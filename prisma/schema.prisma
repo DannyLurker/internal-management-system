@@ -1,0 +1,289 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Enum
+enum Roles {
+  ADMIN
+  HOTEL_MANAGER
+  HOUSEKEEPING
+  FRONT_DESK
+}
+
+enum LocationType {
+  MAIN_WAREHOUSE
+  FLOOR_LOCKER
+  FRONT_OFFICE
+  OPERATIONAL
+}
+
+enum StockType {
+  READY
+  DIRTY
+  DAMAGED
+  EXPIRED
+}
+
+enum MovementType {
+  RECEIVE
+  TRANSFER
+  CONSUME
+  DISCARD
+  LAUNDRY_OUT
+  LAUNDRY_IN
+  ADJUSTMENT
+}
+
+enum UserAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+enum Entity {
+  USER
+  ACCOUNT
+  SESSION
+  VERIFICATION_TOKEN
+  CATEGORY
+  PRODUCT
+  STOCK
+  ORDER
+  ORDER_ITEM
+}
+
+// Acount creation
+model User {
+  id            String          @id @default(cuid())
+  name          String
+  email         String          @unique
+  password      String
+  emailVerified DateTime?
+  image         String?
+  role          Roles
+  accounts      Account[]
+  sessions      Session[]
+  // Optional for WebAuthn support
+  Authenticator Authenticator[]
+
+  createdCategories Category[]      @relation("CategoryCreator")
+  updatedCategories Category[]      @relation("CategoryUpdater")
+  createdItems      Item[]          @relation("ItemsCreator")
+  updatedItems      Item[]          @relation("ItemsUpdater")
+  stocks            Stock[]
+  orders            Order[]
+  logs              AuditLog[]
+  stockMovements    StockMovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+// Optional for WebAuthn support
+model Authenticator {
+  credentialID         String  @unique
+  userId               String
+  providerAccountId    String
+  credentialPublicKey  String
+  counter              Int
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, credentialID])
+}
+
+// Inventor Core Model
+model Category {
+  id       String @id @default(cuid())
+  name     String @unique
+  products Item[]
+
+  createdBy     String?
+  updatedBy     String?
+  userCreatedBy User?   @relation("CategoryCreator", fields: [createdBy], references: [id])
+  userUpdatedBy User?   @relation("CategoryUpdater", fields: [updatedBy], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Item {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  image       String?
+  description String
+  price       Decimal
+  attributes  Json?
+  isActive    Boolean @default(true)
+
+  stockMovements StockMovement[]
+  categoryId     String?
+  category       Category?       @relation(fields: [categoryId], references: [id])
+
+  createdBy     String
+  updatedBy     String?
+  userCreatedBy User    @relation("ItemsCreator", fields: [createdBy], references: [id])
+  userUpdatedBy User?   @relation("ItemsUpdater", fields: [updatedBy], references: [id])
+
+  stocks     Stock[]
+  orderItems OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Location {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  type        LocationType
+  description String?
+
+  stocks            Stock[]
+  incomingMovements StockMovement[] @relation("Destination")
+  outgoingMovements StockMovement[] @relation("Source")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Stock {
+  id        String    @id @default(cuid())
+  quantity  Int
+  type      StockType @default(READY)
+  expiredAt DateTime?
+
+  itemId     String
+  item       Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  createdBy String
+  creator   User   @relation(fields: [createdBy], references: [id])
+
+  movements StockMovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([itemId, locationId, type])
+}
+
+// Logistic and movement tracking
+model StockMovement {
+  id       String       @id @default(cuid())
+  quantity Int
+  type     MovementType
+  reason   String?
+
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  sourceLocationId      String?
+  sourceLocation        Location? @relation("Source", fields: [sourceLocationId], references: [id])
+  destinationLocationId String?
+  destinationLocation   Location? @relation("Destination", fields: [destinationLocationId], references: [id])
+
+  stockId String?
+  stock   Stock?  @relation(fields: [stockId], references: [id])
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id])
+
+  createdBy String
+  user      User   @relation(fields: [createdBy], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// Internal Transaction / Extra Orders (later to work)
+model Order {
+  id             String  @id @default(cuid())
+  roomNumber     String?
+  guestName      String?
+  totalAmount    Decimal @default(0)
+  isBilledToRoom Boolean @default(true)
+
+  items          OrderItem[]
+  stockMovements StockMovement[]
+
+  createdBy String
+  user      User   @relation(fields: [createdBy], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  quantity    Int
+  priceAtSale Decimal
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  itemId  String
+  item    Item   @relation(fields: [itemId], references: [id])
+}
+
+// Log Audit
+model AuditLog {
+  id       String     @id @default(cuid())
+  userId   String
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action   UserAction
+  entity   Entity
+  entityId String
+
+  metadata  Json
+  timestamp DateTime @default(now())
+}
