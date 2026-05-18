@@ -164,13 +164,13 @@ model Category {
 }
 
 model Item {
-  id          String  @id @default(cuid())
-  name        String  @unique
-  image       String?
-  description String
-  price       Decimal
-  attributes  Json?
-  isActive    Boolean @default(true)
+  id           String   @id @default(cuid())
+  name         String   @unique
+  image        String?
+  description  String
+  sellingPrice Decimal?
+  attributes   Json?
+  isActive     Boolean  @default(true)
 
   stockMovements StockMovement[]
   categoryId     String?
@@ -228,7 +228,7 @@ model Stock {
 model StockMovement {
   id        String       @id @default(cuid())
   quantity  Int
-  totalCost Decimal
+  totalCost Decimal?
   type      MovementType
   reason    String?
 
