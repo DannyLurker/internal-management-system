@@ -1,16 +1,16 @@
-import { ItemCreateSchema } from "@/shared/lib/zods/item.zod";
 import { test, expect } from "@playwright/test";
 
-test.describe("CRUD operations for Product", () => {
+test.describe("CRUD operations for Item", () => {
   test.describe.configure({ mode: "serial" });
 
   const TEST_PREFIX = `TEST_${Date.now()}+${Math.floor(Math.random() * 1000)}`;
-  let createdProductId: string;
+  let createdItemId: string;
   let testCategoryId: string;
+  let testLocationId: string;
 
   test("Setup: Create test category for items", async ({ request }) => {
     const response = await request.post("/api/categories", {
-      data: { name: `${TEST_PREFIX}ProductCategory` },
+      data: { name: `${TEST_PREFIX}ItemCategory` },
     });
     const body = await response.json();
     console.log("Category Create Response:", body);
@@ -27,23 +27,45 @@ test.describe("CRUD operations for Product", () => {
     const categories: CategoryDto[] = listBody.data;
 
     const category = categories.find((c) => {
-      console.log("Category:", `${TEST_PREFIX}ProductCategory`);
+      console.log("Category:", `${TEST_PREFIX}ItemCategory`);
       console.log("Category name:", c.name);
-      return c.name === `${TEST_PREFIX}ProductCategory`;
+      return c.name === `${TEST_PREFIX}ItemCategory`;
     });
     expect(category).toBeDefined();
     testCategoryId = category!.id;
   });
 
-  test("Create a new product", async ({ request }) => {
+  test("Setup: Get test location ID", async ({ request }) => {
+    const response = await request.get(
+      "/api/locations?page=1&dataPerPage=10",
+    );
+    const body = await response.json();
+    console.log("Location List Response:", body);
+
+    expect(response.status()).toBe(200);
+
+    // ApiResponse wraps the locations array under `data`
+    const locations: { id: string }[] = body.data;
+    expect(Array.isArray(locations)).toBe(true);
+    expect(locations.length).toBeGreaterThan(0);
+
+    testLocationId = locations[0].id;
+  });
+
+  test("Create a new item", async ({ request }) => {
     const response = await request.post("/api/items", {
       data: {
         name: `${TEST_PREFIX}Laptop`,
         description: "A high-performance laptop for testing",
         categoryId: testCategoryId,
-        price: 999.99,
+        locationId: testLocationId,
+        sellingPrice: 999.99,
         image: "https://example.com/laptop.jpg",
-        initialStock: 10,
+        stock: {
+          quantity: 10,
+          totalCost: 8000,
+          reason: "Initial stock for testing",
+        },
         attributes: {
           color: "black",
           weight: "1.5kg",
@@ -57,62 +79,66 @@ test.describe("CRUD operations for Product", () => {
     expect(body.message).toContain(`${TEST_PREFIX}Laptop`);
   });
 
-  test("Get list of products", async ({ request }) => {
+  test("Get list of items", async ({ request }) => {
     const response = await request.get(
-      "/api/products?page=1&dataPerPage=10&sortBy=name&orderBy=asc",
+      "/api/items?page=1&dataPerPage=10&sortBy=name&orderBy=asc",
     );
     const body = await response.json();
     console.log("Get List Response:", body);
 
     expect(response.status()).toBe(200);
+    // ItemGetManyApiResponse = ApiResponse<items[]> → body.data is the array
     expect(body.data).toBeDefined();
     expect(Array.isArray(body.data)).toBe(true);
   });
 
-  test("Get single product by ID", async ({ request }) => {
-    // First get list to find the product ID
+  test("Get single item by ID", async ({ request }) => {
+    // First get list to find the item ID
     const listResponse = await request.get(
-      "/api/products?page=1&dataPerPage=100&sortBy=name&orderBy=asc",
+      "/api/items?page=1&dataPerPage=100&sortBy=name&orderBy=asc",
     );
     const listBody = await listResponse.json();
 
-    type ProductDto = { id: string; name: string };
-    const products: ProductDto[] = listBody.data;
+    type ItemDto = { id: string; name: string };
+    // ItemGetManyApiResponse = ApiResponse<items[]> → body.data is the array
+    const items: ItemDto[] = listBody.data;
 
-    const product = products.find((p) => p.name === `${TEST_PREFIX}Laptop`);
-    expect(product).toBeDefined();
-    createdProductId = product!.id;
+    const item = items.find((p) => p.name === `${TEST_PREFIX}Laptop`);
+    expect(item).toBeDefined();
+    createdItemId = item!.id;
 
-    // Get single product
-    const response = await request.get(`/api/products/${createdProductId}`);
+    // Get single item
+    const response = await request.get(`/api/items/${createdItemId}`);
     const body = await response.json();
     console.log("Get Single Response:", body);
 
     expect(response.status()).toBe(200);
+    // ItemGetByIdApiResponse = ApiResponse<item> → body.data is the item object
     expect(body.data).toBeDefined();
-    expect(body.data.id).toBe(createdProductId);
+    expect(body.data.id).toBe(createdItemId);
   });
 
-  test("Get products by category", async ({ request }) => {
+  test("Get items by category", async ({ request }) => {
     const response = await request.get(
-      `/api/products?isByCategory=true&categoryId=${testCategoryId}`,
+      `/api/items?isByCategory=true&categoryId=${testCategoryId}&page=1&dataPerPage=10&sortBy=name&orderBy=asc`,
     );
     const body = await response.json();
     console.log("Get By Category Response:", body);
 
     expect(response.status()).toBe(200);
+    // ItemGetManyApiResponse = ApiResponse<items[]> → body.data is the array
     expect(body.data).toBeDefined();
     expect(Array.isArray(body.data)).toBe(true);
   });
 
-  test("Update a product", async ({ request }) => {
-    const response = await request.patch("/api/products", {
+  test("Update an item", async ({ request }) => {
+    const response = await request.patch("/api/items", {
       data: {
-        productId: createdProductId,
+        itemId: createdItemId,
         name: `${TEST_PREFIX}Gaming Laptop`,
         description: "Updated description for gaming",
         categoryId: testCategoryId,
-        price: 1299.99,
+        sellingPrice: 1299.99,
         image: "https://example.com/gaming-laptop.jpg",
       },
     });
@@ -123,8 +149,8 @@ test.describe("CRUD operations for Product", () => {
     expect(body.message).toContain(`${TEST_PREFIX}Gaming Laptop`);
   });
 
-  test("Delete a product", async ({ request }) => {
-    const response = await request.delete(`/api/products/${createdProductId}`);
+  test("Delete an item", async ({ request }) => {
+    const response = await request.delete(`/api/items/${createdItemId}`);
     const body = await response.json();
     console.log("Delete Response:", body);
 
@@ -132,13 +158,14 @@ test.describe("CRUD operations for Product", () => {
     expect(body.message).toContain(`${TEST_PREFIX}Gaming Laptop`);
   });
 
-  test("Error: Create product with short name", async ({ request }) => {
-    const response = await request.post("/api/products", {
+  test("Error: Create item with short name", async ({ request }) => {
+    const response = await request.post("/api/items", {
       data: {
         name: "",
         description: "Test description",
         categoryId: testCategoryId,
-        price: 100,
+        locationId: testLocationId,
+        sellingPrice: 100,
       },
     });
     const body = await response.json();
@@ -147,13 +174,14 @@ test.describe("CRUD operations for Product", () => {
     expect(response.status()).toBe(400);
   });
 
-  test("Error: Create product with invalid category", async ({ request }) => {
-    const response = await request.post("/api/products", {
+  test("Error: Create item with invalid category", async ({ request }) => {
+    const response = await request.post("/api/items", {
       data: {
         name: `${TEST_PREFIX}InvalidProduct`,
         description: "Test description",
         categoryId: "XX",
-        price: 100,
+        locationId: testLocationId,
+        sellingPrice: 100,
       },
     });
     const body = await response.json();
@@ -162,14 +190,14 @@ test.describe("CRUD operations for Product", () => {
     expect(response.status()).toBe(400);
   });
 
-  test("Error: Update non-existent product", async ({ request }) => {
-    const response = await request.patch("/api/products", {
+  test("Error: Update non-existent item", async ({ request }) => {
+    const response = await request.patch("/api/items", {
       data: {
-        productId: "non-existent-id-12345",
+        itemId: "non-existent-id-12345",
         name: `${TEST_PREFIX}UpdatedName`,
         description: "Updated description",
         categoryId: testCategoryId,
-        price: 200,
+        sellingPrice: 200,
       },
     });
     const body = await response.json();
@@ -178,9 +206,9 @@ test.describe("CRUD operations for Product", () => {
     expect(response.status()).toBe(404);
   });
 
-  test("Error: Delete non-existent product", async ({ request }) => {
+  test("Error: Delete non-existent item", async ({ request }) => {
     const response = await request.delete(
-      "/api/products/non-existent-id-12345",
+      "/api/items/non-existent-id-12345",
     );
     const body = await response.json();
     console.log("Non-existent Delete Error Response:", body);
@@ -195,16 +223,18 @@ test.describe("CRUD operations for Product", () => {
     });
     const request = context.request;
 
-    // Delete test products
-    const productList = await request.get(
-      "http://localhost:3000/api/products?page=1&dataPerPage=100",
+    // Delete test items
+    // ItemGetManyApiResponse = ApiResponse<items[]> → body.data is the array
+    const itemList = await request.get(
+      "http://localhost:3000/api/items?page=1&dataPerPage=100&sortBy=name&orderBy=asc",
     );
-    const { data: products } = await productList.json();
+    const itemBody = await itemList.json();
+    const items: { id: string; name: string }[] = itemBody.data ?? [];
 
-    for (const product of products) {
-      if (product.name.startsWith(TEST_PREFIX)) {
+    for (const item of items) {
+      if (item.name.startsWith(TEST_PREFIX)) {
         await request.delete(
-          `http://localhost:3000/api/products/${product.id}`,
+          `http://localhost:3000/api/items/${item.id}`,
         );
       }
     }

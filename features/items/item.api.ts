@@ -28,7 +28,7 @@ const itemApi = {
   },
 
   update: async (data: ItemUpdateSchema) => {
-    const result = await api.put<ItemUpdateApiResponse>(`/items`, data);
+    const result = await api.patch<ItemUpdateApiResponse>(`/items`, data);
 
     return result.data;
   },
