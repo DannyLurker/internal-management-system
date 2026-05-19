@@ -104,7 +104,7 @@ const productRepository = {
   ) => {
     const category = await tx.category.findUnique({
       where: {
-        id  : params.categoryId,
+        id: params.categoryId,
       },
       include: {
         products: {

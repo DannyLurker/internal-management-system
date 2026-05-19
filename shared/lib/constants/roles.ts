@@ -2,8 +2,9 @@ import { Roles } from "@prisma/client";
 
 export const ROLE_LABEL: Record<Roles, string> = {
   ADMIN: "Administrator",
-  OWNER: "Owner",
-  MANAGER: "Manager",
-  INVENTORY: "Inventory",
-  CASHIER: "Cashier",
+  HOTEL_MANAGER: "Hotel Manager",
+  SUPERVISOR: "Supervisor",
+  ACCOUNTANT: "Accountant",
+  FRONT_DESK: "Front Desk",
+  HOUSEKEEPING: "Housekeeping",
 };
