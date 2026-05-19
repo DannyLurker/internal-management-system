@@ -15,6 +15,8 @@ datasource db {
 enum Roles {
   ADMIN
   HOTEL_MANAGER
+  SUPERVISOR
+  ACCOUNTANT
   HOUSEKEEPING
   FRONT_DESK
 }
@@ -37,6 +39,7 @@ enum MovementType {
   RECEIVE
   TRANSFER
   CONSUME
+  SALE
   DISCARD
   LAUNDRY_OUT
   LAUNDRY_IN
@@ -55,8 +58,9 @@ enum Entity {
   SESSION
   VERIFICATION_TOKEN
   CATEGORY
-  PRODUCT
+  ITEM
   STOCK
+  STOCK_MOVEMENT
   ORDER
   ORDER_ITEM
 }
@@ -222,10 +226,11 @@ model Stock {
 
 // Logistic and movement tracking
 model StockMovement {
-  id       String       @id @default(cuid())
-  quantity Int
-  type     MovementType
-  reason   String?
+  id        String       @id @default(cuid())
+  quantity  Int
+  totalCost Decimal
+  type      MovementType
+  reason    String?
 
   itemId String
   item   Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
