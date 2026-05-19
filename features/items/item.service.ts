@@ -5,6 +5,7 @@ import sessionValidation from "@/shared/lib/validations/user-session-validation"
 import {
   itemCreateSchema,
   ItemCreateSchema,
+  itemGetSchema,
   itemUpdateSchema,
   ItemUpdateSchema,
 } from "@/shared/lib/zods/item.zod";
@@ -45,6 +46,35 @@ const itemService = {
 
     return {
       message: `${result.name} created successfully`,
+    };
+  },
+
+  getMany: async (rawParams: Record<string, string>) => {
+    const session = await sessionValidation();
+    const validatedParams = itemGetSchema.parse(rawParams);
+
+    if (!canManageItem(session.role)) {
+      throw unauthorized("You're not allowed to access this feature");
+    }
+
+    const result = await itemRepository.getMany(validatedParams, prisma);
+    return {
+      message: "Items retrieved successfully",
+      items: result,
+    };
+  },
+
+  getById: async (itemId: string) => {
+    const session = await sessionValidation();
+
+    if (!canManageItem(session.role)) {
+      throw unauthorized("You're not allowed to access this feature");
+    }
+
+    const result = await itemRepository.getById(itemId, prisma);
+    return {
+      message: "Item retrieved successfully",
+      item: result,
     };
   },
 

@@ -19,6 +19,7 @@ const itemRepository = {
         image: data.image,
         sellingPrice: data.sellingPrice ? data.sellingPrice : undefined,
         attributes: data.attributes,
+        minTreshold: data.minTreshold,
         createdBy: userId,
       },
     });
@@ -61,19 +62,34 @@ const itemRepository = {
       where: {
         id: itemId,
       },
+      include: {
+        stocks: true,
+      },
     });
   },
 
-  getAll: async (
+  getMany: async (
     params: ItemGetSchema,
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
     if (params.search && params.search.length >= 3) {
-      return await tx.item.findMany({
+      const items = await tx.item.findMany({
         where: {
           name: {
             contains: params.search,
             mode: "insensitive",
+          },
+        },
+        include: {
+          stocks: {
+            where: {
+              type: "READY",
+              OR: [{ expiredAt: null }, { expiredAt: { gte: new Date() } }],
+              quantity: { gte: 0 },
+            },
+            select: {
+              quantity: true,
+            },
           },
         },
         skip: params.isTakeAll
@@ -84,46 +100,72 @@ const itemRepository = {
           [params.sortBy]: params.orderBy,
         },
       });
+
+      return items.map((item) => ({
+        ...item,
+        totalStock: item.stocks.reduce((sum, s) => sum + s.quantity, 0),
+      }));
     }
 
     if (params.isByCategory) {
-      return await tx.item.findMany({
+      const items = await tx.item.findMany({
         where: {
           categoryId: params.categoryId,
         },
         skip: params.isTakeAll
           ? (params.page - 1) * params.dataPerPage
           : undefined,
+        include: {
+          stocks: {
+            where: {
+              type: "READY",
+              OR: [{ expiredAt: null }, { expiredAt: { gte: new Date() } }],
+              quantity: { gte: 0 },
+            },
+            select: {
+              quantity: true,
+            },
+          },
+        },
         take: params.isTakeAll ? params.dataPerPage : undefined,
         orderBy: {
           [params.sortBy]: params.orderBy,
         },
       });
+
+      return items.map((item) => ({
+        ...item,
+        totalStock: item.stocks.reduce((sum, s) => sum + s.quantity, 0),
+      }));
     }
 
-    if (params.isByLocation) {
-      return await tx.item.findMany({
-        where: {},
-        skip: params.isTakeAll
-          ? (params.page - 1) * params.dataPerPage
-          : undefined,
-        take: params.isTakeAll ? params.dataPerPage : undefined,
-        orderBy: {
-          [params.sortBy]: params.orderBy,
-        },
-      });
-    }
-
-    return await tx.item.findMany({
+    const items = await tx.item.findMany({
       where: {},
       skip: params.isTakeAll
         ? (params.page - 1) * params.dataPerPage
         : undefined,
+      include: {
+        stocks: {
+          where: {
+            type: "READY",
+            OR: [{ expiredAt: null }, { expiredAt: { gte: new Date() } }],
+            quantity: { gte: 0 },
+          },
+          select: {
+            quantity: true,
+          },
+        },
+      },
       take: params.isTakeAll ? params.dataPerPage : undefined,
       orderBy: {
         [params.sortBy]: params.orderBy,
       },
     });
+
+    return items.map((item) => ({
+      ...item,
+      totalStock: item.stocks.reduce((sum, s) => sum + s.quantity, 0),
+    }));
   },
 
   update: async (
@@ -143,6 +185,7 @@ const itemRepository = {
         sellingPrice: data.sellingPrice ? data.sellingPrice : undefined,
         attributes: data.attributes,
         updatedBy: userId,
+        minTreshold: data.minTreshold,
       },
     });
   },

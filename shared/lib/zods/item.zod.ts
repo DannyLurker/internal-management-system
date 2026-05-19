@@ -13,6 +13,7 @@ export const itemCreateSchema = z.object({
   description: z.string().trim().min(1),
   image: z.string().optional(),
   sellingPrice: z.number().min(1).optional(),
+  minTreshold: z.number().optional(),
   attributes: z.record(z.any(), z.any()).optional().default({}),
   stock: z
     .object({
@@ -52,10 +53,6 @@ export const itemGetSchema = z.object({
     .preprocess((val) => val === "true", z.boolean())
     .default(false),
   categoryId: z.string().optional(),
-  isByLocation: z
-    .preprocess((val) => val === "true", z.boolean())
-    .default(false),
-  locationId: z.string().optional(),
   isTakeAll: z.preprocess((val) => val === "true", z.boolean()).default(false),
   search: z.string().trim().optional(),
   sortBy: sortItemByEnum,
@@ -72,6 +69,7 @@ export const itemUpdateSchema = z.object({
   image: z.string().optional(),
   sellingPrice: z.number().min(1).optional(),
   attributes: z.record(z.any(), z.any()).optional().default({}),
+  minTreshold: z.number().optional(),
 });
 
 export type ItemUpdateSchema = z.infer<typeof itemUpdateSchema>;

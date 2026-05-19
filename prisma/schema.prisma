@@ -170,6 +170,7 @@ model Item {
   description  String
   sellingPrice Decimal?
   attributes   Json?
+  minTreshold  Int      @default(0)
   isActive     Boolean  @default(true)
 
   stockMovements StockMovement[]
