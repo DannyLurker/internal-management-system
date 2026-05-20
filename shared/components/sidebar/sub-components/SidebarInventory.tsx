@@ -6,11 +6,12 @@ import InventorySubLink from "./InventorySubLink";
 import CollapsedFlyoutLink from "./ColapsedFlyoutLink";
 import { navAmbient } from "../sidebar-link.styles";
 import { AnimatePresence, motion } from "framer-motion";
+import { PathsType } from "@/shared/lib/constants/url-paths";
 
 interface SidebarInventoryProps {
   isExpanded: boolean;
   pathname: string;
-  paths: { products: string; categories: string };
+  paths: PathsType;
   inventoryOpen: boolean;
   setInventoryOpen: (val: boolean | ((prev: boolean) => boolean)) => void;
   inventoryFlyoutOpen: boolean;
@@ -33,7 +34,7 @@ export default function SidebarInventory({
   inventoryFlyoutId,
 }: SidebarInventoryProps) {
   const inventoryChildActive =
-    pathname === paths.products || pathname === paths.categories;
+    pathname === paths.items || pathname === paths.categories;
 
   if (isExpanded) {
     return (
@@ -77,9 +78,9 @@ export default function SidebarInventory({
                   active={pathname === paths.categories}
                 />
                 <InventorySubLink
-                  href={paths.products}
-                  label="Products"
-                  active={pathname === paths.products}
+                  href={paths.items}
+                  label="Items"
+                  active={pathname === paths.items}
                 />
               </div>
             </div>
@@ -139,9 +140,9 @@ export default function SidebarInventory({
               />
 
               <CollapsedFlyoutLink
-                href={paths.products}
-                label="Products"
-                active={pathname === paths.products}
+                href={paths.items}
+                label="Items"
+                active={pathname === paths.items}
               />
             </div>
           </motion.div>
