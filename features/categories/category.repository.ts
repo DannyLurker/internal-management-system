@@ -58,7 +58,7 @@ const categoryRepository = {
           select: {
             stocks: {
               where: {
-                type: "IN_STOCK",
+                type: "READY",
                 OR: [
                   { expiredAt: null }, // Keep it if it has no expiry date
                   { expiredAt: { gte: new Date() } }, // Keep it if it's not expired yet
@@ -126,7 +126,7 @@ const categoryRepository = {
           include: {
             stocks: {
               where: {
-                type: "IN_STOCK",
+                type: "READY",
                 OR: [{ expiredAt: null }, { expiredAt: { gte: new Date() } }],
               },
               select: {
