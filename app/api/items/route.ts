@@ -4,12 +4,10 @@ import {
   ItemGetManyApiResponse,
   ItemUpdateApiResponse,
 } from "@/features/items/item.types";
-import { ApiResponse } from "@/shared/lib/api-client";
 import {
   handleError,
   printConsoleError,
 } from "@/shared/lib/error-handlers/handleError";
-import { request } from "https";
 
 export async function POST(request: Request) {
   try {
@@ -63,7 +61,7 @@ export async function PATCH(request: Request) {
     const response: ItemUpdateApiResponse = {
       message: result.message,
       data: null,
-      status: 201,
+      status: 200,
     };
 
     return Response.json(response, {

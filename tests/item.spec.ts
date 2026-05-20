@@ -1,3 +1,4 @@
+import prisma from "@/shared/db/prisma";
 import { test, expect } from "@playwright/test";
 
 test.describe("CRUD operations for Item", () => {
@@ -35,32 +36,21 @@ test.describe("CRUD operations for Item", () => {
     testCategoryId = category!.id;
   });
 
-  test("Setup: Get test location ID", async ({ request }) => {
-    const response = await request.get(
-      "/api/items?page=1&dataPerPage=10&sortBy=name&orderBy=asc",
-    );
-    const body = await response.json();
-    console.log("Location List Response:", body);
-
-    expect(response.status()).toBe(200);
-
-    // ApiResponse wraps the locations array under `data`
-    const locations: { id: string }[] = body.data;
-    expect(Array.isArray(locations)).toBe(true);
-    expect(locations.length).toBeGreaterThan(0);
-
-    testLocationId = locations[0].id;
+  test("Setup: Get test location ID (I haven't created the location yet)", async ({
+    request,
+  }) => {
+    testLocationId = "cmpe19lj7000d5ouqm8izv6ap"; //hard coded for a while;
   });
 
   test("Create a new item", async ({ request }) => {
     const response = await request.post("/api/items", {
       data: {
-        name: `${TEST_PREFIX}Laptop`,
-        description: "A high-performance laptop for testing",
+        name: `${TEST_PREFIX}chair`,
+        description: "A high-performance chair for testing",
         categoryId: testCategoryId,
         locationId: testLocationId,
         sellingPrice: 999.99,
-        image: "https://example.com/laptop.jpg",
+        image: "https://example.com/chair.jpg",
         stock: {
           quantity: 10,
           totalCost: 8000,
@@ -72,11 +62,14 @@ test.describe("CRUD operations for Item", () => {
         },
       },
     });
+
+    console.log("76 Items ln: ", response);
+
     const body = await response.json();
     console.log("Create Response:", body);
 
     expect(response.status()).toBe(201);
-    expect(body.message).toContain(`${TEST_PREFIX}Laptop`);
+    expect(body.message).toContain(`${TEST_PREFIX}chair`);
   });
 
   test("Get list of items", async ({ request }) => {
@@ -103,7 +96,7 @@ test.describe("CRUD operations for Item", () => {
     // ItemGetManyApiResponse = ApiResponse<items[]> → body.data is the array
     const items: ItemDto[] = listBody.data;
 
-    const item = items.find((p) => p.name === `${TEST_PREFIX}Laptop`);
+    const item = items.find((p) => p.name === `${TEST_PREFIX}chair`);
     expect(item).toBeDefined();
     createdItemId = item!.id;
 
@@ -135,18 +128,18 @@ test.describe("CRUD operations for Item", () => {
     const response = await request.patch("/api/items", {
       data: {
         itemId: createdItemId,
-        name: `${TEST_PREFIX}Gaming Laptop`,
+        name: `${TEST_PREFIX}Gaming Chair`,
         description: "Updated description for gaming",
         categoryId: testCategoryId,
         sellingPrice: 1299.99,
-        image: "https://example.com/gaming-laptop.jpg",
+        image: "https://example.com/gaming-chair.jpg",
       },
     });
     const body = await response.json();
     console.log("Update Response:", body);
 
     expect(response.status()).toBe(200);
-    expect(body.message).toContain(`${TEST_PREFIX}Gaming Laptop`);
+    expect(body.message).toContain(`${TEST_PREFIX}Gaming Chair`);
   });
 
   test("Delete an item", async ({ request }) => {
@@ -155,7 +148,7 @@ test.describe("CRUD operations for Item", () => {
     console.log("Delete Response:", body);
 
     expect(response.status()).toBe(200);
-    expect(body.message).toContain(`${TEST_PREFIX}Gaming Laptop`);
+    expect(body.message).toContain(`${TEST_PREFIX}Gaming Chair`);
   });
 
   test("Error: Create item with short name", async ({ request }) => {
