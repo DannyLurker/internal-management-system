@@ -37,7 +37,7 @@ test.describe("CRUD operations for Item", () => {
 
   test("Setup: Get test location ID", async ({ request }) => {
     const response = await request.get(
-      "/api/locations?page=1&dataPerPage=10",
+      "/api/items?page=1&dataPerPage=10&sortBy=name&orderBy=asc",
     );
     const body = await response.json();
     console.log("Location List Response:", body);
@@ -207,9 +207,7 @@ test.describe("CRUD operations for Item", () => {
   });
 
   test("Error: Delete non-existent item", async ({ request }) => {
-    const response = await request.delete(
-      "/api/items/non-existent-id-12345",
-    );
+    const response = await request.delete("/api/items/non-existent-id-12345");
     const body = await response.json();
     console.log("Non-existent Delete Error Response:", body);
 
@@ -233,9 +231,7 @@ test.describe("CRUD operations for Item", () => {
 
     for (const item of items) {
       if (item.name.startsWith(TEST_PREFIX)) {
-        await request.delete(
-          `http://localhost:3000/api/items/${item.id}`,
-        );
+        await request.delete(`http://localhost:3000/api/items/${item.id}`);
       }
     }
 
