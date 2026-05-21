@@ -7,12 +7,13 @@ import {
 import { ItemGetByIdApiResponse, ItemGetManyApiResponse } from "./item.types";
 import ITEM_KEYS from "./item.keys";
 import itemApi from "./item.api";
+
+import { toast } from "sonner";
 import {
   ItemCreateSchema,
   ItemGetSchema,
   ItemUpdateSchema,
-} from "@/features/items/item.zod";
-import { toast } from "sonner";
+} from "@/shared/lib/zods/item.zod";
 
 export const useItem = (
   itemId: string,

@@ -92,6 +92,15 @@ const itemRepository = {
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
     if (params.search && params.search.length >= 3) {
+      const totalItems = await tx.item.count({
+        where: {
+          name: {
+            contains: params.search,
+            mode: "insensitive",
+          },
+        },
+      });
+
       const items = await tx.item.findMany({
         where: {
           name: {
@@ -122,10 +131,16 @@ const itemRepository = {
         },
       });
 
-      return items.map((item) => mapItemListRow(item));
+      return { items: items.map((item) => mapItemListRow(item)), totalItems };
     }
 
     if (params.isByCategory) {
+      const totalItems = await tx.item.count({
+        where: {
+          categoryId: params.categoryId,
+        },
+      });
+
       const items = await tx.item.findMany({
         where: {
           categoryId: params.categoryId,
@@ -153,8 +168,10 @@ const itemRepository = {
         },
       });
 
-      return items.map((item) => mapItemListRow(item));
+      return { items: items.map((item) => mapItemListRow(item)), totalItems };
     }
+
+    const totalItems = await tx.item.count();
 
     const items = await tx.item.findMany({
       where: {},

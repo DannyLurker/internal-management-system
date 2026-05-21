@@ -85,7 +85,8 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
 
   const { data: itemsResponse, isLoading, isError } = useItems(params);
 
-  const items = itemsResponse?.data ?? [];
+  const dataItems = itemsResponse?.data.items ?? [];
+  const totalItems = itemsResponse?.data.totalItems ?? 0;
 
   const openCreate = useCallback(() => {
     setEditItem(null);
@@ -157,7 +158,8 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
 
       <div className="mt-8">
         <ItemTable
-          items={items}
+          items={dataItems}
+          totalItems={totalItems}
           isLoading={isLoading}
           isError={isError}
           filters={tableFilters}

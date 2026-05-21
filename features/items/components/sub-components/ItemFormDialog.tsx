@@ -168,29 +168,36 @@ export default function ItemFormDialog({
     reader.readAsDataURL(file);
   };
 
-  const onCreateSubmit = createForm.handleSubmit(async (values) => {
-    const quantity = values.stock?.quantity;
-    const price = values.sellingPrice ?? 1;
-    const payload = itemCreateSchema.parse({
-      ...values,
-      attributes: attributesToRecord(attributeRows),
-      stock: quantity
-        ? {
-            quantity,
-            totalCost: price * quantity,
-            reason: "Initial inventory",
-          }
-        : undefined,
-    });
+  const onCreateSubmit = createForm.handleSubmit(
+    async (values) => {
+      console.log("test", values);
 
-    try {
-      await createMutation.mutateAsync(payload);
-      onOpenChange(false);
-      onSuccess();
-    } catch {
-      /* handled by API */
-    }
-  });
+      const quantity = values.stock?.quantity;
+      const price = values.sellingPrice ?? 1;
+      const payload = itemCreateSchema.parse({
+        ...values,
+        attributes: attributesToRecord(attributeRows),
+        stock: quantity
+          ? {
+              quantity,
+              totalCost: price * quantity,
+              reason: "Initial inventory",
+            }
+          : undefined,
+      });
+
+      try {
+        await createMutation.mutateAsync(payload);
+        onOpenChange(false);
+        onSuccess();
+      } catch {
+        /* handled by API */
+      }
+    },
+    (error) => {
+      console.log("validation error", error);
+    },
+  );
 
   const onUpdateSubmit = updateForm.handleSubmit(async (values) => {
     const payload = itemUpdateSchema.parse({
@@ -496,9 +503,10 @@ export default function ItemFormDialog({
           </fieldset>
         </form>
 
-        <DialogFooter className="shrink-0 gap-2 border-t border-[#eef4ff] bg-[#f8f9ff]/50 px-6 py-4 sm:justify-end">
+        <DialogFooter className="shrink-0 gap-2 border-t border-[#eef4ff] bg-[#f8f9ff]/50 px-6 py-4 sm:justify-end mb-1">
           <Button
             type="button"
+            onSubmit={isEdit ? onUpdateSubmit : onCreateSubmit}
             variant="outline"
             onClick={() => onOpenChange(false)}
             className="rounded border-[#121c28]/30 font-ochre-ui text-[#121c28] hover:bg-white"

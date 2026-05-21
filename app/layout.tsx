@@ -16,8 +16,8 @@ const hankenGrotesk = Hanken_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "E-Cashier ",
-  description: "POS System for small businesses",
+  title: "IMS - Inventory Management System",
+  description: "IMS",
 };
 
 export default function RootLayout({

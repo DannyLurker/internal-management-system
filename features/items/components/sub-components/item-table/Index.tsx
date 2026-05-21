@@ -36,6 +36,7 @@ export type ItemTableFilters = {
 
 type ItemTableProps = {
   items: Item[];
+  totalItems: number;
   isLoading: boolean;
   isError: boolean;
   filters: ItemTableFilters;
@@ -60,6 +61,7 @@ const STATUS_OPTIONS: { value: ItemStockStatus | "ALL"; label: string }[] = [
 
 export default function ItemTable({
   items,
+  totalItems,
   isLoading,
   isError,
   filters,
@@ -78,12 +80,12 @@ export default function ItemTable({
     return items.filter((item) => getItemStockStatus(item) === filters.status);
   }, [items, filters.status]);
 
-  const hasNextPage = items.length === dataPerPage;
+  const hasNextPage = totalItems > dataPerPage;
   const hasPrevPage = page > 1;
   const rangeStart =
     filteredItems.length === 0 ? 0 : (page - 1) * dataPerPage + 1;
   const rangeEnd = (page - 1) * dataPerPage + filteredItems.length;
-  const totalShown = filteredItems.length;
+  const totalShown = totalItems;
 
   if (isError) {
     return (
@@ -121,7 +123,7 @@ export default function ItemTable({
               onFiltersChange({ categoryId: value ?? "ALL" })
             }
           >
-            <SelectTrigger className="h-9 min-w-[9rem] rounded border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm">
+            <SelectTrigger className="h-9 min-w-36nded border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm">
               <SelectValue>
                 {filters.categoryId === "ALL"
                   ? "Category: All"
@@ -146,7 +148,7 @@ export default function ItemTable({
               })
             }
           >
-            <SelectTrigger className="h-9 min-w-[9rem] rounded border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm">
+            <SelectTrigger className="h-9 min-w-36 rounded border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm">
               <SelectValue>
                 {filters.status === "ALL"
                   ? "Status: All"
@@ -176,7 +178,7 @@ export default function ItemTable({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[900px] border-collapse">
+        <table className="w-full min-w-225 border-collapse">
           <TableHeader />
           <tbody>
             {isLoading ? (
@@ -217,10 +219,7 @@ export default function ItemTable({
             <span className="font-semibold text-[#121c28]">{rangeStart}</span>{" "}
             to <span className="font-semibold text-[#121c28]">{rangeEnd}</span>{" "}
             of{" "}
-            <span className="font-semibold text-[#121c28]">
-              {totalShown}
-              {hasNextPage ? "+" : ""}
-            </span>{" "}
+            <span className="font-semibold text-[#121c28]">{totalShown}</span>{" "}
             items
           </p>
           <div className="flex items-center gap-2">

@@ -39,7 +39,7 @@ export async function GET(request: Request) {
 
     const response: ItemGetManyApiResponse = {
       message: result.message,
-      data: result.items,
+      data: result.data,
       status: 200,
     };
 
