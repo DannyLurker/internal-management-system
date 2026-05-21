@@ -21,7 +21,7 @@ const SidebarLogo = ({
           className="min-w-0 flex-1 font-ochre-brand text-2xl font-semibold leading-8 tracking-tight text-[#eaf1ff]"
           style={{ fontFeatureSettings: '"lnum" 1' }}
         >
-          E-Cashier
+          IMS
         </span>
         <button
           type="button"
@@ -58,16 +58,16 @@ const SidebarLogo = ({
             className="font-ochre-brand text-2xl font-semibold leading-8 tracking-tight text-[#eaf1ff]"
             style={{ fontFeatureSettings: '"lnum" 1' }}
           >
-            E-Cashier
+            IMS
           </span>
         ) : (
           <>
-            <span className="sr-only">E-Cashier</span>
+            <span className="sr-only">IMS</span>
             <span
               className="font-ochre-brand text-xl font-semibold leading-none text-[#eaf1ff]"
               aria-hidden
             >
-              E
+              IMS
             </span>
           </>
         )}

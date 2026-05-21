@@ -11,7 +11,7 @@ import {
   ItemCreateSchema,
   ItemGetSchema,
   ItemUpdateSchema,
-} from "@/shared/lib/zods/item.zod";
+} from "@/features/items/item.zod";
 import { toast } from "sonner";
 
 export const useItem = (
