@@ -57,10 +57,13 @@ const itemService = {
       throw unauthorized("You're not allowed to access this feature");
     }
 
+    console.log("60 ln:", validatedParams.isTakeAll);
+
     const result = await itemRepository.getMany(validatedParams, prisma);
     return {
       message: "Items retrieved successfully",
-      items: result,
+      items: result.items,
+      totalItems: result.totalItems,
     };
   },
 

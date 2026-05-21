@@ -13,7 +13,7 @@ export const itemCreateSchema = z.object({
   description: z.string().trim().min(1),
   image: z.string().optional(),
   sellingPrice: z.number().min(1).optional(),
-  minTreshold: z.number().optional(),
+  minThreshold: z.number().optional(),
   attributes: z.record(z.any(), z.any()).optional().default({}),
   stock: z
     .object({
@@ -69,7 +69,7 @@ export const itemUpdateSchema = z.object({
   image: z.string().optional(),
   sellingPrice: z.number().min(1).optional(),
   attributes: z.record(z.any(), z.any()).optional().default({}),
-  minTreshold: z.number().optional(),
+  minThreshold: z.number().optional(),
 });
 
 export type ItemUpdateSchema = z.infer<typeof itemUpdateSchema>;

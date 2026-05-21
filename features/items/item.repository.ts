@@ -5,6 +5,25 @@ import {
 } from "@/shared/lib/zods/item.zod";
 import { Prisma, PrismaClient } from "@prisma/client";
 
+type ItemWithStocks = {
+  stocks: { quantity: number; expiredAt?: Date | null }[];
+  category?: { id: string; name: string } | null;
+};
+
+function mapItemListRow<T extends ItemWithStocks>(item: T) {
+  const { stocks, ...rest } = item;
+  const expiryDates = stocks
+    .map((s) => s.expiredAt)
+    .filter((d): d is Date => d != null)
+    .sort((a, b) => a.getTime() - b.getTime());
+
+  return {
+    ...rest,
+    totalStock: stocks.reduce((sum, s) => sum + s.quantity, 0),
+    nearestExpiredAt: expiryDates[0] ?? null,
+  };
+}
+
 const itemRepository = {
   create: async (
     userId: string,
@@ -19,7 +38,7 @@ const itemRepository = {
         image: data.image,
         sellingPrice: data.sellingPrice ? data.sellingPrice : undefined,
         attributes: data.attributes,
-        minTreshold: data.minTreshold,
+        minThreshold: data.minThreshold ? data.minThreshold : undefined,
         createdBy: userId,
       },
     });
@@ -81,6 +100,7 @@ const itemRepository = {
           },
         },
         include: {
+          category: { select: { id: true, name: true } },
           stocks: {
             where: {
               type: "READY",
@@ -89,22 +109,20 @@ const itemRepository = {
             },
             select: {
               quantity: true,
+              expiredAt: true,
             },
           },
         },
         skip: params.isTakeAll
-          ? (params.page - 1) * params.dataPerPage
-          : undefined,
-        take: params.isTakeAll ? params.dataPerPage : undefined,
+          ? undefined
+          : (params.page - 1) * params.dataPerPage,
+        take: params.isTakeAll ? undefined : params.dataPerPage,
         orderBy: {
           [params.sortBy]: params.orderBy,
         },
       });
 
-      return items.map((item) => ({
-        ...item,
-        totalStock: item.stocks.reduce((sum, s) => sum + s.quantity, 0),
-      }));
+      return items.map((item) => mapItemListRow(item));
     }
 
     if (params.isByCategory) {
@@ -113,9 +131,10 @@ const itemRepository = {
           categoryId: params.categoryId,
         },
         skip: params.isTakeAll
-          ? (params.page - 1) * params.dataPerPage
-          : undefined,
+          ? undefined
+          : (params.page - 1) * params.dataPerPage,
         include: {
+          category: { select: { id: true, name: true } },
           stocks: {
             where: {
               type: "READY",
@@ -124,27 +143,26 @@ const itemRepository = {
             },
             select: {
               quantity: true,
+              expiredAt: true,
             },
           },
         },
-        take: params.isTakeAll ? params.dataPerPage : undefined,
+        take: params.isTakeAll ? undefined : params.dataPerPage,
         orderBy: {
           [params.sortBy]: params.orderBy,
         },
       });
 
-      return items.map((item) => ({
-        ...item,
-        totalStock: item.stocks.reduce((sum, s) => sum + s.quantity, 0),
-      }));
+      return items.map((item) => mapItemListRow(item));
     }
 
     const items = await tx.item.findMany({
       where: {},
       skip: params.isTakeAll
-        ? (params.page - 1) * params.dataPerPage
-        : undefined,
+        ? undefined
+        : (params.page - 1) * params.dataPerPage,
       include: {
+        category: { select: { id: true, name: true } },
         stocks: {
           where: {
             type: "READY",
@@ -153,19 +171,17 @@ const itemRepository = {
           },
           select: {
             quantity: true,
+            expiredAt: true,
           },
         },
       },
-      take: params.isTakeAll ? params.dataPerPage : undefined,
+      take: params.isTakeAll ? undefined : params.dataPerPage,
       orderBy: {
         [params.sortBy]: params.orderBy,
       },
     });
 
-    return items.map((item) => ({
-      ...item,
-      totalStock: item.stocks.reduce((sum, s) => sum + s.quantity, 0),
-    }));
+    return { items: items.map((item) => mapItemListRow(item)), totalItems };
   },
 
   update: async (
@@ -185,7 +201,7 @@ const itemRepository = {
         sellingPrice: data.sellingPrice ? data.sellingPrice : undefined,
         attributes: data.attributes,
         updatedBy: userId,
-        minTreshold: data.minTreshold,
+        minThreshold: data.minThreshold ? data.minThreshold : undefined,
       },
     });
   },
