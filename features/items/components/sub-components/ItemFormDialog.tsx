@@ -100,7 +100,11 @@ export default function ItemFormDialog({
       sellingPrice: undefined,
       minThreshold: 0,
       attributes: {},
-      stock: { quantity: undefined },
+      stock: {
+        quantity: undefined,
+        totalCost: undefined,
+        reason: "",
+      },
     },
   });
 
@@ -117,6 +121,8 @@ export default function ItemFormDialog({
       attributes: {},
     },
   });
+
+  const stockQuantity = createForm.watch("stock.quantity");
 
   useEffect(() => {
     if (!open) return;
@@ -173,15 +179,14 @@ export default function ItemFormDialog({
       console.log("test", values);
 
       const quantity = values.stock?.quantity;
-      const price = values.sellingPrice ?? 1;
       const payload = itemCreateSchema.parse({
         ...values,
         attributes: attributesToRecord(attributeRows),
         stock: quantity
           ? {
               quantity,
-              totalCost: price * quantity,
-              reason: "Initial inventory",
+              totalCost: values.stock?.totalCost,
+              reason: values.stock?.reason,
             }
           : undefined,
       });
@@ -445,6 +450,42 @@ export default function ItemFormDialog({
                 />
               </div>
             </div>
+
+            {!isEdit && stockQuantity != null && stockQuantity > 0 && (
+              <div className="grid gap-4 sm:grid-cols-2 rounded-lg bg-[#eef4ff]/50 p-4 border border-[#eef4ff] mt-4">
+                <div>
+                  <Label className="font-ochre-ui text-sm">Total cost ($)</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    step="0.01"
+                    className={cn("mt-1.5", inputClass)}
+                    {...createForm.register("stock.totalCost", {
+                      setValueAs: (value) =>
+                        value === "" ? undefined : Number(value),
+                    })}
+                  />
+                  {createForm.formState.errors.stock?.totalCost ? (
+                    <p className="mt-1 font-ochre-ui text-xs text-red-600">
+                      {createForm.formState.errors.stock.totalCost.message}
+                    </p>
+                  ) : null}
+                </div>
+                <div>
+                  <Label className="font-ochre-ui text-sm">Reason for stock transaction</Label>
+                  <Input
+                    placeholder="e.g. Initial stock receipt"
+                    className={cn("mt-1.5", inputClass)}
+                    {...createForm.register("stock.reason")}
+                  />
+                  {createForm.formState.errors.stock?.reason ? (
+                    <p className="mt-1 font-ochre-ui text-xs text-red-600">
+                      {createForm.formState.errors.stock.reason.message}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            )}
           </fieldset>
 
           <fieldset className="mt-6 space-y-3">

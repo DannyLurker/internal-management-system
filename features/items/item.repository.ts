@@ -8,10 +8,11 @@ import { Prisma, PrismaClient } from "@prisma/client";
 type ItemWithStocks = {
   stocks: { quantity: number; expiredAt?: Date | null }[];
   category?: { id: string; name: string } | null;
+  stockMovements?: { totalCost: Prisma.Decimal | null; reason: string | null }[];
 };
 
 function mapItemListRow<T extends ItemWithStocks>(item: T) {
-  const { stocks, ...rest } = item;
+  const { stocks, stockMovements, ...rest } = item;
   const expiryDates = stocks
     .map((s) => s.expiredAt)
     .filter((d): d is Date => d != null)
@@ -21,6 +22,8 @@ function mapItemListRow<T extends ItemWithStocks>(item: T) {
     ...rest,
     totalStock: stocks.reduce((sum, s) => sum + s.quantity, 0),
     nearestExpiredAt: expiryDates[0] ?? null,
+    totalCost: stockMovements?.[0]?.totalCost ? Number(stockMovements[0].totalCost) : null,
+    reason: stockMovements?.[0]?.reason ?? null,
   };
 }
 
@@ -121,6 +124,17 @@ const itemRepository = {
               expiredAt: true,
             },
           },
+          stockMovements: {
+            where: {
+              type: "RECEIVE",
+              sourceLocationId: null,
+            },
+            select: {
+              totalCost: true,
+              reason: true,
+            },
+            take: 1,
+          },
         },
         skip: params.isTakeAll
           ? undefined
@@ -161,6 +175,17 @@ const itemRepository = {
               expiredAt: true,
             },
           },
+          stockMovements: {
+            where: {
+              type: "RECEIVE",
+              sourceLocationId: null,
+            },
+            select: {
+              totalCost: true,
+              reason: true,
+            },
+            take: 1,
+          },
         },
         take: params.isTakeAll ? undefined : params.dataPerPage,
         orderBy: {
@@ -190,6 +215,17 @@ const itemRepository = {
             quantity: true,
             expiredAt: true,
           },
+        },
+        stockMovements: {
+          where: {
+            type: "RECEIVE",
+            sourceLocationId: null,
+          },
+          select: {
+            totalCost: true,
+            reason: true,
+          },
+          take: 1,
         },
       },
       take: params.isTakeAll ? undefined : params.dataPerPage,

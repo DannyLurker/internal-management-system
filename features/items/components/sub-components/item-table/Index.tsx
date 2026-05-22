@@ -1,14 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import {
-  ArrowDownUp,
-  ChevronLeft,
-  ChevronRight,
-  LayoutGrid,
-  List,
-  Search,
-} from "lucide-react";
+import { ArrowDownUp, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -17,7 +10,6 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { Input } from "@/shared/components/ui/input";
-import { Button } from "@/shared/components/ui/button";
 import type { Item } from "@/features/items/item.types";
 import {
   getItemStockStatus,
@@ -26,6 +18,7 @@ import {
 import { cn } from "@/shared/lib/utils";
 import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
+import type { ItemGetSchema } from "@/shared/lib/zods/item.zod";
 
 export type ItemTableFilters = {
   search: string;
@@ -41,7 +34,9 @@ type ItemTableProps = {
   isError: boolean;
   filters: ItemTableFilters;
   onFiltersChange: (patch: Partial<ItemTableFilters>) => void;
+  sortBy: ItemGetSchema["sortBy"];
   sortOrder: "asc" | "desc";
+  onRequestSort: (column: ItemGetSchema["sortBy"]) => void;
   onToggleSort: () => void;
   page: number;
   dataPerPage: number;
@@ -66,7 +61,9 @@ export default function ItemTable({
   isError,
   filters,
   onFiltersChange,
+  sortBy,
   sortOrder,
+  onRequestSort,
   onToggleSort,
   page,
   dataPerPage,
@@ -99,9 +96,10 @@ export default function ItemTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-[#d9e3f4]/80 bg-white shadow-[0_16px_48px_-20px_rgba(18,28,40,0.08)]">
-      <div className="flex flex-col gap-4 border-b border-[#eef4ff] p-4 md:flex-row md:items-center md:justify-between">
-        <div className="relative min-w-0 flex-1 max-w-md">
+    <div className="flex flex-col gap-4">
+      {/* Filter bar — inside a card like Categories */}
+      <div className="flex flex-col gap-3 rounded-xl border border-[#d9e3f4]/80 bg-white px-4 py-3 shadow-[0_16px_48px_-20px_rgba(15,23,42,0.08)] md:flex-row md:items-center md:justify-between">
+        <div className="relative min-w-0 flex-1">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#565e74]/60"
             strokeWidth={1.5}
@@ -112,7 +110,7 @@ export default function ItemTable({
             value={filters.search}
             onChange={(e) => onFiltersChange({ search: e.target.value })}
             placeholder="Search inventory..."
-            className="h-10 rounded border-[#e5eeff] bg-[#f8f9ff]/80 pl-10 font-ochre-ui text-sm focus-visible:border-[#894d0d]/50 focus-visible:ring-[#894d0d]/25"
+            className="h-10 rounded-lg border-[#e5eeff] bg-[#f8f9ff]/80 pl-10 font-ochre-ui text-sm focus-visible:border-[#894d0d]/35 focus-visible:ring-2 focus-visible:ring-[#894d0d]/15"
           />
         </div>
 
@@ -123,7 +121,7 @@ export default function ItemTable({
               onFiltersChange({ categoryId: value ?? "ALL" })
             }
           >
-            <SelectTrigger className="h-9 min-w-36nded border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm">
+            <SelectTrigger className="h-10 min-w-[9rem] rounded-lg border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15">
               <SelectValue>
                 {filters.categoryId === "ALL"
                   ? "Category: All"
@@ -148,7 +146,7 @@ export default function ItemTable({
               })
             }
           >
-            <SelectTrigger className="h-9 min-w-36 rounded border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm">
+            <SelectTrigger className="h-10 min-w-[9rem] rounded-lg border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15">
               <SelectValue>
                 {filters.status === "ALL"
                   ? "Status: All"
@@ -164,90 +162,107 @@ export default function ItemTable({
             </SelectContent>
           </Select>
 
-          <Button
+          <button
             type="button"
-            variant="outline"
-            size="icon-sm"
             onClick={onToggleSort}
-            className="rounded border-[#121c28]/25 text-[#121c28] hover:bg-[#eef4ff]"
+            className={cn(
+              "flex size-10 items-center justify-center rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 text-[#565e74]",
+              "hover:border-[#894d0d]/40 hover:bg-white hover:text-[#894d0d]",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#894d0d]/15",
+            )}
             aria-label={`Sort ${sortOrder === "asc" ? "ascending" : "descending"}`}
           >
-            <ArrowDownUp className="size-4" />
-          </Button>
+            <ArrowDownUp className="size-4" strokeWidth={1.5} />
+          </button>
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-225 border-collapse">
-          <TableHeader />
-          <tbody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i} className="border-b border-[#eef4ff]">
-                  <td className="px-4 py-3" colSpan={7}>
-                    <div className="h-12 animate-pulse rounded bg-[#eef4ff]/80" />
+      {/* Table card */}
+      <div className="overflow-hidden rounded-xl border border-[#d9e3f4]/80 bg-white shadow-[0_16px_48px_-20px_rgba(15,23,42,0.08)]">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-225 border-collapse">
+            <TableHeader
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onRequestSort={onRequestSort}
+            />
+            <tbody>
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="border-b border-[#eef4ff]">
+                    <td className="px-4 py-3" colSpan={7}>
+                      <div className="h-10 animate-pulse rounded-md bg-[#eef4ff]/80" />
+                    </td>
+                  </tr>
+                ))
+              ) : filteredItems.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="px-4 py-12 text-center font-ochre-ui text-sm text-[#524439]"
+                  >
+                    No items match your filters.
                   </td>
                 </tr>
-              ))
-            ) : filteredItems.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={7}
-                  className="px-4 py-12 text-center font-ochre-ui text-sm text-[#524439]"
-                >
-                  No items match your filters.
-                </td>
-              </tr>
-            ) : (
-              filteredItems.map((item) => (
-                <TableRow
-                  key={item.id}
-                  item={item}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                />
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {!isLoading && totalShown > 0 ? (
-        <div className="flex flex-col gap-3 border-t border-[#eef4ff] px-4 py-3 font-ochre-ui text-sm text-[#524439] sm:flex-row sm:items-center sm:justify-between">
-          <p>
-            Showing{" "}
-            <span className="font-semibold text-[#121c28]">{rangeStart}</span>{" "}
-            to <span className="font-semibold text-[#121c28]">{rangeEnd}</span>{" "}
-            of{" "}
-            <span className="font-semibold text-[#121c28]">{totalShown}</span>{" "}
-            items
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={!hasPrevPage}
-              onClick={() => onPageChange(page - 1)}
-              className="rounded border-[#d9e3f4] font-ochre-ui text-xs font-semibold uppercase tracking-wide text-[#565e74] disabled:opacity-40"
-            >
-              <ChevronLeft className="size-4" />
-              Prev
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={!hasNextPage}
-              onClick={() => onPageChange(page + 1)}
-              className="rounded border-[#d9e3f4] font-ochre-ui text-xs font-semibold uppercase tracking-wide text-[#565e74] disabled:opacity-40"
-            >
-              Next
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
+              ) : (
+                filteredItems.map((item) => (
+                  <TableRow
+                    key={item.id}
+                    item={item}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                  />
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      ) : null}
+
+        {!isLoading && totalShown > 0 ? (
+          <div className="flex flex-col gap-3 border-t border-[#eef4ff] px-4 py-3 font-ochre-ui text-sm text-[#524439] sm:flex-row sm:items-center sm:justify-between">
+            <p>
+              Showing{" "}
+              <span className="font-semibold text-[#121c28]">{rangeStart}</span>{" "}
+              to{" "}
+              <span className="font-semibold text-[#121c28]">{rangeEnd}</span>{" "}
+              of{" "}
+              <span className="font-semibold text-[#121c28]">{totalShown}</span>{" "}
+              items
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={!hasPrevPage}
+                onClick={() => onPageChange(page - 1)}
+                className={cn(
+                  "rounded-md border border-[#d9e3f4] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[#565e74]",
+                  !hasPrevPage && "cursor-not-allowed opacity-40",
+                  hasPrevPage &&
+                    "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+                )}
+              >
+                Prev
+              </button>
+              <span className="rounded-md bg-[#894d0d] px-3 py-1.5 text-xs font-semibold text-white">
+                {page}
+              </span>
+              <button
+                type="button"
+                disabled={!hasNextPage}
+                onClick={() => onPageChange(page + 1)}
+                className={cn(
+                  "rounded-md border border-[#d9e3f4] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[#565e74]",
+                  !hasNextPage && "cursor-not-allowed opacity-40",
+                  hasNextPage &&
+                    "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+                )}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

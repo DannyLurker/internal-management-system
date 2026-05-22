@@ -1,14 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
-import { Button } from "@/shared/components/ui/button";
+import { Pencil, Trash2 } from "lucide-react";
 import type { Item } from "@/features/items/item.types";
 import {
   formatItemDate,
@@ -30,11 +23,15 @@ export default function TableRow({ item, onEdit, onDelete }: TableRowProps) {
   const status = getItemStockStatus(item);
   const categoryLabel = item.category?.name ?? "General";
 
+  // Safely extract optional fields returned by repository mapping
+  const totalCost = (item as any).totalCost as number | null | undefined;
+  const reason = (item as any).reason as string | null | undefined;
+
   return (
     <tr className="border-b border-[#eef4ff] last:border-0 hover:bg-[#f8f9ff]/80">
       <td className="px-4 py-3 align-middle">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="relative size-10 shrink-0 overflow-hidden rounded-sm bg-[#e5eeff]">
+          <div className="relative size-10 shrink-0 overflow-hidden rounded-md bg-[#e5eeff]">
             {item.image ? (
               <Image
                 src={item.image}
@@ -61,7 +58,7 @@ export default function TableRow({ item, onEdit, onDelete }: TableRowProps) {
         </div>
       </td>
       <td className="px-4 py-3 align-middle">
-        <span className="inline-flex rounded px-2 py-0.5 font-ochre-ui text-[11px] font-semibold uppercase tracking-[0.05em] text-white bg-[#121c28]">
+        <span className="inline-flex rounded-md bg-[#121c28] px-2 py-0.5 font-ochre-ui text-xs font-semibold text-white">
           {categoryLabel}
         </span>
       </td>
@@ -85,33 +82,39 @@ export default function TableRow({ item, onEdit, onDelete }: TableRowProps) {
         {formatItemDate(item.updatedAt)}
       </td>
       <td className="px-4 py-3 align-middle text-end">
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="text-[#565e74] hover:bg-[#eef4ff] hover:text-[#121c28]"
-                aria-label={`Actions for ${item.name}`}
-              />
-            }
+        <div className="inline-flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => onEdit(item)}
+            className={cn(
+              "rounded-md p-2 outline-none inline-flex items-center justify-center transition-all duration-200 ease-out",
+              "bg-transparent text-[#565e74]",
+              "hover:-translate-y-0.5 active:translate-y-0",
+              "hover:shadow-[0_8px_16px_-6px_rgba(15,23,42,0.08)]",
+              "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#894d0d]",
+              "hover:bg-[#e5eeff] hover:text-[#121c28]",
+            )}
+            aria-label={`Edit ${item.name}`}
           >
-            <MoreHorizontal className="size-4" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-40">
-            <DropdownMenuItem onClick={() => onEdit(item)}>
-              <Pencil className="size-4" />
-              Edit item
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={() => onDelete(item)}
-            >
-              <Trash2 className="size-4" />
-              Delete item
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            <Pencil className="size-4" strokeWidth={1.5} />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onDelete(item)}
+            className={cn(
+              "rounded-md p-2 outline-none inline-flex items-center justify-center transition-all duration-200 ease-out",
+              "bg-transparent text-[#565e74]",
+              "hover:-translate-y-0.5 active:translate-y-0",
+              "hover:shadow-[0_8px_16px_-6px_rgba(15,23,42,0.08)]",
+              "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#ba1a1a]",
+              "hover:bg-[#ffdad6]/60 hover:text-[#ba1a1a]",
+            )}
+            aria-label={`Delete ${item.name}`}
+          >
+            <Trash2 className="size-4" strokeWidth={1.5} />
+          </button>
+        </div>
       </td>
     </tr>
   );

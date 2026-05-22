@@ -1,15 +1,11 @@
 "use client";
 
+import { useId } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/shared/components/ui/dialog";
-import { Button } from "@/shared/components/ui/button";
+import { cn } from "@/shared/lib/utils";
 import type { Item } from "@/features/items/item.types";
 import { useDeleteItem } from "@/features/items/item.hooks";
-import { cn } from "@/shared/lib/utils";
 
 type ItemDeleteModalProps = {
   open: boolean;
@@ -24,7 +20,10 @@ export default function ItemDeleteModal({
   item,
   onSuccess,
 }: ItemDeleteModalProps) {
+  const titleId = useId();
   const deleteMutation = useDeleteItem();
+
+  const handleClose = () => onOpenChange(false);
 
   const handleConfirm = async () => {
     if (!item) return;
@@ -38,52 +37,83 @@ export default function ItemDeleteModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        showCloseButton={false}
-        className="max-w-md gap-0 overflow-hidden rounded-lg p-0 sm:max-w-md"
-      >
-        <div className="h-1 w-full rounded-t-lg bg-red-600" aria-hidden />
-        <div className="flex flex-col items-center px-6 pb-2 pt-8 text-center">
-          <span className="flex size-12 items-center justify-center rounded-lg bg-red-50 text-red-600">
-            <AlertTriangle className="size-6" strokeWidth={1.5} aria-hidden />
-          </span>
-          <DialogTitle className="mt-5 font-ochre-brand text-2xl font-medium text-[#121c28]">
-            Delete item?
-          </DialogTitle>
-        </div>
-
-        <p className="mx-6 mb-6 text-center font-ochre-ui text-sm leading-relaxed text-[#524439]">
-          You are about to delete the &ldquo;
-          <span className="font-semibold text-[#121c28]">
-            {item?.name ?? "this item"}
-          </span>
-          &rdquo; item. This action is irreversible and will remove all
-          associated stock and financial history.
-        </p>
-
-        <div className="flex flex-col gap-2 px-6 pb-6">
-          <Button
+    <AnimatePresence>
+      {open ? (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="presentation"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.button
             type="button"
-            disabled={deleteMutation.isPending || !item}
-            onClick={() => void handleConfirm()}
-            className={cn(
-              "h-11 w-full rounded bg-[#121c28] font-ochre-ui text-xs font-semibold uppercase tracking-[0.05em] text-white",
-              "hover:bg-[#27313e] disabled:opacity-60",
-            )}
+            className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+            aria-label="Close dialog"
+            onClick={handleClose}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          />
+          <motion.div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            className="relative z-10 w-full max-w-md overflow-hidden rounded-xl bg-white shadow-[0_24px_64px_-24px_rgba(15,23,42,0.28)]"
+            initial={{ opacity: 0, scale: 0.96, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ type: "spring", damping: 24, stiffness: 320 }}
           >
-            Delete item
-          </Button>
-          <button
-            type="button"
-            disabled={deleteMutation.isPending}
-            onClick={() => onOpenChange(false)}
-            className="py-2 text-center font-ochre-ui text-xs font-semibold uppercase tracking-[0.05em] text-[#565e74] hover:text-[#121c28]"
-          >
-            Cancel
-          </button>
-        </div>
-      </DialogContent>
-    </Dialog>
+            <div className="flex flex-col items-center px-6 pb-2 pt-8 text-center">
+              <span className="flex size-12 items-center justify-center rounded-xl bg-[#ffdad6]/90 text-[#ba1a1a]">
+                <AlertTriangle className="size-6" strokeWidth={1.5} aria-hidden />
+              </span>
+              <h2
+                id={titleId}
+                className="mt-5 font-ochre-brand text-2xl font-medium text-[#121c28]"
+              >
+                Delete item?
+              </h2>
+            </div>
+
+            <div className="mx-6 mb-6 rounded-lg bg-[#eef4ff]/80 px-4 py-4 text-center">
+              <p className="font-ochre-ui text-sm leading-relaxed text-[#524439]">
+                You are about to delete the{" "}
+                <span className="font-semibold text-[#121c28]">
+                  {item?.name ?? "this item"}
+                </span>{" "}
+                item. This action is{" "}
+                <span className="font-semibold text-[#ba1a1a]">irreversible</span>{" "}
+                and will remove all associated stock and financial history.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 border-t border-[#eef4ff] px-6 py-5">
+              <button
+                type="button"
+                disabled={deleteMutation.isPending || !item}
+                onClick={() => void handleConfirm()}
+                className={cn(
+                  "w-full rounded-md bg-[#894d0d] py-3 font-ochre-ui text-xs font-semibold uppercase tracking-wider text-white",
+                  "hover:bg-[#6d3a00] disabled:cursor-not-allowed disabled:opacity-60",
+                  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#894d0d]",
+                )}
+              >
+                Delete item
+              </button>
+              <button
+                type="button"
+                disabled={deleteMutation.isPending}
+                onClick={handleClose}
+                className="py-2 font-ochre-ui text-xs font-semibold uppercase tracking-wider text-[#565e74] hover:text-[#121c28] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#894d0d]"
+              >
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
   );
 }

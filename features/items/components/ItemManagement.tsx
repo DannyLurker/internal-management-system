@@ -111,6 +111,17 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
     if (!open) setDeleteItem(null);
   }, []);
 
+  const handleRequestSort = useCallback((column: ItemGetSchema["sortBy"]) => {
+    setSortBy((prevColumn) => {
+      if (prevColumn === column) {
+        setOrderBy((o) => (o === "asc" ? "desc" : "asc"));
+        return prevColumn;
+      }
+      setOrderBy("asc");
+      return column;
+    });
+  }, []);
+
   const handleToggleSort = useCallback(() => {
     setOrderBy((o) => (o === "asc" ? "desc" : "asc"));
   }, []);
@@ -134,7 +145,7 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
     <div className="min-h-0 flex-1 bg-[#f8f9ff] px-4 py-8 md:px-10">
       <header className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-2xl">
-          <h1 className="font-ochre-brand text-3xl font-medium text-[#121c28] md:text-4xl">
+          <h1 className="font-ochre-brand text-3xl font-medium text-[#894d0d] md:text-4xl">
             Items
           </h1>
           <p className="mt-2 font-ochre-brand text-sm italic leading-relaxed text-[#524439] md:text-base">
@@ -164,7 +175,9 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
           isError={isError}
           filters={tableFilters}
           onFiltersChange={handleFiltersChange}
+          sortBy={sortBy}
           sortOrder={orderBy}
+          onRequestSort={handleRequestSort}
           onToggleSort={handleToggleSort}
           page={page}
           dataPerPage={DATA_PER_PAGE}
