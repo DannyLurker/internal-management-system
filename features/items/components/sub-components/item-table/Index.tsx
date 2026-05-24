@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { ArrowDownUp, Search } from "lucide-react";
 import {
   Select,
@@ -10,11 +9,7 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { Input } from "@/shared/components/ui/input";
-import type { Item } from "@/features/items/item.types";
-import {
-  getItemStockStatus,
-  type ItemStockStatus,
-} from "@/features/items/item.utils";
+import type { Item, ItemStockStatus } from "@/features/items/item.types";
 import { cn } from "@/shared/lib/utils";
 import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
@@ -24,7 +19,6 @@ export type ItemTableFilters = {
   search: string;
   categoryId: string;
   status: ItemStockStatus | "ALL";
-  viewMode: "grid" | "list";
 };
 
 type ItemTableProps = {
@@ -72,16 +66,11 @@ export default function ItemTable({
   onEdit,
   onDelete,
 }: ItemTableProps) {
-  const filteredItems = useMemo(() => {
-    if (filters.status === "ALL") return items;
-    return items.filter((item) => getItemStockStatus(item) === filters.status);
-  }, [items, filters.status]);
-
-  const hasNextPage = totalItems > dataPerPage;
+  const hasNextPage = page * dataPerPage < totalItems;
   const hasPrevPage = page > 1;
   const rangeStart =
-    filteredItems.length === 0 ? 0 : (page - 1) * dataPerPage + 1;
-  const rangeEnd = (page - 1) * dataPerPage + filteredItems.length;
+    items.length === 0 ? 0 : (page - 1) * dataPerPage + 1;
+  const rangeEnd = (page - 1) * dataPerPage + items.length;
   const totalShown = totalItems;
 
   if (isError) {
@@ -142,7 +131,7 @@ export default function ItemTable({
             value={filters.status}
             onValueChange={(value) =>
               onFiltersChange({
-                status: (value ?? "ALL") as ItemStockStatus | "ALL",
+                status: value as ItemStockStatus,
               })
             }
           >
@@ -195,7 +184,7 @@ export default function ItemTable({
                     </td>
                   </tr>
                 ))
-              ) : filteredItems.length === 0 ? (
+              ) : items.length === 0 ? (
                 <tr>
                   <td
                     colSpan={7}
@@ -205,7 +194,7 @@ export default function ItemTable({
                   </td>
                 </tr>
               ) : (
-                filteredItems.map((item) => (
+                items.map((item) => (
                   <TableRow
                     key={item.id}
                     item={item}

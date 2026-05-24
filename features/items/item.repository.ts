@@ -1,31 +1,11 @@
+
 import {
   ItemCreateSchema,
   ItemGetSchema,
   ItemUpdateSchema,
 } from "@/shared/lib/zods/item.zod";
 import { Prisma, PrismaClient } from "@prisma/client";
-
-type ItemWithStocks = {
-  stocks: { quantity: number; expiredAt?: Date | null }[];
-  category?: { id: string; name: string } | null;
-  stockMovements?: { totalCost: Prisma.Decimal | null; reason: string | null }[];
-};
-
-function mapItemListRow<T extends ItemWithStocks>(item: T) {
-  const { stocks, stockMovements, ...rest } = item;
-  const expiryDates = stocks
-    .map((s) => s.expiredAt)
-    .filter((d): d is Date => d != null)
-    .sort((a, b) => a.getTime() - b.getTime());
-
-  return {
-    ...rest,
-    totalStock: stocks.reduce((sum, s) => sum + s.quantity, 0),
-    nearestExpiredAt: expiryDates[0] ?? null,
-    totalCost: stockMovements?.[0]?.totalCost ? Number(stockMovements[0].totalCost) : null,
-    reason: stockMovements?.[0]?.reason ?? null,
-  };
-}
+import { EXPIRING_WINDOW_DAYS } from "./item.utils";
 
 const itemRepository = {
   create: async (
@@ -81,160 +61,73 @@ const itemRepository = {
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
     return await tx.item.findUnique({
-      where: {
-        id: itemId,
-      },
-      include: {
-        stocks: true,
-      },
+      where: { id: itemId },
+      include: { stocks: true },
     });
   },
 
-  getMany: async (
+  getManyRawData: async (
     params: ItemGetSchema,
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
+    const whereClause: Prisma.ItemWhereInput = {};
+
     if (params.search && params.search.length >= 3) {
-      const totalItems = await tx.item.count({
-        where: {
-          name: {
-            contains: params.search,
-            mode: "insensitive",
-          },
-        },
-      });
-
-      const items = await tx.item.findMany({
-        where: {
-          name: {
-            contains: params.search,
-            mode: "insensitive",
-          },
-        },
-        include: {
-          category: { select: { id: true, name: true } },
-          stocks: {
-            where: {
-              type: "READY",
-              OR: [{ expiredAt: null }, { expiredAt: { gte: new Date() } }],
-              quantity: { gte: 0 },
-            },
-            select: {
-              quantity: true,
-              expiredAt: true,
-            },
-          },
-          stockMovements: {
-            where: {
-              type: "RECEIVE",
-              sourceLocationId: null,
-            },
-            select: {
-              totalCost: true,
-              reason: true,
-            },
-            take: 1,
-          },
-        },
-        skip: params.isTakeAll
-          ? undefined
-          : (params.page - 1) * params.dataPerPage,
-        take: params.isTakeAll ? undefined : params.dataPerPage,
-        orderBy: {
-          [params.sortBy]: params.orderBy,
-        },
-      });
-
-      return { items: items.map((item) => mapItemListRow(item)), totalItems };
+      whereClause.name = { contains: params.search, mode: "insensitive" };
+    }
+    if (params.isByCategory && params.categoryId) {
+      whereClause.categoryId = params.categoryId;
     }
 
-    if (params.isByCategory) {
-      const totalItems = await tx.item.count({
-        where: {
-          categoryId: params.categoryId,
-        },
-      });
+    const expiringWindow = new Date();
+    expiringWindow.setDate(expiringWindow.getDate() + EXPIRING_WINDOW_DAYS);
 
-      const items = await tx.item.findMany({
-        where: {
-          categoryId: params.categoryId,
+    if (params.status === "OUT_OF_STOCK") {
+      whereClause.stocks = { none: { type: "READY", quantity: { gt: 0 } } };
+    } else if (params.status === "EXPIRING_SOON") {
+      whereClause.stocks = {
+        some: {
+          type: "READY",
+          expiredAt: { lte: expiringWindow, gte: new Date() },
         },
-        skip: params.isTakeAll
-          ? undefined
-          : (params.page - 1) * params.dataPerPage,
-        include: {
-          category: { select: { id: true, name: true } },
-          stocks: {
-            where: {
-              type: "READY",
-              OR: [{ expiredAt: null }, { expiredAt: { gte: new Date() } }],
-              quantity: { gte: 0 },
-            },
-            select: {
-              quantity: true,
-              expiredAt: true,
-            },
-          },
-          stockMovements: {
-            where: {
-              type: "RECEIVE",
-              sourceLocationId: null,
-            },
-            select: {
-              totalCost: true,
-              reason: true,
-            },
-            take: 1,
-          },
-        },
-        take: params.isTakeAll ? undefined : params.dataPerPage,
-        orderBy: {
-          [params.sortBy]: params.orderBy,
-        },
-      });
-
-      return { items: items.map((item) => mapItemListRow(item)), totalItems };
+      };
     }
 
-    const totalItems = await tx.item.count();
+    const requiresInMemoryProcessing =
+      params.status === "LOW_STOCK" || params.status === "IN_STOCK";
 
-    const items = await tx.item.findMany({
-      where: {},
-      skip: params.isTakeAll
+    const skip =
+      params.isTakeAll || requiresInMemoryProcessing
         ? undefined
-        : (params.page - 1) * params.dataPerPage,
-      include: {
-        category: { select: { id: true, name: true } },
-        stocks: {
-          where: {
-            type: "READY",
-            OR: [{ expiredAt: null }, { expiredAt: { gte: new Date() } }],
-            quantity: { gte: 0 },
-          },
-          select: {
-            quantity: true,
-            expiredAt: true,
-          },
-        },
-        stockMovements: {
-          where: {
-            type: "RECEIVE",
-            sourceLocationId: null,
-          },
-          select: {
-            totalCost: true,
-            reason: true,
-          },
-          take: 1,
-        },
-      },
-      take: params.isTakeAll ? undefined : params.dataPerPage,
-      orderBy: {
-        [params.sortBy]: params.orderBy,
-      },
-    });
+        : (params.page - 1) * params.dataPerPage;
 
-    return { items: items.map((item) => mapItemListRow(item)), totalItems };
+    const take =
+      params.isTakeAll || requiresInMemoryProcessing
+        ? undefined
+        : params.dataPerPage;
+
+    const [items, totalItemsCount] = await Promise.all([
+      tx.item.findMany({
+        where: whereClause,
+        include: {
+          category: { select: { id: true, name: true } },
+          stocks: {
+            where: { type: "READY", quantity: { gte: 0 } },
+            select: { quantity: true, expiredAt: true },
+          },
+        },
+        skip,
+        take,
+        orderBy: { [params.sortBy]: params.orderBy },
+      }),
+      tx.item.count({ where: whereClause }),
+    ]);
+
+    return {
+      items,
+      totalItemsCount,
+      wasPaginatedByDb: !requiresInMemoryProcessing,
+    };
   },
 
   update: async (
@@ -243,9 +136,7 @@ const itemRepository = {
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
     return await tx.item.update({
-      where: {
-        id: data.itemId,
-      },
+      where: { id: data.itemId },
       data: {
         categoryId: data.categoryId,
         name: data.name,
@@ -264,9 +155,7 @@ const itemRepository = {
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
     return await tx.item.delete({
-      where: {
-        id: itemId,
-      },
+      where: { id: itemId },
     });
   },
 };

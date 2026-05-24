@@ -6,8 +6,6 @@ import type { Item } from "@/features/items/item.types";
 import {
   formatItemDate,
   formatItemPrice,
-  formatItemSku,
-  getItemStockStatus,
   ITEM_STATUS_LABELS,
   ITEM_STATUS_STYLES,
 } from "@/features/items/item.utils";
@@ -20,12 +18,8 @@ type TableRowProps = {
 };
 
 export default function TableRow({ item, onEdit, onDelete }: TableRowProps) {
-  const status = getItemStockStatus(item);
+  const status = item.status;
   const categoryLabel = item.category?.name ?? "General";
-
-  // Safely extract optional fields returned by repository mapping
-  const totalCost = (item as any).totalCost as number | null | undefined;
-  const reason = (item as any).reason as string | null | undefined;
 
   return (
     <tr className="border-b border-[#eef4ff] last:border-0 hover:bg-[#f8f9ff]/80">
@@ -51,9 +45,9 @@ export default function TableRow({ item, onEdit, onDelete }: TableRowProps) {
             <p className="truncate font-ochre-ui text-sm font-semibold text-[#121c28]">
               {item.name}
             </p>
-            <p className="font-ochre-ui text-xs text-[#524439]/70">
+            {/* <p className="font-ochre-ui text-xs text-[#524439]/70">
               SKU: {formatItemSku(item.id)}
-            </p>
+            </p> */}
           </div>
         </div>
       </td>

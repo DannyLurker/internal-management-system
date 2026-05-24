@@ -1,3 +1,4 @@
+import { itemStockStatusArray } from "@/features/items/item.utils";
 import { Entity } from "@prisma/client";
 import z from "zod";
 
@@ -7,6 +8,7 @@ export const dataPerPage = z.coerce.number().min(10).default(10);
 export const sortOrderEnum = z.enum(["asc", "desc"]).default("asc");
 export const userActionEnum = z.enum(["CREATE", "UPDATE", "DELETE"]);
 export const sortItemByEnum = z.enum(["name", "createdAt"]).default("name");
+export const statusItemEnum = z.enum(itemStockStatusArray);
 export const entityEnum = z.enum(Object.values(Entity));
 
 export const generateReadableError = (issue: z.core.$ZodIssue): string => {

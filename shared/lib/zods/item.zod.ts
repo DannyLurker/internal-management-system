@@ -4,6 +4,7 @@ import {
   page,
   sortItemByEnum,
   sortOrderEnum,
+  statusItemEnum,
 } from "./general.zod";
 
 export const itemCreateSchema = z.object({
@@ -57,6 +58,7 @@ export const itemGetSchema = z.object({
   search: z.string().trim().optional(),
   sortBy: sortItemByEnum,
   orderBy: sortOrderEnum.default("asc"),
+  status: statusItemEnum.default("ALL"),
 });
 
 export type ItemGetSchema = z.infer<typeof itemGetSchema>;

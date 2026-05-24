@@ -1,5 +1,6 @@
 import { ApiResponse } from "@/shared/lib/api-client";
 import itemService from "./item.service";
+import { itemStockStatusArray } from "./item.utils";
 
 export type ItemServiceGetById = Awaited<
   ReturnType<typeof itemService.getById>
@@ -19,3 +20,5 @@ export type ItemGetManyApiResponse = ApiResponse<ItemServiceGetMany["data"]>;
 export type ItemCreateApiResponse = ApiResponse<null>;
 export type ItemUpdateApiResponse = ApiResponse<null>;
 export type ItemDeleteApiResponse = ApiResponse<null>;
+
+export type ItemStockStatus = (typeof itemStockStatusArray)[number];

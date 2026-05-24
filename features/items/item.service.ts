@@ -11,6 +11,8 @@ import {
 } from "@/shared/lib/zods/item.zod";
 import itemRepository from "./item.repository";
 import auditLogsRepository from "../audit-logs/audit-log.repository";
+import { ItemStockStatus } from "./item.types";
+import { EXPIRING_WINDOW_DAYS, mapItemListRow } from "./item.utils";
 
 const itemService = {
   create: async (rawData: ItemCreateSchema) => {
@@ -57,12 +59,37 @@ const itemService = {
       throw unauthorized("You're not allowed to access this feature");
     }
 
-    const result = await itemRepository.getMany(validatedParams, prisma);
+    const { items, totalItemsCount, wasPaginatedByDb } =
+      await itemRepository.getManyRawData(validatedParams, prisma);
+
+    const processedItems = items.map((item) => mapItemListRow(item));
+
+    let filteredItems = processedItems;
+    if (!wasPaginatedByDb && validatedParams.status) {
+      filteredItems = processedItems.filter(
+        (item) => item.status === validatedParams.status,
+      );
+    }
+
+    let finalItems = filteredItems;
+    let finalTotal = totalItemsCount;
+
+    if (!wasPaginatedByDb) {
+      finalTotal = filteredItems.length;
+      const skip = validatedParams.isTakeAll
+        ? 0
+        : (validatedParams.page - 1) * validatedParams.dataPerPage;
+      const limit = validatedParams.isTakeAll
+        ? finalTotal
+        : validatedParams.dataPerPage;
+      finalItems = filteredItems.slice(skip, skip + limit);
+    }
+
     return {
       message: "Items retrieved successfully",
       data: {
-        items: result.items,
-        totalItems: result.totalItems,
+        items: finalItems,
+        totalItems: finalTotal,
       },
     };
   },

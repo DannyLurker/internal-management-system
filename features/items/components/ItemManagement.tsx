@@ -31,7 +31,6 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
     search: "",
     categoryId: "ALL",
     status: "ALL",
-    viewMode: "grid",
   });
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -49,7 +48,13 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, sortBy, orderBy, tableFilters.categoryId]);
+  }, [
+    debouncedSearch,
+    sortBy,
+    orderBy,
+    tableFilters.categoryId,
+    tableFilters.status,
+  ]);
 
   const categoryListParams = useMemo(
     () =>
@@ -72,16 +77,22 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
       isTakeAll: false,
       sortBy,
       orderBy,
-      isByCategory: tableFilters.categoryId !== "ALL",
-      ...(tableFilters.categoryId !== "ALL"
-        ? { categoryId: tableFilters.categoryId }
-        : {}),
-      ...(debouncedSearch.trim().length >= 3
-        ? { search: debouncedSearch.trim() }
-        : {}),
+      isByCategory: tableFilters.categoryId !== "ALL" ? "true" : "false",
+      categoryId:
+        tableFilters.categoryId !== "ALL" ? tableFilters.categoryId : undefined,
+      search:
+        debouncedSearch.trim().length >= 3 ? debouncedSearch.trim() : undefined,
+      status: tableFilters.status !== "ALL" ? tableFilters.status : undefined,
     };
     return itemGetSchema.parse(raw);
-  }, [page, sortBy, orderBy, debouncedSearch, tableFilters.categoryId]);
+  }, [
+    page,
+    sortBy,
+    orderBy,
+    debouncedSearch,
+    tableFilters.categoryId,
+    tableFilters.status,
+  ]);
 
   const { data: itemsResponse, isLoading, isError } = useItems(params);
 
