@@ -1,5 +1,5 @@
 import { itemStockStatusArray } from "@/features/items/item.utils";
-import { Entity } from "@prisma/client";
+import { Entity, LocationType } from "@prisma/client";
 import z from "zod";
 
 export const page = z.coerce.number().min(1).default(1);
@@ -10,6 +10,7 @@ export const userActionEnum = z.enum(["CREATE", "UPDATE", "DELETE"]);
 export const sortItemByEnum = z.enum(["name", "createdAt"]).default("name");
 export const statusItemEnum = z.enum(itemStockStatusArray);
 export const entityEnum = z.enum(Object.values(Entity));
+export const locationEnum = z.enum(Object.values(LocationType));
 
 export const generateReadableError = (issue: z.core.$ZodIssue): string => {
   const fieldName = issue.path.join(".");

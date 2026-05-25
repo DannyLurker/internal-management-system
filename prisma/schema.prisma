@@ -83,6 +83,8 @@ model User {
   updatedCategories Category[]      @relation("CategoryUpdater")
   createdItems      Item[]          @relation("ItemsCreator")
   updatedItems      Item[]          @relation("ItemsUpdater")
+  createdLocations  Location[]      @relation("LocationCreator")
+  updatedLocations  Location[]      @relation("LocationUpdater")
   stocks            Stock[]
   orders            Order[]
   logs              AuditLog[]
@@ -198,6 +200,11 @@ model Location {
   stocks            Stock[]
   incomingMovements StockMovement[] @relation("Destination")
   outgoingMovements StockMovement[] @relation("Source")
+
+  createdBy     String
+  userCreatedBy User    @relation("LocationCreator", fields: [createdBy], references: [id])
+  updatedBy     String?
+  userUpdatedBy User?   @relation("LocationUpdater", fields: [updatedBy], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
