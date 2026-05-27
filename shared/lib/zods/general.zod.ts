@@ -2,6 +2,7 @@ import { itemStockStatusArray } from "@/features/items/item.utils";
 import { Entity, LocationType } from "@prisma/client";
 import z from "zod";
 
+export const searchQuery = z.string().trim().min(3).optional();
 export const page = z.coerce.number().min(1).default(1);
 export const dataPerPage = z.coerce.number().min(10).default(10);
 
