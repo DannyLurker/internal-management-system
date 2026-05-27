@@ -57,6 +57,7 @@ enum Entity {
   ACCOUNT
   SESSION
   VERIFICATION_TOKEN
+  LOCATION
   CATEGORY
   ITEM
   STOCK
@@ -151,6 +152,25 @@ model Authenticator {
 }
 
 // Inventor Core Model
+model Location {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  type        LocationType
+  description String?
+
+  stocks            Stock[]
+  incomingMovements StockMovement[] @relation("Destination")
+  outgoingMovements StockMovement[] @relation("Source")
+
+  createdBy     String
+  userCreatedBy User    @relation("LocationCreator", fields: [createdBy], references: [id])
+  updatedBy     String?
+  userUpdatedBy User?   @relation("LocationUpdater", fields: [updatedBy], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Category {
   id       String @id @default(cuid())
   name     String @unique
@@ -186,25 +206,6 @@ model Item {
 
   stocks     Stock[]
   orderItems OrderItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Location {
-  id          String       @id @default(cuid())
-  name        String       @unique
-  type        LocationType
-  description String?
-
-  stocks            Stock[]
-  incomingMovements StockMovement[] @relation("Destination")
-  outgoingMovements StockMovement[] @relation("Source")
-
-  createdBy     String
-  userCreatedBy User    @relation("LocationCreator", fields: [createdBy], references: [id])
-  updatedBy     String?
-  userUpdatedBy User?   @relation("LocationUpdater", fields: [updatedBy], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
