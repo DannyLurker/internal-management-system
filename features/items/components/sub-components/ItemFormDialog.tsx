@@ -20,7 +20,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/shared/components/ui/select";
 import type { Item } from "@/features/items/item.types";
 import { useCreateItem, useUpdateItem } from "@/features/items/item.hooks";
@@ -84,7 +83,9 @@ export default function ItemFormDialog({
   const [attributeRows, setAttributeRows] = useState<AttributeRow[]>([
     { key: "", value: "" },
   ]);
-  const [expiryInputMode, setExpiryInputMode] = useState<"picker" | "manual">("picker");
+  const [expiryInputMode, setExpiryInputMode] = useState<"picker" | "manual">(
+    "picker",
+  );
 
   const createMutation = useCreateItem();
   const updateMutation = useUpdateItem();
@@ -205,9 +206,7 @@ export default function ItemFormDialog({
         /* handled by API */
       }
     },
-    (error) => {
-      console.log("validation error", error);
-    },
+    (error) => {},
   );
 
   const onUpdateSubmit = updateForm.handleSubmit(async (values) => {
@@ -521,7 +520,7 @@ export default function ItemFormDialog({
                     <Label className="font-ochre-ui text-sm font-semibold text-[#121c28]">
                       Expiration date (Optional)
                     </Label>
-                    
+
                     <div className="inline-flex rounded-lg bg-[#eef4ff] p-0.5 border border-[#d9e3f4]/40">
                       <button
                         type="button"
@@ -530,7 +529,7 @@ export default function ItemFormDialog({
                           "inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold tracking-wide transition-all duration-200 cursor-pointer",
                           expiryInputMode === "picker"
                             ? "bg-white text-[#894d0d] shadow-[0_2px_8px_rgba(137,77,13,0.12)] font-bold"
-                            : "text-[#565e74] hover:text-[#121c28]"
+                            : "text-[#565e74] hover:text-[#121c28]",
                         )}
                       >
                         <Calendar className="size-3.5 text-[#894d0d]" />
@@ -543,7 +542,7 @@ export default function ItemFormDialog({
                           "inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold tracking-wide transition-all duration-200 cursor-pointer",
                           expiryInputMode === "manual"
                             ? "bg-white text-[#894d0d] shadow-[0_2px_8px_rgba(137,77,13,0.12)] font-bold"
-                            : "text-[#565e74] hover:text-[#121c28]"
+                            : "text-[#565e74] hover:text-[#121c28]",
                         )}
                       >
                         <Keyboard className="size-3.5 text-[#894d0d]" />
@@ -555,10 +554,13 @@ export default function ItemFormDialog({
                   <div className="mt-2 relative">
                     <Input
                       type={expiryInputMode === "picker" ? "date" : "text"}
-                      placeholder={expiryInputMode === "picker" ? undefined : "YYYY-MM-DD"}
+                      placeholder={
+                        expiryInputMode === "picker" ? undefined : "YYYY-MM-DD"
+                      }
                       className={cn("w-full", inputClass)}
                       {...createForm.register("stock.expiredAt", {
-                        setValueAs: (value) => (value === "" ? undefined : value),
+                        setValueAs: (value) =>
+                          value === "" ? undefined : value,
                       })}
                     />
                     {createForm.formState.errors.stock?.expiredAt ? (

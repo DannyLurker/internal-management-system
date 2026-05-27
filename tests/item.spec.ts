@@ -1,6 +1,14 @@
 import prisma from "@/shared/db/prisma";
 import { test, expect } from "@playwright/test";
 
+const formatToIDR = (value: number) => {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 2,
+  }).format(value);
+};
+
 test.describe("CRUD operations for Item", () => {
   test.describe.configure({ mode: "serial" });
 
@@ -9,10 +17,15 @@ test.describe("CRUD operations for Item", () => {
   let testCategoryId: string;
   let testLocationId: string;
 
+  test.afterAll(async () => {
+    await prisma.$disconnect();
+  });
+
   test("Setup: Create test category for items", async ({ request }) => {
     const response = await request.post("/api/categories", {
-      data: { name: `${TEST_PREFIX}ItemCategory` },
+      data: { name: `${TEST_PREFIX}Hotel Linen` },
     });
+
     const body = await response.json();
     console.log("Category Create Response:", body);
 
@@ -20,93 +33,133 @@ test.describe("CRUD operations for Item", () => {
 
     type CategoryDto = { id: string; name: string };
 
-    // Get the category ID from list
     const listResponse = await request.get(
       "/api/categories?sortOrder=asc&sortBy=name&page=1&dataPerPage=100",
     );
+
     const listBody = await listResponse.json();
     const categories: CategoryDto[] = listBody.data;
 
     const category = categories.find((c) => {
-      console.log("Category:", `${TEST_PREFIX}ItemCategory`);
-      console.log("Category name:", c.name);
-      return c.name === `${TEST_PREFIX}ItemCategory`;
+      console.log("Category Target:", `${TEST_PREFIX}Hotel Linen`);
+      console.log("Category Name:", c.name);
+
+      return c.name === `${TEST_PREFIX}Hotel Linen`;
     });
+
     expect(category).toBeDefined();
+
     testCategoryId = category!.id;
   });
 
-  test("Setup: Get test location ID (I haven't created the location yet)", async ({
-    request,
-  }) => {
-    testLocationId = "cmpe19lj7000d5ouqm8izv6ap"; //hard coded for a while;
+  test("Setup: Get test location ID dynamically", async () => {
+    const location = await prisma.location.findFirst({
+      where: { name: "Main Warehouse" },
+    });
+
+    if (location) {
+      testLocationId = location.id;
+    } else {
+      const fallbackLoc = await prisma.location.findFirst();
+
+      if (!fallbackLoc) {
+        throw new Error(
+          "No location found in database. Please run db seed first.",
+        );
+      }
+
+      testLocationId = fallbackLoc.id;
+    }
+
+    console.log("Resolved testLocationId:", testLocationId);
   });
 
   test("Create a new item", async ({ request }) => {
+    const sellingPrice = 450000;
+    const totalCost = 1500000;
+
     const response = await request.post("/api/items", {
       data: {
-        name: `${TEST_PREFIX}chair`,
-        description: "A high-performance chair for testing",
+        name: `${TEST_PREFIX}Luxury King Pillow`,
+        description: "Premium goose down pillow for guest rooms",
         categoryId: testCategoryId,
         locationId: testLocationId,
-        sellingPrice: 999.99,
-        image: "https://example.com/chair.jpg",
+        sellingPrice,
+        image: "https://example.com/luxury-king-pillow.jpg",
+
         stock: {
-          quantity: 10,
-          totalCost: 8000,
-          reason: "Initial stock for testing",
+          quantity: 50,
+          totalCost,
+          reason: "Bulk purchase for room setup",
         },
+
         attributes: {
-          color: "black",
-          weight: "1.5kg",
+          size: "King",
+          fill: "Goose Down",
+          color: "White",
         },
       },
     });
 
-    console.log("76 Items ln: ", response);
+    console.log("Create Item Response Status:", response.status());
 
     const body = await response.json();
-    console.log("Create Response:", body);
+
+    console.log("Create Response:", {
+      ...body,
+      formattedSellingPrice: formatToIDR(sellingPrice),
+      formattedTotalCost: formatToIDR(totalCost),
+    });
 
     expect(response.status()).toBe(201);
-    expect(body.message).toContain(`${TEST_PREFIX}chair`);
+
+    expect(body.message).toContain(`${TEST_PREFIX}Luxury King Pillow`);
   });
 
   test("Get list of items", async ({ request }) => {
     const response = await request.get(
       "/api/items?page=1&dataPerPage=10&sortBy=name&orderBy=asc",
     );
+
     const body = await response.json();
+
     console.log("Get List Response:", body);
 
     expect(response.status()).toBe(200);
-    // ItemGetManyApiResponse = ApiResponse<items[]> → body.data is the array
     expect(body.data).toBeDefined();
-    expect(Array.isArray(body.data)).toBe(true);
+    expect(body.data.items).toBeDefined();
+    expect(Array.isArray(body.data.items)).toBe(true);
   });
 
   test("Get single item by ID", async ({ request }) => {
-    // First get list to find the item ID
     const listResponse = await request.get(
       "/api/items?page=1&dataPerPage=100&sortBy=name&orderBy=asc",
     );
+
     const listBody = await listResponse.json();
 
-    type ItemDto = { id: string; name: string };
-    // ItemGetManyApiResponse = ApiResponse<items[]> → body.data is the array
-    const items: ItemDto[] = listBody.data;
+    type ItemDto = {
+      id: string;
+      name: string;
+    };
 
-    const item = items.find((p) => p.name === `${TEST_PREFIX}chair`);
+    const items: ItemDto[] = listBody.data?.items ?? [];
+
+    const item = items.find(
+      (p) => p.name === `${TEST_PREFIX}Luxury King Pillow`,
+    );
+
     expect(item).toBeDefined();
+
     createdItemId = item!.id;
 
-    // Get single item
     const response = await request.get(`/api/items/${createdItemId}`);
+
     const body = await response.json();
+
     console.log("Get Single Response:", body);
 
     expect(response.status()).toBe(200);
-    // ItemGetByIdApiResponse = ApiResponse<item> → body.data is the item object
     expect(body.data).toBeDefined();
     expect(body.data.id).toBe(createdItemId);
   });
@@ -115,40 +168,53 @@ test.describe("CRUD operations for Item", () => {
     const response = await request.get(
       `/api/items?isByCategory=true&categoryId=${testCategoryId}&page=1&dataPerPage=10&sortBy=name&orderBy=asc`,
     );
+
     const body = await response.json();
+
     console.log("Get By Category Response:", body);
 
     expect(response.status()).toBe(200);
-    // ItemGetManyApiResponse = ApiResponse<items[]> → body.data is the array
     expect(body.data).toBeDefined();
-    expect(Array.isArray(body.data)).toBe(true);
+    expect(body.data.items).toBeDefined();
+    expect(Array.isArray(body.data.items)).toBe(true);
   });
 
   test("Update an item", async ({ request }) => {
+    const updatedSellingPrice = 499000;
+
     const response = await request.patch("/api/items", {
       data: {
         itemId: createdItemId,
-        name: `${TEST_PREFIX}Gaming Chair`,
-        description: "Updated description for gaming",
+        name: `${TEST_PREFIX}Luxury King Pillow - Firm`,
+        description: "Updated firm edition of premium goose down pillow",
         categoryId: testCategoryId,
-        sellingPrice: 1299.99,
-        image: "https://example.com/gaming-chair.jpg",
+        sellingPrice: updatedSellingPrice,
+        image: "https://example.com/luxury-king-pillow-firm.jpg",
       },
     });
+
     const body = await response.json();
-    console.log("Update Response:", body);
+
+    console.log("Update Response:", {
+      ...body,
+      formattedSellingPrice: formatToIDR(updatedSellingPrice),
+    });
 
     expect(response.status()).toBe(200);
-    expect(body.message).toContain(`${TEST_PREFIX}Gaming Chair`);
+
+    expect(body.message).toContain(`${TEST_PREFIX}Luxury King Pillow - Firm`);
   });
 
   test("Delete an item", async ({ request }) => {
     const response = await request.delete(`/api/items/${createdItemId}`);
+
     const body = await response.json();
+
     console.log("Delete Response:", body);
 
     expect(response.status()).toBe(200);
-    expect(body.message).toContain(`${TEST_PREFIX}Gaming Chair`);
+
+    expect(body.message).toContain(`${TEST_PREFIX}Luxury King Pillow - Firm`);
   });
 
   test("Error: Create item with short name", async ({ request }) => {
@@ -158,10 +224,12 @@ test.describe("CRUD operations for Item", () => {
         description: "Test description",
         categoryId: testCategoryId,
         locationId: testLocationId,
-        sellingPrice: 100,
+        sellingPrice: 100000,
       },
     });
+
     const body = await response.json();
+
     console.log("Short Name Error Response:", body);
 
     expect(response.status()).toBe(400);
@@ -170,14 +238,16 @@ test.describe("CRUD operations for Item", () => {
   test("Error: Create item with invalid category", async ({ request }) => {
     const response = await request.post("/api/items", {
       data: {
-        name: `${TEST_PREFIX}InvalidProduct`,
+        name: `${TEST_PREFIX}InvalidHotelItem`,
         description: "Test description",
         categoryId: "XX",
         locationId: testLocationId,
-        sellingPrice: 100,
+        sellingPrice: 100000,
       },
     });
+
     const body = await response.json();
+
     console.log("Invalid Category Error Response:", body);
 
     expect(response.status()).toBe(400);
@@ -187,13 +257,15 @@ test.describe("CRUD operations for Item", () => {
     const response = await request.patch("/api/items", {
       data: {
         itemId: "non-existent-id-12345",
-        name: `${TEST_PREFIX}UpdatedName`,
+        name: `${TEST_PREFIX}UpdatedHotelItem`,
         description: "Updated description",
         categoryId: testCategoryId,
-        sellingPrice: 200,
+        sellingPrice: 200000,
       },
     });
+
     const body = await response.json();
+
     console.log("Non-existent Update Error Response:", body);
 
     expect(response.status()).toBe(404);
@@ -201,26 +273,28 @@ test.describe("CRUD operations for Item", () => {
 
   test("Error: Delete non-existent item", async ({ request }) => {
     const response = await request.delete("/api/items/non-existent-id-12345");
+
     const body = await response.json();
+
     console.log("Non-existent Delete Error Response:", body);
 
     expect(response.status()).toBe(404);
   });
 
-  // Cleanup leftover test data
   test("Cleanup: Delete leftover test data", async ({ browser }) => {
     const context = await browser.newContext({
       storageState: "playwright/.auth/manager.json",
     });
+
     const request = context.request;
 
-    // Delete test items
-    // ItemGetManyApiResponse = ApiResponse<items[]> → body.data is the array
     const itemList = await request.get(
       "http://localhost:3000/api/items?page=1&dataPerPage=100&sortBy=name&orderBy=asc",
     );
+
     const itemBody = await itemList.json();
-    const items: { id: string; name: string }[] = itemBody.data ?? [];
+
+    const items: { id: string; name: string }[] = itemBody.data?.items ?? [];
 
     for (const item of items) {
       if (item.name.startsWith(TEST_PREFIX)) {
@@ -228,10 +302,10 @@ test.describe("CRUD operations for Item", () => {
       }
     }
 
-    // Delete test categories
     const categoryList = await request.get(
       "http://localhost:3000/api/categories?page=1&dataPerPage=100",
     );
+
     const { data: categories } = await categoryList.json();
 
     for (const category of categories) {
