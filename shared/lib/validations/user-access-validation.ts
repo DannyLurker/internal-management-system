@@ -1,8 +1,13 @@
 import { Roles } from "@prisma/client";
 
 const PERMISSIONS = {
+  MANAGE_LOCATION: ["HOTEL_MANAGER", "SUPERVISOR"] as Roles[],
   MANAGE_CATEGORY: ["HOTEL_MANAGER", "SUPERVISOR"] as Roles[],
   MANAGE_ITEM: ["HOTEL_MANAGER", "SUPERVISOR"] as Roles[],
+};
+
+export const canManageLocation = (role: Roles) => {
+  return PERMISSIONS.MANAGE_LOCATION.includes(role);
 };
 
 export const canManageCategory = (role: Roles) => {
