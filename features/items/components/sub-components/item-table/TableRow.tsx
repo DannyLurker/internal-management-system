@@ -4,12 +4,11 @@ import Image from "next/image";
 import { Pencil, Trash2 } from "lucide-react";
 import type { Item } from "@/features/items/item.types";
 import {
-  formatItemDate,
-  formatItemPrice,
   ITEM_STATUS_LABELS,
   ITEM_STATUS_STYLES,
 } from "@/features/items/item.utils";
 import { cn } from "@/shared/lib/utils";
+import { formatItemDate, formatItemPrice } from "@/shared/lib/formatter";
 
 type TableRowProps = {
   item: Item;
@@ -65,7 +64,7 @@ export default function TableRow({ item, onEdit, onDelete }: TableRowProps) {
       <td className="px-4 py-3 align-middle">
         <span
           className={cn(
-            "inline-flex rounded-full border px-2.5 py-0.5 font-ochre-ui text-[10px] font-semibold uppercase tracking-[0.05em]",
+            "inline-flex rounded-full border px-2.5 py-0.5 font-ochre-ui text-[10px] font-semibold uppercase tracking-wider",
             ITEM_STATUS_STYLES[status],
           )}
         >

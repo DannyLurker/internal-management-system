@@ -4,6 +4,7 @@ import {
   locationEnum,
   page,
   searchQuery,
+  sortLocationEnum,
   sortOrderEnum,
 } from "./general.zod";
 
@@ -16,7 +17,7 @@ export const locationCreateSchema = z.object({
 export type LocationCreateSchema = z.infer<typeof locationCreateSchema>;
 
 export const locationUpdateSchema = z.object({
-  itemId: z.string().trim().min(3),
+  locationId: z.string().trim().min(3),
   name: z.string().trim().min(3).optional(),
   type: locationEnum.optional(),
   description: z.string().trim().optional(),
@@ -28,8 +29,21 @@ export const locationGetSchema = z.object({
   searchQuery,
   page,
   dataPerPage,
+  isTakeAll: z.preprocess((val) => val === "true", z.boolean()).default(false),
   sortOrderEnum,
-  sortBy: locationEnum.optional(),
+  sortBy: sortLocationEnum,
+  locationType: locationEnum.optional(),
 });
 
 export type LocationGetSchema = z.infer<typeof locationGetSchema>;
+
+export const locationGetSpesificSchema = z.object({
+  itemSearchQuery: searchQuery,
+  itemPage: page,
+  itemDataPerPage: dataPerPage,
+  isTakeAll: z.preprocess((val) => val === "true", z.boolean()).default(false),
+});
+
+export type LocationGetSpecificSchema = z.infer<
+  typeof locationGetSpesificSchema
+>;

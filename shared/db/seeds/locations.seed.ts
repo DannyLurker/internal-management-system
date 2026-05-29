@@ -2,7 +2,7 @@ import { LocationType } from "@prisma/client";
 import prisma from "../prisma";
 import type { SeedEntityMap } from "./types";
 
-export async function createLocationsSeed() {
+export async function createLocationsSeed(createdBy: { id: string }) {
   const locationsData = [
     {
       name: "Main Warehouse",
@@ -37,7 +37,10 @@ export async function createLocationsSeed() {
     const location = await prisma.location.upsert({
       where: { name: locData.name },
       update: {},
-      create: locData,
+      create: {
+        ...locData,
+        createdBy: createdBy.id,
+      },
     });
     locations[locData.name] = location;
   }

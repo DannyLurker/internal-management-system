@@ -11,8 +11,7 @@ import {
 } from "@/shared/lib/zods/item.zod";
 import itemRepository from "./item.repository";
 import auditLogsRepository from "../audit-logs/audit-log.repository";
-import { ItemStockStatus } from "./item.types";
-import { EXPIRING_WINDOW_DAYS, mapItemListRow } from "./item.utils";
+import { mapItemListRow } from "./item.utils";
 
 const itemService = {
   create: async (rawData: ItemCreateSchema) => {

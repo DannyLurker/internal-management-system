@@ -6,11 +6,16 @@ import {
   locationCreateSchema,
   LocationCreateSchema,
   locationGetSchema,
+  locationGetSpesificSchema,
   locationUpdateSchema,
   LocationUpdateSchema,
 } from "@/shared/lib/zods/location.zod";
 import auditLogsRepository from "../audit-logs/audit-log.repository";
-import { locationRepository, locationSelectData } from "./location.repository";
+import {
+  locationRepository,
+  locationSelectData,
+  locationWhereUniqueInput,
+} from "./location.repository";
 import { Prisma } from "@prisma/client";
 
 const locationService = {
@@ -61,17 +66,58 @@ const locationService = {
     };
   },
 
-  get: async (locationId: string) => {
+  get: async (locationId: string, params: { [key: string]: string }) => {
     const session = await sessionValidation();
+    const validatedParams = locationGetSpesificSchema.parse(params);
 
     if (!canManageLocation(session.role)) {
       throw forbidden("You're not allowed to access this feature");
     }
 
+    const whereQuery = locationWhereUniqueInput({
+      id: locationId,
+    });
+
+    if (
+      validatedParams.itemSearchQuery &&
+      validatedParams.itemSearchQuery.length >= 3
+    ) {
+      whereQuery.stocks = {
+        some: {
+          item: {
+            name: {
+              contains: validatedParams.itemSearchQuery,
+              mode: "insensitive",
+            },
+          },
+        },
+      };
+    }
+
+    const skip = validatedParams.isTakeAll
+      ? undefined
+      : (validatedParams.itemPage - 1) * validatedParams.itemDataPerPage;
+
+    const take = validatedParams.isTakeAll
+      ? undefined
+      : validatedParams.itemDataPerPage;
+
     const selectData = locationSelectData({
       name: true,
+      createdAt: true,
+      updatedAt: true,
       description: true,
       type: true,
+      userCreatedBy: {
+        select: {
+          name: true,
+        },
+      },
+      userUpdatedBy: {
+        select: {
+          name: true,
+        },
+      },
       stocks: {
         select: {
           item: {
@@ -80,19 +126,19 @@ const locationService = {
             },
           },
           quantity: true,
+          type: true,
         },
+        skip,
+        take,
       },
-      createdAt: true,
-      createdBy: true,
-      updatedAt: true,
-      updatedBy: true,
     });
 
     const location = await locationRepository.get(
-      locationId,
+      whereQuery,
       selectData,
       prisma,
     );
+
     if (!location) throw notFound("Location not found");
 
     return {
@@ -109,8 +155,7 @@ const locationService = {
       throw forbidden("You're not allowed to access this feature");
     }
 
-    // skip and take bisa di akal akalin
-    let whereQuery: Prisma.LocationFindManyArgs = {};
+    let whereQuery: Prisma.LocationWhereInput = {};
 
     if (
       validatedParams.searchQuery &&
@@ -122,7 +167,45 @@ const locationService = {
       };
     }
 
-    const locations = await locationRepository.getMany();
+    if (validatedParams.locationType) {
+      whereQuery.type = validatedParams.locationType;
+    }
+
+    const selectData = locationSelectData({
+      name: true,
+      createdAt: true,
+      updatedAt: true,
+      description: true,
+      type: true,
+      userCreatedBy: {
+        select: {
+          name: true,
+        },
+      },
+      userUpdatedBy: {
+        select: {
+          name: true,
+        },
+      },
+    });
+
+    const skip = validatedParams.isTakeAll
+      ? undefined
+      : (validatedParams.page - 1) * validatedParams.dataPerPage;
+
+    const take = validatedParams.isTakeAll
+      ? undefined
+      : validatedParams.dataPerPage;
+
+    const locations = await locationRepository.getMany(
+      whereQuery,
+      selectData,
+      skip,
+      take,
+      validatedParams.sortOrderEnum,
+      validatedParams.sortBy,
+      prisma,
+    );
 
     return {
       message: "Locations retrieved successfully",
@@ -146,14 +229,14 @@ const locationService = {
       });
 
       const existing = await locationRepository.get(
-        validatedData.itemId,
+        { id: validatedData.locationId },
         selectData,
         tx,
       );
       if (!existing) throw notFound("Location not found");
 
       const location = await locationRepository.update(
-        validatedData.itemId,
+        validatedData.locationId,
         {
           name: validatedData.name,
           type: validatedData.type,
@@ -212,7 +295,11 @@ const locationService = {
         description: true,
       });
 
-      const existing = await locationRepository.get(locationId, selectData, tx);
+      const existing = await locationRepository.get(
+        { id: locationId },
+        selectData,
+        tx,
+      );
       if (!existing) throw notFound("Location not found");
 
       const location = await locationRepository.delete(locationId, tx);

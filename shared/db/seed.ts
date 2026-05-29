@@ -41,14 +41,18 @@ async function main() {
   // ============================================
   console.log("📍 Creating locations...");
 
-  const { locations, locationsTotalData } = await createLocationsSeed();
+  const { locations, locationsTotalData } =
+    await createLocationsSeed(hotelManagerUser);
 
   // ============================================
   // 4. ITEMS (not Products — matches schema)
   // ============================================
   console.log("📦 Creating items...");
 
-  const { items, itemsTotalData } = await createItemsSeed(categories, adminUser);
+  const { items, itemsTotalData } = await createItemsSeed(
+    categories,
+    adminUser,
+  );
 
   console.log(`   ✓ Created ${itemsTotalData} items\n`);
 
@@ -57,11 +61,7 @@ async function main() {
   // ============================================
   console.log("📊 Creating stocks...");
 
-  const stockCount = await createStocksSeed(
-    items,
-    locations,
-    housekeepingUser,
-  );
+  const stockCount = await createStocksSeed(items, locations, housekeepingUser);
 
   console.log(`   ✓ Created ${stockCount} stock entries\n`);
 

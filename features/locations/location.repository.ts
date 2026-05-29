@@ -1,6 +1,11 @@
+import { SortLocationBy, SortOrder } from "@/shared/lib/types/zod.type";
 import { Prisma, PrismaClient } from "@prisma/client";
 
 export const locationWhereInput = (where: Prisma.LocationWhereInput) => where;
+
+export const locationWhereUniqueInput = (
+  where: Prisma.LocationWhereUniqueInput,
+) => where;
 
 export const locationSelectData = (where: Prisma.LocationSelect) => where;
 
@@ -38,21 +43,30 @@ export const locationRepository = {
   getMany: async (
     where: Prisma.LocationWhereInput,
     select: Prisma.LocationSelect,
+    skip: number | undefined,
+    take: number | undefined,
+    sortOrder: SortOrder | "asc",
+    sortBy: SortLocationBy,
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
     return tx.location.findMany({
       where,
       select,
+      skip,
+      take,
+      orderBy: {
+        [sortBy]: sortOrder,
+      },
     });
   },
 
   get: async (
-    locationId: string,
+    where: Prisma.LocationWhereUniqueInput,
     select: Prisma.LocationSelect,
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
     return tx.location.findUnique({
-      where: { id: locationId },
+      where,
       select,
     });
   },

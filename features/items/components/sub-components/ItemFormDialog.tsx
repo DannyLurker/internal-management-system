@@ -242,7 +242,7 @@ export default function ItemFormDialog({
           onSubmit={isEdit ? onUpdateSubmit : onCreateSubmit}
         >
           <fieldset className="space-y-4">
-            <legend className="font-ochre-ui text-[11px] font-semibold uppercase tracking-[0.05em] text-[#524439]">
+            <legend className="font-ochre-ui text-[11px] font-semibold uppercase tracking-wider text-[#524439]">
               General specifications
             </legend>
             <div>
@@ -339,7 +339,7 @@ export default function ItemFormDialog({
           <fieldset className="mt-6 grid gap-4 sm:grid-cols-2">
             <legend className="sr-only">Location and visual identity</legend>
             <div>
-              <p className="font-ochre-ui text-[11px] font-semibold uppercase tracking-[0.05em] text-[#524439]">
+              <p className="font-ochre-ui text-[11px] font-semibold uppercase tracking-wider text-[#524439]">
                 Location
               </p>
 
@@ -383,7 +383,7 @@ export default function ItemFormDialog({
             </div>
 
             <div>
-              <p className="font-ochre-ui text-[11px] font-semibold uppercase tracking-[0.05em] text-[#524439]">
+              <p className="font-ochre-ui text-[11px] font-semibold uppercase tracking-wider text-[#524439]">
                 Visual identity
               </p>
               <button
@@ -419,7 +419,7 @@ export default function ItemFormDialog({
           </fieldset>
 
           <fieldset className="mt-6 space-y-4">
-            <legend className="font-ochre-ui text-[11px] font-semibold uppercase tracking-[0.05em] text-[#524439]">
+            <legend className="font-ochre-ui text-[11px] font-semibold uppercase tracking-wider text-[#524439]">
               Financial controls &amp; availability
             </legend>
             <div className="grid gap-4 sm:grid-cols-3">
@@ -580,7 +580,7 @@ export default function ItemFormDialog({
           </fieldset>
 
           <fieldset className="mt-6 space-y-3">
-            <legend className="font-ochre-ui text-[11px] font-semibold uppercase tracking-[0.05em] text-[#524439]">
+            <legend className="font-ochre-ui text-[11px] font-semibold uppercase tracking-wider text-[#524439]">
               Custom attributes
             </legend>
             {attributeRows.map((row, index) => (
