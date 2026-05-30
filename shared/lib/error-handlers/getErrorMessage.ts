@@ -6,7 +6,6 @@ export const getErrorMessage = async (error: any) => {
   if (data instanceof Blob) {
     try {
       const text = await data.text();
-      console.log("test out:", text);
       data = JSON.parse(text);
     } catch (error) {
       console.error(error);

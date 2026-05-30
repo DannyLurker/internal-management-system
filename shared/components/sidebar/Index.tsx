@@ -26,7 +26,7 @@ export default function Sidebar() {
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const inventoryChildActive =
-    pathname === paths.items || pathname === paths.categories;
+    pathname === paths.items || pathname === paths.categories || pathname === paths.locations;
 
   const [inventoryOpen, setInventoryOpen] = useState(
     inventoryChildActive || pathname.startsWith("/inventory"),

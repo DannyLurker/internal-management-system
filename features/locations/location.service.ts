@@ -94,15 +94,13 @@ const locationService = {
       };
     }
 
-    const skip = validatedParams.isTakeAll
-      ? undefined
-      : (validatedParams.itemPage - 1) * validatedParams.itemDataPerPage;
+    const skip =
+      (validatedParams.itemPage - 1) * validatedParams.itemDataPerPage;
 
-    const take = validatedParams.isTakeAll
-      ? undefined
-      : validatedParams.itemDataPerPage;
+    const take = validatedParams.itemDataPerPage;
 
     const selectData = locationSelectData({
+      id: true,
       name: true,
       createdAt: true,
       updatedAt: true,
@@ -172,6 +170,7 @@ const locationService = {
     }
 
     const selectData = locationSelectData({
+      id: true,
       name: true,
       createdAt: true,
       updatedAt: true,
@@ -189,13 +188,9 @@ const locationService = {
       },
     });
 
-    const skip = validatedParams.isTakeAll
-      ? undefined
-      : (validatedParams.page - 1) * validatedParams.dataPerPage;
+    const skip = (validatedParams.page - 1) * validatedParams.dataPerPage;
 
-    const take = validatedParams.isTakeAll
-      ? undefined
-      : validatedParams.dataPerPage;
+    const take = validatedParams.dataPerPage;
 
     const locations = await locationRepository.getMany(
       whereQuery,

@@ -218,9 +218,9 @@ model Stock {
   expiredAt DateTime?
 
   itemId     String
-  item       Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  locationId String
-  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  item       Item      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
   createdBy String
   creator   User   @relation(fields: [createdBy], references: [id])

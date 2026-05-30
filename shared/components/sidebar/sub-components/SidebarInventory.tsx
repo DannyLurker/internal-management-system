@@ -34,7 +34,9 @@ export default function SidebarInventory({
   inventoryFlyoutId,
 }: SidebarInventoryProps) {
   const inventoryChildActive =
-    pathname === paths.items || pathname === paths.categories;
+    pathname === paths.items ||
+    pathname === paths.categories ||
+    pathname === paths.locations;
 
   if (isExpanded) {
     return (
@@ -76,6 +78,11 @@ export default function SidebarInventory({
                   href={paths.categories}
                   label="Categories"
                   active={pathname === paths.categories}
+                />
+                <InventorySubLink
+                  href={paths.locations}
+                  label="Locations"
+                  active={pathname === paths.locations}
                 />
                 <InventorySubLink
                   href={paths.items}
@@ -137,6 +144,12 @@ export default function SidebarInventory({
                 href={paths.categories}
                 label="Categories"
                 active={pathname === paths.categories}
+              />
+
+              <CollapsedFlyoutLink
+                href={paths.locations}
+                label="Locations"
+                active={pathname === paths.locations}
               />
 
               <CollapsedFlyoutLink

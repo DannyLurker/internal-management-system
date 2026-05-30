@@ -29,7 +29,6 @@ export const locationGetSchema = z.object({
   searchQuery,
   page,
   dataPerPage,
-  isTakeAll: z.preprocess((val) => val === "true", z.boolean()).default(false),
   sortOrderEnum,
   sortBy: sortLocationEnum,
   locationType: locationEnum.optional(),
@@ -41,7 +40,6 @@ export const locationGetSpesificSchema = z.object({
   itemSearchQuery: searchQuery,
   itemPage: page,
   itemDataPerPage: dataPerPage,
-  isTakeAll: z.preprocess((val) => val === "true", z.boolean()).default(false),
 });
 
 export type LocationGetSpecificSchema = z.infer<
