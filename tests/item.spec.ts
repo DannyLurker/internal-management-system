@@ -1,78 +1,46 @@
-import prisma from "@/shared/db/prisma";
 import { test, expect } from "@playwright/test";
 
-const formatToIDR = (value: number) => {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 2,
-  }).format(value);
-};
+test.describe.configure({ mode: "serial" });
 
 test.describe("CRUD operations for Item", () => {
-  test.describe.configure({ mode: "serial" });
-
   const TEST_PREFIX = `TEST_${Date.now()}+${Math.floor(Math.random() * 1000)}`;
   let createdItemId: string;
   let testCategoryId: string;
   let testLocationId: string;
 
-  test.afterAll(async () => {
-    await prisma.$disconnect();
-  });
+  test.describe.configure({ mode: "serial" });
 
-  test("Setup: Create test category for items", async ({ request }) => {
-    const response = await request.post("/api/categories", {
-      data: { name: `${TEST_PREFIX}Hotel Linen` },
-    });
+  test.beforeAll(
+    "Setup: Create test category and resolve location",
+    async ({ request }) => {
+      // 1. Create category
+      const categoryResponse = await request.post("/api/categories", {
+        data: { name: `${TEST_PREFIX}Hotel Linen` },
+      });
+      expect(categoryResponse.status()).toBe(201);
 
-    const body = await response.json();
-    console.log("Category Create Response:", body);
+      const listResponse = await request.get(
+        "/api/categories?sortOrder=asc&sortBy=name&page=1&dataPerPage=100",
+      );
+      const listBody = await listResponse.json();
+      const categories = listBody.data;
+      const category = categories.find(
+        (c: any) => c.name === `${TEST_PREFIX}Hotel Linen`,
+      );
 
-    expect(response.status()).toBe(201);
+      expect(category).toBeDefined();
+      testCategoryId = category.id;
 
-    type CategoryDto = { id: string; name: string };
+      const locationResponse = await request.get(
+        "/api/locations?page=1&dataPerPage=10",
+      );
+      const locationBody = await locationResponse.json();
 
-    const listResponse = await request.get(
-      "/api/categories?sortOrder=asc&sortBy=name&page=1&dataPerPage=100",
-    );
-
-    const listBody = await listResponse.json();
-    const categories: CategoryDto[] = listBody.data;
-
-    const category = categories.find((c) => {
-      console.log("Category Target:", `${TEST_PREFIX}Hotel Linen`);
-      console.log("Category Name:", c.name);
-
-      return c.name === `${TEST_PREFIX}Hotel Linen`;
-    });
-
-    expect(category).toBeDefined();
-
-    testCategoryId = category!.id;
-  });
-
-  test("Setup: Get test location ID dynamically", async () => {
-    const location = await prisma.location.findFirst({
-      where: { name: "Main Warehouse" },
-    });
-
-    if (location) {
-      testLocationId = location.id;
-    } else {
-      const fallbackLoc = await prisma.location.findFirst();
-
-      if (!fallbackLoc) {
-        throw new Error(
-          "No location found in database. Please run db seed first.",
-        );
-      }
-
-      testLocationId = fallbackLoc.id;
-    }
-
-    console.log("Resolved testLocationId:", testLocationId);
-  });
+      expect(locationResponse.status()).toBe(200);
+      console.log(locationBody);
+      testLocationId = locationBody.data[0].id;
+    },
+  );
 
   test("Create a new item", async ({ request }) => {
     const sellingPrice = 450000;
@@ -86,13 +54,11 @@ test.describe("CRUD operations for Item", () => {
         locationId: testLocationId,
         sellingPrice,
         image: "https://example.com/luxury-king-pillow.jpg",
-
         stock: {
           quantity: 50,
           totalCost,
           reason: "Bulk purchase for room setup",
         },
-
         attributes: {
           size: "King",
           fill: "Goose Down",
@@ -101,18 +67,8 @@ test.describe("CRUD operations for Item", () => {
       },
     });
 
-    console.log("Create Item Response Status:", response.status());
-
     const body = await response.json();
-
-    console.log("Create Response:", {
-      ...body,
-      formattedSellingPrice: formatToIDR(sellingPrice),
-      formattedTotalCost: formatToIDR(totalCost),
-    });
-
     expect(response.status()).toBe(201);
-
     expect(body.message).toContain(`${TEST_PREFIX}Luxury King Pillow`);
   });
 
@@ -197,7 +153,7 @@ test.describe("CRUD operations for Item", () => {
 
     console.log("Update Response:", {
       ...body,
-      formattedSellingPrice: formatToIDR(updatedSellingPrice),
+      formattedSellingPrice: updatedSellingPrice,
     });
 
     expect(response.status()).toBe(200);
@@ -282,37 +238,21 @@ test.describe("CRUD operations for Item", () => {
   });
 
   test("Cleanup: Delete leftover test data", async ({ browser }) => {
+    // Keep your cleanup script exactly the same at the bottom of the stack
     const context = await browser.newContext({
       storageState: "playwright/.auth/manager.json",
     });
-
     const request = context.request;
 
     const itemList = await request.get(
       "http://localhost:3000/api/items?page=1&dataPerPage=100&sortBy=name&orderBy=asc",
     );
-
     const itemBody = await itemList.json();
-
     const items: { id: string; name: string }[] = itemBody.data?.items ?? [];
 
     for (const item of items) {
       if (item.name.startsWith(TEST_PREFIX)) {
         await request.delete(`http://localhost:3000/api/items/${item.id}`);
-      }
-    }
-
-    const categoryList = await request.get(
-      "http://localhost:3000/api/categories?page=1&dataPerPage=100",
-    );
-
-    const { data: categories } = await categoryList.json();
-
-    for (const category of categories) {
-      if (category.name.startsWith(TEST_PREFIX)) {
-        await request.delete(
-          `http://localhost:3000/api/categories/${category.id}`,
-        );
       }
     }
 

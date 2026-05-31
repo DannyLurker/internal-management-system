@@ -19,7 +19,7 @@ export async function GET(req: Request) {
 
     const response: LocationGetManyApiResponse = {
       message: result.message,
-      data: result.locations,
+      data: result.data,
       status: 200,
     };
 

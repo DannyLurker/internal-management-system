@@ -29,7 +29,6 @@ import {
   locationCreateSchema,
   locationUpdateSchema,
   type LocationCreateSchema,
-  type LocationUpdateSchema,
 } from "@/shared/lib/zods/location.zod";
 import { cn } from "@/shared/lib/utils";
 
@@ -38,6 +37,16 @@ type LocationFormDefaultValues = {
   name: string;
   type: LocationType;
   description?: string;
+};
+
+type LocationFormSharedValues = {
+  name: string;
+  type: LocationType;
+  description?: string;
+};
+
+type LocationEditFormValues = LocationFormSharedValues & {
+  locationId: string;
 };
 
 type LocationFormDialogProps = {
@@ -56,17 +65,11 @@ const fieldInputClass = cn(
   "placeholder:text-[#524439]/45 focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15",
 );
 
-type LocationFormFields = {
-  name: string;
-  type: LocationType;
-  description?: string;
-};
-
 function LocationFormFields({
   form,
   idPrefix,
 }: {
-  form: UseFormReturn<LocationFormFields>;
+  form: UseFormReturn<LocationFormSharedValues>;
   idPrefix: string;
 }) {
   const selectedType = form.watch("type");
@@ -109,8 +112,9 @@ function LocationFormFields({
             className={cn(fieldInputClass, "mt-1.5 flex h-auto w-full")}
           >
             <SelectValue>
-              {LOCATION_TYPE_OPTIONS.find((option) => option.value === selectedType)
-                ?.label ?? "Select type"}
+              {LOCATION_TYPE_OPTIONS.find(
+                (option) => option.value === selectedType,
+              )?.label ?? "Select type"}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -159,7 +163,7 @@ function LocationFormShell({
   submitLabel: string;
   isSubmitting: boolean;
   onClose: () => void;
-  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  onSubmit: (event: React.SubmitEvent<HTMLFormElement>) => void;
   children: React.ReactNode;
 }) {
   return (
@@ -203,7 +207,9 @@ export default function LocationFormDialog({
   const updateMutation = useUpdateLocation();
 
   const createForm = useForm<LocationCreateSchema>({
-    resolver: zodResolver(locationCreateSchema) as Resolver<LocationCreateSchema>,
+    resolver: zodResolver(
+      locationCreateSchema,
+    ) as Resolver<LocationCreateSchema>,
     defaultValues: {
       name: "",
       type: LocationType.MAIN_WAREHOUSE,
@@ -211,8 +217,10 @@ export default function LocationFormDialog({
     },
   });
 
-  const updateForm = useForm<LocationUpdateSchema>({
-    resolver: zodResolver(locationUpdateSchema) as Resolver<LocationUpdateSchema>,
+  const updateForm = useForm<LocationEditFormValues>({
+    resolver: zodResolver(
+      locationUpdateSchema,
+    ) as Resolver<LocationEditFormValues>,
     defaultValues: {
       locationId: "",
       name: "",
@@ -287,7 +295,10 @@ export default function LocationFormDialog({
               }
             })}
           >
-            <LocationFormFields form={createForm} idPrefix="location-create" />
+            <LocationFormFields
+              form={createForm as UseFormReturn<LocationFormSharedValues>}
+              idPrefix="location-create"
+            />
           </LocationFormShell>
         ) : (
           <LocationFormShell
@@ -308,7 +319,12 @@ export default function LocationFormDialog({
             })}
           >
             <input type="hidden" {...updateForm.register("locationId")} />
-            <LocationFormFields form={updateForm} idPrefix="location-edit" />
+            <LocationFormFields
+              form={
+                updateForm as unknown as UseFormReturn<LocationFormSharedValues>
+              }
+              idPrefix="location-edit"
+            />
           </LocationFormShell>
         )}
       </DialogContent>

@@ -84,12 +84,18 @@ const locationService = {
     ) {
       whereQuery.stocks = {
         some: {
-          item: {
-            name: {
-              contains: validatedParams.itemSearchQuery,
-              mode: "insensitive",
-            },
-          },
+          locationId,
+          ...(validatedParams.itemSearchQuery &&
+          validatedParams.itemSearchQuery.length >= 3
+            ? {
+                item: {
+                  name: {
+                    contains: validatedParams.itemSearchQuery,
+                    mode: "insensitive",
+                  },
+                },
+              }
+            : {}),
         },
       };
     }
@@ -118,11 +124,7 @@ const locationService = {
       },
       stocks: {
         select: {
-          item: {
-            select: {
-              name: true,
-            },
-          },
+          item: { select: { name: true } },
           quantity: true,
           type: true,
         },
@@ -137,11 +139,26 @@ const locationService = {
       prisma,
     );
 
-    if (!location) throw notFound("Location not found");
+    const totalStocksCount = await prisma.stock.count({
+      where: {
+        locationId,
+        ...(validatedParams.itemSearchQuery &&
+        validatedParams.itemSearchQuery.length >= 3
+          ? {
+              item: {
+                name: {
+                  contains: validatedParams.itemSearchQuery,
+                  mode: "insensitive",
+                },
+              },
+            }
+          : {}),
+      },
+    });
 
     return {
       message: "Location retrieved successfully",
-      location,
+      data: { location, totalStocks: totalStocksCount },
     };
   },
 
@@ -202,9 +219,13 @@ const locationService = {
       prisma,
     );
 
+    const totalCount = await prisma.location.count({
+      where: whereQuery,
+    });
+
     return {
       message: "Locations retrieved successfully",
-      locations,
+      data: { locations, totalCount },
     };
   },
 
@@ -285,6 +306,7 @@ const locationService = {
 
     const deleted = await prisma.$transaction(async (tx) => {
       const selectData = locationSelectData({
+        id: true,
         name: true,
         type: true,
         description: true,

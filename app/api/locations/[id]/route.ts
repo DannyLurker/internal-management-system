@@ -23,7 +23,7 @@ export async function GET(
 
     const response: LocationGetByIdApiResponse = {
       message: result.message,
-      data: result.location,
+      data: result.data,
       status: 200,
     };
 

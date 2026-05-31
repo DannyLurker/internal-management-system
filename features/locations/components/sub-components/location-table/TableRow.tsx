@@ -6,10 +6,7 @@ import {
   infoButtonClasses,
   sharedButtonClasses,
 } from "@/features/locations/location.styles";
-import {
-  formatLocationDisplayId,
-  formatLocationTypeBadge,
-} from "@/features/locations/location.utils";
+import { formatLocationTypeBadge } from "@/features/locations/location.utils";
 import { cn } from "@/shared/lib/utils";
 
 type TableRowProps = {
@@ -31,9 +28,6 @@ export default function TableRow({
         <div className="min-w-0">
           <p className="truncate font-ochre-ui text-sm font-semibold text-[#121c28]">
             {location.name}
-          </p>
-          <p className="mt-0.5 font-ochre-ui text-xs text-[#524439]/70">
-            ID: {formatLocationDisplayId(location.id)}
           </p>
         </div>
       </td>

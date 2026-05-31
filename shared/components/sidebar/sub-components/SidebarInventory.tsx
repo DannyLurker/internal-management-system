@@ -75,14 +75,14 @@ export default function SidebarInventory({
             <div className="relative ms-3 mt-1 border-s border-[#eaf1ff]/12 ps-3">
               <div className="space-y-1 pb-1 pt-0.5">
                 <InventorySubLink
-                  href={paths.categories}
-                  label="Categories"
-                  active={pathname === paths.categories}
-                />
-                <InventorySubLink
                   href={paths.locations}
                   label="Locations"
                   active={pathname === paths.locations}
+                />
+                <InventorySubLink
+                  href={paths.categories}
+                  label="Categories"
+                  active={pathname === paths.categories}
                 />
                 <InventorySubLink
                   href={paths.items}

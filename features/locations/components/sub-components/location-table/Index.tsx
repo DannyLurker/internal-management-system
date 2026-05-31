@@ -1,6 +1,6 @@
 "use client";
 
-import { ClipboardCheck, Plus } from "lucide-react";
+import { ClipboardCheck, Plus, ChevronsLeft, ChevronsRight } from "lucide-react";
 import type { LocationListItem } from "@/features/locations/location.types";
 import { cn } from "@/shared/lib/utils";
 import TableHeader from "./TableHeader";
@@ -8,6 +8,7 @@ import TableRow from "./TableRow";
 
 type LocationTableProps = {
   locations: LocationListItem[];
+  totalCount: number;
   isLoading: boolean;
   isError: boolean;
   page: number;
@@ -21,6 +22,7 @@ type LocationTableProps = {
 
 export default function LocationTable({
   locations,
+  totalCount,
   isLoading,
   isError,
   page,
@@ -31,7 +33,8 @@ export default function LocationTable({
   onDelete,
   onCreateFirst,
 }: LocationTableProps) {
-  const hasNextPage = locations.length === dataPerPage;
+  const totalPages = Math.ceil(totalCount / dataPerPage);
+  const hasNextPage = page < totalPages;
   const hasPrevPage = page > 1;
   const rangeStart = locations.length === 0 ? 0 : (page - 1) * dataPerPage + 1;
   const rangeEnd = (page - 1) * dataPerPage + locations.length;
@@ -90,7 +93,7 @@ export default function LocationTable({
   return (
     <div className="overflow-hidden rounded-xl border border-[#d9e3f4]/80 bg-white shadow-[0_16px_48px_-20px_rgba(15,23,42,0.08)]">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] border-collapse">
+        <table className="w-full min-w-180 border-collapse">
           <TableHeader />
           <tbody>
             {isLoading
@@ -120,10 +123,23 @@ export default function LocationTable({
             Showing{" "}
             <span className="font-semibold text-[#121c28]">{rangeStart}</span>{" "}
             to <span className="font-semibold text-[#121c28]">{rangeEnd}</span>{" "}
-            {rangeEnd === 1 ? "location" : "locations"}
-            {hasNextPage ? " (more on next page)" : ""}
+            of <span className="font-semibold text-[#121c28]">{totalCount}</span>{" "}
+            {totalCount === 1 ? "location" : "locations"}
           </p>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={!hasPrevPage}
+              onClick={() => onPageChange(1)}
+              className={cn(
+                "rounded-md border border-[#d9e3f4] p-1.5 text-[#565e74]",
+                !hasPrevPage && "cursor-not-allowed opacity-40",
+                hasPrevPage && "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+              )}
+              aria-label="First page"
+            >
+              <ChevronsLeft className="size-4" strokeWidth={1.5} />
+            </button>
             <button
               type="button"
               disabled={!hasPrevPage}
@@ -150,6 +166,19 @@ export default function LocationTable({
               )}
             >
               Next
+            </button>
+            <button
+              type="button"
+              disabled={!hasNextPage}
+              onClick={() => onPageChange(totalPages)}
+              className={cn(
+                "rounded-md border border-[#d9e3f4] p-1.5 text-[#565e74]",
+                !hasNextPage && "cursor-not-allowed opacity-40",
+                hasNextPage && "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+              )}
+              aria-label="Last page"
+            >
+              <ChevronsRight className="size-4" strokeWidth={1.5} />
             </button>
           </div>
         </div>

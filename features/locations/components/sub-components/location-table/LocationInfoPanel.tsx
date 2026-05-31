@@ -10,6 +10,14 @@ import {
 } from "@/features/locations/location.utils";
 import { locationGetSpesificSchema } from "@/shared/lib/zods/location.zod";
 import LocationInfoPanelTable from "./LocationInfoPanelTable";
+import { cn } from "@/shared/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
 
 type LocationInfoPanelProps = {
   locationId: string;
@@ -24,6 +32,7 @@ export default function LocationInfoPanel({
   const [itemDataPerPage] = useState(10);
   const [itemSearchInput, setItemSearchInput] = useState("");
   const [debouncedItemSearch, setDebouncedItemSearch] = useState("");
+  const [isItemsOpen, setIsItemsOpen] = useState(false);
 
   useEffect(() => {
     const id = window.setTimeout(
@@ -50,7 +59,12 @@ export default function LocationInfoPanel({
   );
 
   const { data, isLoading, isError } = useLocation(locationId, itemParams);
+
   const location = data?.data;
+
+  console.log("location:", location);
+
+  const totalStocksCount = 0;
 
   return (
     <motion.aside
@@ -58,7 +72,7 @@ export default function LocationInfoPanel({
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 24 }}
       transition={{ type: "spring", damping: 26, stiffness: 280 }}
-      className="flex h-full min-h-0 w-full shrink-0 flex-col overflow-hidden rounded-xl border border-[#d9e3f4]/80 bg-white shadow-[0_16px_48px_-20px_rgba(15,23,42,0.08)] lg:w-[22rem] xl:w-[26rem]"
+      className="flex h-full min-h-0 w-full shrink-0 flex-col overflow-hidden rounded-xl border border-[#d9e3f4]/80 bg-white shadow-[0_16px_48px_-20px_rgba(15,23,42,0.08)] lg:w-88 xl:w-104"
     >
       <div className="flex items-start justify-between gap-3 border-b border-[#eef4ff] px-4 py-4">
         <div className="min-w-0">
@@ -133,6 +147,12 @@ export default function LocationInfoPanel({
                     {formatTimestamp(location.updatedAt)}
                   </dd>
                 </div>
+                <div className="flex flex-col gap-1 border-t border-[#eef4ff] pt-2 mt-2">
+                  <dt className="text-[#524439]/70">Description</dt>
+                  <dd className="font-normal text-[#121c28] whitespace-pre-wrap leading-relaxed text-left">
+                    {location.description?.trim() || "No description provided."}
+                  </dd>
+                </div>
               </dl>
             </div>
 
@@ -140,8 +160,44 @@ export default function LocationInfoPanel({
               <h3 className="mb-3 font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
                 Items in this location
               </h3>
+              <button
+                type="button"
+                onClick={() => setIsItemsOpen(true)}
+                className={cn(
+                  "w-full flex items-center justify-between gap-3 rounded-lg border border-[#d9e3f4] bg-[#f8f9ff]/50 px-4 py-3 font-ochre-ui text-sm text-[#121c28] shadow-xs",
+                  "transition-colors hover:bg-[#eef4ff] hover:border-[#894d0d]/30",
+                )}
+              >
+                <span className="font-semibold text-[#894d0d]">
+                  View items table
+                </span>
+                <span className="rounded-full bg-[#894d0d] px-2.5 py-0.5 text-xs font-semibold text-white">
+                  {totalStocksCount}
+                </span>
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      {location ? (
+        <Dialog open={isItemsOpen} onOpenChange={setIsItemsOpen}>
+          <DialogContent
+            showCloseButton
+            className="sm:max-w-2xl max-h-[85vh] flex flex-col gap-0 overflow-hidden border-[#eef4ff] p-0"
+          >
+            <DialogHeader className="border-b border-[#eef4ff] px-6 py-5 text-left">
+              <DialogTitle className="font-ochre-brand text-2xl font-medium text-[#894d0d]">
+                Items in {location.name}
+              </DialogTitle>
+              <DialogDescription className="font-ochre-ui text-sm text-[#524439]/80">
+                Showing items currently stored at this location.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex-1 overflow-y-auto p-6 min-h-0">
               <LocationInfoPanelTable
                 stocks={location.stocks}
+                totalStocksCount={totalStocksCount}
                 itemPage={itemPage}
                 itemDataPerPage={itemDataPerPage}
                 itemSearchQuery={itemSearchInput}
@@ -149,9 +205,9 @@ export default function LocationInfoPanel({
                 onSearchChange={setItemSearchInput}
               />
             </div>
-          </div>
-        ) : null}
-      </div>
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </motion.aside>
   );
 }

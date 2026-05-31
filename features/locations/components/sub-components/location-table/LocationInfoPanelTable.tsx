@@ -1,11 +1,12 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Search, ChevronsLeft, ChevronsRight } from "lucide-react";
 import type { LocationStockItem } from "@/features/locations/location.types";
 import { cn } from "@/shared/lib/utils";
 
 type LocationInfoPanelTableProps = {
   stocks: LocationStockItem[];
+  totalStocksCount: number;
   itemPage: number;
   itemDataPerPage: number;
   itemSearchQuery: string;
@@ -15,15 +16,18 @@ type LocationInfoPanelTableProps = {
 
 export default function LocationInfoPanelTable({
   stocks,
+  totalStocksCount,
   itemPage,
   itemDataPerPage,
   itemSearchQuery,
   onPageChange,
   onSearchChange,
 }: LocationInfoPanelTableProps) {
-  const totalStock = stocks.reduce((sum, stock) => sum + stock.quantity, 0);
-  const hasNextPage = stocks.length === itemDataPerPage;
+  const totalPages = Math.ceil(totalStocksCount / itemDataPerPage);
+  const hasNextPage = itemPage < totalPages;
   const hasPrevPage = itemPage > 1;
+
+  console.log("stocks: ", stocks);
 
   return (
     <div className="flex flex-col gap-4">
@@ -89,23 +93,24 @@ export default function LocationInfoPanelTable({
               ))
             )}
           </tbody>
-          {stocks.length > 0 ? (
-            <tfoot>
-              <tr className="border-t border-[#d9e3f4] bg-[#f8f9ff]/60">
-                <td
-                  colSpan={3}
-                  className="px-3 py-2.5 text-end font-ochre-ui text-sm font-semibold text-[#121c28]"
-                >
-                  Total stock: {totalStock}
-                </td>
-              </tr>
-            </tfoot>
-          ) : null}
         </table>
       </div>
 
       {stocks.length > 0 ? (
         <div className="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            disabled={!hasPrevPage}
+            onClick={() => onPageChange(1)}
+            className={cn(
+              "rounded-md border border-[#d9e3f4] p-1.5 text-[#565e74]",
+              !hasPrevPage && "cursor-not-allowed opacity-40",
+              hasPrevPage && "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+            )}
+            aria-label="First page"
+          >
+            <ChevronsLeft className="size-4" strokeWidth={1.5} />
+          </button>
           <button
             type="button"
             disabled={!hasPrevPage}
@@ -132,6 +137,19 @@ export default function LocationInfoPanelTable({
             )}
           >
             Next
+          </button>
+          <button
+            type="button"
+            disabled={!hasNextPage}
+            onClick={() => onPageChange(totalPages)}
+            className={cn(
+              "rounded-md border border-[#d9e3f4] p-1.5 text-[#565e74]",
+              !hasNextPage && "cursor-not-allowed opacity-40",
+              hasNextPage && "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+            )}
+            aria-label="Last page"
+          >
+            <ChevronsRight className="size-4" strokeWidth={1.5} />
           </button>
         </div>
       ) : null}

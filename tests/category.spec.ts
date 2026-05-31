@@ -1,8 +1,8 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("CRUD operations for Category", () => {
-  test.describe.configure({ mode: "serial" });
+test.describe.configure({ mode: "serial" });
 
+test.describe("CRUD operations for Category", () => {
   const TEST_PREFIX = `TEST_${Date.now()}+${Math.floor(Math.random() * 1000)}`;
   let createdCategoryId: string;
 
@@ -31,9 +31,7 @@ test.describe("CRUD operations for Category", () => {
 
   test("Get single category by ID", async ({ request }) => {
     console.log("createdCategoryId: ", createdCategoryId);
-    const response = await request.get(
-      `/api/categories/${createdCategoryId}`,
-    );
+    const response = await request.get(`/api/categories/${createdCategoryId}`);
     const body = await response.json();
     console.log("Get Single Response:", body);
 

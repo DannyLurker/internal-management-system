@@ -5,9 +5,9 @@ export const LOCATION_TYPE_OPTIONS: {
   label: string;
 }[] = [
   { value: LocationType.MAIN_WAREHOUSE, label: "Warehouse" },
-  { value: LocationType.FRONT_OFFICE, label: "Room" },
-  { value: LocationType.OPERATIONAL, label: "Storage" },
-  { value: LocationType.FLOOR_LOCKER, label: "Floor" },
+  { value: LocationType.FRONT_OFFICE, label: "Front Office" },
+  { value: LocationType.OPERATIONAL, label: "Operational" },
+  { value: LocationType.FLOOR_LOCKER, label: "Floor Locker" },
 ];
 
 const LOCATION_TYPE_BADGE_LABELS: Record<LocationType, string> = {
@@ -26,10 +26,6 @@ export function formatLocationTypeSelectLabel(type: LocationType): string {
     LOCATION_TYPE_OPTIONS.find((option) => option.value === type)?.label ??
     type.replace(/_/g, " ")
   );
-}
-
-export function formatLocationDisplayId(id: string): string {
-  return id.slice(-8).toUpperCase();
 }
 
 export function formatTimestamp(value: Date | string): string {

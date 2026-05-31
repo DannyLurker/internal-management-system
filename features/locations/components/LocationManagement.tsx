@@ -149,7 +149,8 @@ export default function LocationManagement() {
   }, [page, dataPerPage, sortBy, sortOrderEnum, debouncedSearch, locationType]);
 
   const { data: locationsResponse, isLoading, isError } = useLocations(filters);
-  const locations = locationsResponse?.data ?? [];
+  const locations = locationsResponse?.data?.locations ?? [];
+  const totalCount = locationsResponse?.data?.totalCount ?? 0;
 
   console.log(locations);
 
@@ -190,7 +191,7 @@ export default function LocationManagement() {
   }, [deleteTarget, selectedLocationId]);
 
   return (
-    <div className="min-h-0 flex-1 bg-[#f8f9ff] px-4 py-8 md:px-10">
+    <div className="min-h-screen h-full flex-1 bg-[#f8f9ff] px-4 py-8 md:px-10">
       <header className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-2xl">
           <h1 className="font-ochre-brand text-3xl font-medium text-[#894d0d] md:text-4xl">
@@ -355,6 +356,7 @@ export default function LocationManagement() {
         >
           <LocationTable
             locations={locations}
+            totalCount={totalCount}
             isLoading={isLoading}
             isError={isError}
             page={page}

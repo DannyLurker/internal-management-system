@@ -7,7 +7,9 @@ export const locationWhereUniqueInput = (
   where: Prisma.LocationWhereUniqueInput,
 ) => where;
 
-export const locationSelectData = (where: Prisma.LocationSelect) => where;
+export const locationSelectData = <T extends Prisma.LocationSelect>(
+  select: T,
+): T => select;
 
 export const locationRepository = {
   create: async (
@@ -16,6 +18,37 @@ export const locationRepository = {
   ) => {
     return tx.location.create({
       data,
+    });
+  },
+
+  getMany: async <T extends Prisma.LocationSelect>(
+    where: Prisma.LocationWhereInput,
+    select: T,
+    skip: number | undefined,
+    take: number | undefined,
+    sortOrder: SortOrder | "asc",
+    sortBy: SortLocationBy,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    return tx.location.findMany({
+      where,
+      select,
+      skip,
+      take,
+      orderBy: {
+        [sortBy]: sortOrder,
+      },
+    });
+  },
+
+  get: async <T extends Prisma.LocationSelect>(
+    where: Prisma.LocationWhereUniqueInput,
+    select: T,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    return tx.location.findUnique({
+      where,
+      select,
     });
   },
 
@@ -37,37 +70,6 @@ export const locationRepository = {
   ) => {
     return tx.location.delete({
       where: { id: locationId },
-    });
-  },
-
-  getMany: async (
-    where: Prisma.LocationWhereInput,
-    select: Prisma.LocationSelect,
-    skip: number | undefined,
-    take: number | undefined,
-    sortOrder: SortOrder | "asc",
-    sortBy: SortLocationBy,
-    tx: PrismaClient | Prisma.TransactionClient,
-  ) => {
-    return tx.location.findMany({
-      where,
-      select,
-      skip,
-      take,
-      orderBy: {
-        [sortBy]: sortOrder,
-      },
-    });
-  },
-
-  get: async (
-    where: Prisma.LocationWhereUniqueInput,
-    select: Prisma.LocationSelect,
-    tx: PrismaClient | Prisma.TransactionClient,
-  ) => {
-    return tx.location.findUnique({
-      where,
-      select,
     });
   },
 };

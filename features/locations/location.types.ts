@@ -7,14 +7,15 @@ type LocationServiceGetMany = Awaited<
 
 type LocationServiceGetById = Awaited<ReturnType<typeof locationService.get>>;
 
-export type LocationListItem = LocationServiceGetMany["locations"][number];
+export type LocationListItem =
+  LocationServiceGetMany["data"]["locations"][number];
 
-export type LocationDetail = LocationServiceGetById["location"];
+export type LocationDetail = LocationServiceGetById["data"];
 
-export type LocationStockItem = LocationDetail["stocks"][number];
+export type LocationStockItem = LocationDetail["stocks"];
 
 export type LocationGetManyApiResponse = ApiResponse<
-  LocationServiceGetMany["locations"]
+  LocationServiceGetMany["data"]
 >;
 export type LocationGetByIdApiResponse = ApiResponse<LocationDetail>;
 export type LocationCreateApiResponse = ApiResponse<null>;
