@@ -1,5 +1,11 @@
 import z from "zod";
-import { sortLocationEnum, sortOrderEnum } from "../zods/general.zod";
+import {
+  sortItemByEnum,
+  sortItemEnumAtLocation,
+  sortLocationEnum,
+  sortOrderEnum,
+  stockStatusEnum,
+} from "../zods/general.zod";
 
 export type Issue = {
   code: string;
@@ -11,3 +17,5 @@ export type Issue = {
 
 export type SortOrder = z.infer<typeof sortOrderEnum>;
 export type SortLocationBy = z.infer<typeof sortLocationEnum>;
+export type SortItemByAtLocation = z.infer<typeof sortItemEnumAtLocation>;
+export type StockTypeStatus = z.infer<typeof stockStatusEnum>;

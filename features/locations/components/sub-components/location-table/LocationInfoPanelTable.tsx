@@ -27,8 +27,6 @@ export default function LocationInfoPanelTable({
   const hasNextPage = itemPage < totalPages;
   const hasPrevPage = itemPage > 1;
 
-  console.log("stocks: ", stocks);
-
   return (
     <div className="flex flex-col gap-4">
       <div className="relative">

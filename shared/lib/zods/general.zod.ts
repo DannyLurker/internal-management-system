@@ -1,5 +1,5 @@
 import { itemStockStatusArray } from "@/features/items/item.utils";
-import { Entity, LocationType } from "@prisma/client";
+import { Entity, LocationType, StockType } from "@prisma/client";
 import z from "zod";
 
 export const searchQuery = z.string().trim().min(3).optional();
@@ -10,6 +10,10 @@ export const sortOrderEnum = z.enum(["asc", "desc"]).default("asc");
 export const userActionEnum = z.enum(["CREATE", "UPDATE", "DELETE"]);
 export const sortItemByEnum = z.enum(["name", "createdAt"]).default("name");
 export const statusItemEnum = z.enum(itemStockStatusArray);
+export const sortItemEnumAtLocation = z
+  .enum(["name", "stockType"])
+  .default("name");
+export const stockStatusEnum = z.enum(Object.values(StockType));
 
 export const entityEnum = z.enum(Object.values(Entity));
 

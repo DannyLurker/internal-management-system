@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { AnimatePresence } from "framer-motion";
 import { ArrowDown, ArrowUp, Plus, Search } from "lucide-react";
 import { LocationType } from "@prisma/client";
 import { useLocations } from "@/features/locations/location.hooks";
@@ -152,8 +151,6 @@ export default function LocationManagement() {
   const locations = locationsResponse?.data?.locations ?? [];
   const totalCount = locationsResponse?.data?.totalCount ?? 0;
 
-  console.log(locations);
-
   const openCreate = useCallback(() => {
     setFormMode("create");
     setEditTarget(null);
@@ -251,8 +248,7 @@ export default function LocationManagement() {
                 );
               }}
               className={cn(
-                "min-w-32 rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 px-3 py-2 font-ochre-ui text-sm text-[#121c28] outline-none",
-                "focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15",
+                "min-w-28 appearance-none rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 px-2 py-1.5 font-ochre-ui text-sm text-[#121c28] outline-none transition-colors duration-200 hover:border-[#b0c8f8] focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15 focus:outline-none",
               )}
             >
               <option value="ALL">All</option>
@@ -274,14 +270,34 @@ export default function LocationManagement() {
                 updateSearchParams({ sortBy: e.target.value }, true)
               }
               className={cn(
-                "min-w-36 rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 px-3 py-2 font-ochre-ui text-sm text-[#121c28] outline-none",
-                "focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15",
+                "min-w-28 appearance-none rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 px-2 py-1.5 font-ochre-ui text-sm text-[#121c28] outline-none transition-colors duration-200 hover:border-[#b0c8f8] focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15 focus:outline-none",
               )}
             >
               <option value="name">Name</option>
               <option value="type">Type</option>
               <option value="createdAt">Created</option>
               <option value="updatedAt">Updated</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="font-ochre-ui text-xs font-medium uppercase tracking-wide text-[#524439]/70">
+              Show:
+            </span>
+            <select
+              value={String(dataPerPage)}
+              onChange={(e) =>
+                updateSearchParams({ dataPerPage: e.target.value }, true)
+              }
+              className={cn(
+                "min-w-28 appearance-none rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 px-2 py-1.5 font-ochre-ui text-sm text-[#121c28] outline-none transition-colors duration-200 hover:border-[#b0c8f8] focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15 focus:outline-none",
+              )}
+            >
+              {DATA_PER_PAGE_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -317,70 +333,35 @@ export default function LocationManagement() {
               <ArrowDown className="size-4" strokeWidth={1.5} />
             </button>
           </div>
-
-          <div className="flex items-center gap-2">
-            <span className="font-ochre-ui text-xs font-medium uppercase tracking-wide text-[#524439]/70">
-              Show:
-            </span>
-            <select
-              value={String(dataPerPage)}
-              onChange={(e) =>
-                updateSearchParams({ dataPerPage: e.target.value }, true)
-              }
-              className={cn(
-                "min-w-20 rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 px-3 py-2 font-ochre-ui text-sm text-[#121c28] outline-none",
-                "focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15",
-              )}
-            >
-              {DATA_PER_PAGE_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
       </section>
 
-      <div
-        className={cn(
-          "mt-8 flex min-h-0 gap-4 transition-[gap]",
-          selectedLocationId ? "lg:items-start" : "",
-        )}
-      >
-        <div
-          className={cn(
-            "min-w-0 flex-1 transition-[max-width]",
-            selectedLocationId && "lg:max-w-[calc(100%-28rem)]",
-          )}
-        >
-          <LocationTable
-            locations={locations}
-            totalCount={totalCount}
-            isLoading={isLoading}
-            isError={isError}
-            page={page}
-            dataPerPage={dataPerPage}
-            onPageChange={(nextPage) =>
-              updateSearchParams({ page: String(nextPage) })
-            }
-            onInfo={(location) => setSelectedLocationId(location.id)}
-            onEdit={openEdit}
-            onDelete={openDelete}
-            onCreateFirst={openCreate}
-          />
-        </div>
-
-        <AnimatePresence>
-          {selectedLocationId ? (
-            <LocationInfoPanel
-              key={selectedLocationId}
-              locationId={selectedLocationId}
-              onClose={() => setSelectedLocationId(null)}
-            />
-          ) : null}
-        </AnimatePresence>
+      <div className="mt-8">
+        <LocationTable
+          locations={locations}
+          totalCount={totalCount}
+          isLoading={isLoading}
+          isError={isError}
+          page={page}
+          dataPerPage={dataPerPage}
+          onPageChange={(nextPage) =>
+            updateSearchParams({ page: String(nextPage) })
+          }
+          onInfo={(location) => setSelectedLocationId(location.id)}
+          onEdit={openEdit}
+          onDelete={openDelete}
+          onCreateFirst={openCreate}
+        />
       </div>
+
+      {selectedLocationId ? (
+        <LocationInfoPanel
+          key={selectedLocationId}
+          locationId={selectedLocationId}
+          open={selectedLocationId != null}
+          onClose={() => setSelectedLocationId(null)}
+        />
+      ) : null}
 
       <LocationFormDialog
         open={isFormOpen}

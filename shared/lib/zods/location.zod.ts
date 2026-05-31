@@ -4,8 +4,10 @@ import {
   locationEnum,
   page,
   searchQuery,
+  sortItemEnumAtLocation,
   sortLocationEnum,
   sortOrderEnum,
+  stockStatusEnum,
 } from "./general.zod";
 
 export const locationCreateSchema = z.object({
@@ -40,6 +42,9 @@ export const locationGetSpesificSchema = z.object({
   itemSearchQuery: searchQuery,
   itemPage: page,
   itemDataPerPage: dataPerPage,
+  sortOrder: sortOrderEnum,
+  sortBy: sortItemEnumAtLocation,
+  stockStatusType: stockStatusEnum,
 });
 
 export type LocationGetSpecificSchema = z.infer<

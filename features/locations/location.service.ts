@@ -78,28 +78,6 @@ const locationService = {
       id: locationId,
     });
 
-    if (
-      validatedParams.itemSearchQuery &&
-      validatedParams.itemSearchQuery.length >= 3
-    ) {
-      whereQuery.stocks = {
-        some: {
-          locationId,
-          ...(validatedParams.itemSearchQuery &&
-          validatedParams.itemSearchQuery.length >= 3
-            ? {
-                item: {
-                  name: {
-                    contains: validatedParams.itemSearchQuery,
-                    mode: "insensitive",
-                  },
-                },
-              }
-            : {}),
-        },
-      };
-    }
-
     const skip =
       (validatedParams.itemPage - 1) * validatedParams.itemDataPerPage;
 
@@ -112,22 +90,38 @@ const locationService = {
       updatedAt: true,
       description: true,
       type: true,
-      userCreatedBy: {
-        select: {
-          name: true,
-        },
-      },
-      userUpdatedBy: {
-        select: {
-          name: true,
-        },
-      },
+      userCreatedBy: { select: { name: true } },
+      userUpdatedBy: { select: { name: true } },
       stocks: {
         select: {
           item: { select: { name: true } },
           quantity: true,
           type: true,
         },
+        where: {
+          ...(validatedParams.stockStatusType
+            ? { type: validatedParams.stockStatusType }
+            : {}),
+          ...(validatedParams.itemSearchQuery &&
+          validatedParams.itemSearchQuery.length >= 3
+            ? {
+                item: {
+                  name: {
+                    contains: validatedParams.itemSearchQuery,
+                    mode: "insensitive",
+                  },
+                },
+              }
+            : {}),
+        },
+        orderBy: [
+          ...(validatedParams.sortBy === "stockType"
+            ? [{ type: validatedParams.sortOrder }]
+            : []),
+          ...(validatedParams.sortBy === "name"
+            ? [{ item: { name: validatedParams.sortOrder } }]
+            : []),
+        ],
         skip,
         take,
       },
@@ -139,9 +133,14 @@ const locationService = {
       prisma,
     );
 
+    if (!location) throw notFound("Location not found");
+
     const totalStocksCount = await prisma.stock.count({
       where: {
-        locationId,
+        locationId: locationId,
+        ...(validatedParams.stockStatusType
+          ? { type: validatedParams.stockStatusType }
+          : {}),
         ...(validatedParams.itemSearchQuery &&
         validatedParams.itemSearchQuery.length >= 3
           ? {

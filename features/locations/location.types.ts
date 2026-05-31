@@ -12,7 +12,9 @@ export type LocationListItem =
 
 export type LocationDetail = LocationServiceGetById["data"];
 
-export type LocationStockItem = LocationDetail["stocks"];
+export type LocationStockItem = NonNullable<
+  LocationDetail["location"]
+>["stocks"][number];
 
 export type LocationGetManyApiResponse = ApiResponse<
   LocationServiceGetMany["data"]
