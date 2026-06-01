@@ -15,8 +15,6 @@ import ItemTable, {
 import ItemFormDialog from "./sub-components/ItemFormDialog";
 import ItemDeleteModal from "./sub-components/ItemDeleteModal";
 
-const DATA_PER_PAGE = 10;
-
 type LocationOption = { id: string; name: string };
 
 type ItemManagementProps = {

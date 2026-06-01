@@ -2,7 +2,12 @@
 
 import type { CategoryListItem } from "@/features/categories/category.types";
 import { cn } from "@/shared/lib/utils";
-import { ClipboardCheck, Plus } from "lucide-react";
+import {
+  ChevronsLeft,
+  ChevronsRight,
+  ClipboardCheck,
+  Plus,
+} from "lucide-react";
 import TableHeader, { type CategorySortBy } from "./TableHeader";
 import TableRow from "./TableRow";
 import type { CategoryGetSchema } from "@/shared/lib/zods/category.zod";
@@ -156,6 +161,19 @@ export default function CategoryTable({
             <button
               type="button"
               disabled={!hasPrevPage}
+              onClick={() => onPageChange(1)}
+              className={cn(
+                "rounded-md border border-[#d9e3f4] p-1.5 text-[#565e74]",
+                !hasPrevPage && "cursor-not-allowed opacity-40",
+                hasPrevPage && "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+              )}
+              aria-label="First page"
+            >
+              <ChevronsLeft className="size-4" strokeWidth={1.5} />
+            </button>
+            <button
+              type="button"
+              disabled={!hasPrevPage}
               onClick={() => onPageChange(page - 1)}
               className={cn(
                 "rounded-md border border-[#d9e3f4] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[#565e74]",
@@ -179,6 +197,19 @@ export default function CategoryTable({
               )}
             >
               Next
+            </button>
+            <button
+              type="button"
+              disabled={!hasNextPage}
+              onClick={() => onPageChange(totalPages)}
+              className={cn(
+                "rounded-md border border-[#d9e3f4] p-1.5 text-[#565e74]",
+                !hasNextPage && "cursor-not-allowed opacity-40",
+                hasNextPage && "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+              )}
+              aria-label="Last page"
+            >
+              <ChevronsRight className="size-4" strokeWidth={1.5} />
             </button>
           </div>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownUp, Search } from "lucide-react";
+import { ArrowDownUp, ChevronsLeft, ChevronsRight, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -68,6 +68,7 @@ export default function ItemTable({
   onEdit,
   onDelete,
 }: ItemTableProps) {
+  const totalPages = Math.ceil(totalItems / dataPerPage);
   const hasNextPage = page * dataPerPage < totalItems;
   const hasPrevPage = page > 1;
   const rangeStart = items.length === 0 ? 0 : (page - 1) * dataPerPage + 1;
@@ -241,7 +242,22 @@ export default function ItemTable({
               <span className="font-semibold text-[#121c28]">{totalShown}</span>{" "}
               items
             </p>
+
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={!hasPrevPage}
+                onClick={() => onPageChange(1)}
+                className={cn(
+                  "rounded-md border border-[#d9e3f4] p-1.5 text-[#565e74]",
+                  !hasPrevPage && "cursor-not-allowed opacity-40",
+                  hasPrevPage &&
+                    "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+                )}
+                aria-label="First page"
+              >
+                <ChevronsLeft className="size-4" strokeWidth={1.5} />
+              </button>
               <button
                 type="button"
                 disabled={!hasPrevPage}
@@ -270,6 +286,20 @@ export default function ItemTable({
                 )}
               >
                 Next
+              </button>
+              <button
+                type="button"
+                disabled={!hasNextPage}
+                onClick={() => onPageChange(totalPages)}
+                className={cn(
+                  "rounded-md border border-[#d9e3f4] p-1.5 text-[#565e74]",
+                  !hasNextPage && "cursor-not-allowed opacity-40",
+                  hasNextPage &&
+                    "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+                )}
+                aria-label="Last page"
+              >
+                <ChevronsRight className="size-4" strokeWidth={1.5} />
               </button>
             </div>
           </div>

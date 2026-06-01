@@ -36,22 +36,3 @@ export function Providers({ children }: { children: React.ReactNode }) {
     </QueryClientProvider>
   );
 }
-
-// export default function AuthenticatedProvider({
-//   children,
-// }: {
-//   children: React.ReactNode;
-// }) {
-//   return (
-//     <LoadingProvider>
-//       <SidebarProvider>
-//         {/* Interceptor handles adding the Auth Token to requests */}
-//         <InterceptorConfig />
-
-//         {children}
-
-//         <Toaster position="top-right" richColors className="font-sans" />
-//       </SidebarProvider>
-//     </LoadingProvider>
-//   );
-// }

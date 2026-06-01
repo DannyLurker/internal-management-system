@@ -26,7 +26,9 @@ export default function Sidebar() {
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const inventoryChildActive =
-    pathname === paths.items || pathname === paths.categories || pathname === paths.locations;
+    pathname === paths.items ||
+    pathname === paths.categories ||
+    pathname === paths.locations;
 
   const [inventoryOpen, setInventoryOpen] = useState(
     inventoryChildActive || pathname.startsWith("/inventory"),
@@ -109,7 +111,7 @@ export default function Sidebar() {
 
   return (
     <>
-      <div className="hidden min-h-screen shrink-0 md:flex">
+      <div className="hidden min-h-screen max-h-screen fixed shrink-0 md:flex">
         <aside
           className={cn(asideShell, isExpanded ? "w-65" : "w-18")}
           data-expanded={isExpanded ? "true" : "false"}
