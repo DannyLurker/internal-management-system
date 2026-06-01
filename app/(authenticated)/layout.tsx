@@ -34,7 +34,7 @@ export default function AuthenticatedLayout({
       <main
         className={cn(
           "min-w-0 flex-1 transition-all duration-300",
-          isOpen ? "md:pl-65" : "pl-0",
+          isOpen ? "md:pl-65" : "md:pl-18",
         )}
       >
         {children}
