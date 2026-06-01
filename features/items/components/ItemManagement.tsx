@@ -27,6 +27,7 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState<ItemGetSchema["sortBy"]>("name");
   const [orderBy, setOrderBy] = useState<ItemGetSchema["orderBy"]>("asc");
+  const [dataPerPage, setDataPerPage] = useState(10);
   const [tableFilters, setTableFilters] = useState<ItemTableFilters>({
     search: "",
     categoryId: "ALL",
@@ -68,12 +69,12 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
   );
 
   const { data: categoriesResponse } = useCategories(categoryListParams);
-  const categoryOptions = categoriesResponse?.data ?? [];
+  const categoryOptions = categoriesResponse?.data.categories ?? [];
 
   const params: ItemGetSchema = useMemo(() => {
     const raw = {
       page,
-      dataPerPage: DATA_PER_PAGE,
+      dataPerPage,
       isTakeAll: false,
       sortBy,
       orderBy,
@@ -92,6 +93,7 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
     debouncedSearch,
     tableFilters.categoryId,
     tableFilters.status,
+    dataPerPage,
   ]);
 
   const { data: itemsResponse, isLoading, isError } = useItems(params);
@@ -190,8 +192,9 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
           sortOrder={orderBy}
           onRequestSort={handleRequestSort}
           onToggleSort={handleToggleSort}
+          dataPerPage={dataPerPage}
+          onDataPerPageChange={setDataPerPage}
           page={page}
-          dataPerPage={DATA_PER_PAGE}
           onPageChange={setPage}
           categoryOptions={categoryOptions}
           onEdit={openEdit}

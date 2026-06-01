@@ -32,8 +32,9 @@ type ItemTableProps = {
   sortOrder: "asc" | "desc";
   onRequestSort: (column: ItemGetSchema["sortBy"]) => void;
   onToggleSort: () => void;
-  page: number;
   dataPerPage: number;
+  onDataPerPageChange: (page: number) => void;
+  page: number;
   onPageChange: (page: number) => void;
   categoryOptions: { id: string; name: string }[];
   onEdit: (item: Item) => void;
@@ -59,8 +60,9 @@ export default function ItemTable({
   sortOrder,
   onRequestSort,
   onToggleSort,
-  page,
   dataPerPage,
+  onDataPerPageChange,
+  page,
   onPageChange,
   categoryOptions,
   onEdit,
@@ -68,8 +70,7 @@ export default function ItemTable({
 }: ItemTableProps) {
   const hasNextPage = page * dataPerPage < totalItems;
   const hasPrevPage = page > 1;
-  const rangeStart =
-    items.length === 0 ? 0 : (page - 1) * dataPerPage + 1;
+  const rangeStart = items.length === 0 ? 0 : (page - 1) * dataPerPage + 1;
   const rangeEnd = (page - 1) * dataPerPage + items.length;
   const totalShown = totalItems;
 
@@ -86,7 +87,7 @@ export default function ItemTable({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Filter bar — inside a card like Categories */}
+      {/* 1. Filter bar card container */}
       <div className="flex flex-col gap-3 rounded-xl border border-[#d9e3f4]/80 bg-white px-4 py-3 shadow-[0_16px_48px_-20px_rgba(15,23,42,0.08)] md:flex-row md:items-center md:justify-between">
         <div className="relative min-w-0 flex-1">
           <Search
@@ -110,7 +111,7 @@ export default function ItemTable({
               onFiltersChange({ categoryId: value ?? "ALL" })
             }
           >
-            <SelectTrigger className="h-10 min-w-[9rem] rounded-lg border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15">
+            <SelectTrigger className="h-10 min-w-36 rounded-lg border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15">
               <SelectValue>
                 {filters.categoryId === "ALL"
                   ? "Category: All"
@@ -135,7 +136,7 @@ export default function ItemTable({
               })
             }
           >
-            <SelectTrigger className="h-10 min-w-[9rem] rounded-lg border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15">
+            <SelectTrigger className="h-10 min-w-36 rounded-lg border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15">
               <SelectValue>
                 {filters.status === "ALL"
                   ? "Status: All"
@@ -151,22 +152,44 @@ export default function ItemTable({
             </SelectContent>
           </Select>
 
-          <button
-            type="button"
-            onClick={onToggleSort}
-            className={cn(
-              "flex size-10 items-center justify-center rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 text-[#565e74]",
-              "hover:border-[#894d0d]/40 hover:bg-white hover:text-[#894d0d]",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#894d0d]/15",
-            )}
-            aria-label={`Sort ${sortOrder === "asc" ? "ascending" : "descending"}`}
-          >
-            <ArrowDownUp className="size-4" strokeWidth={1.5} />
-          </button>
-        </div>
-      </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="font-ochre-ui text-xs font-medium uppercase tracking-wide text-[#524439]/70">
+                Show:
+              </span>
+              <select
+                value={String(dataPerPage)}
+                onChange={(e) => {
+                  onDataPerPageChange(Number(e.target.value));
+                }}
+                className="min-w-28 appearance-none rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 px-2 py-1.5 font-ochre-ui text-sm text-[#121c28] outline-none transition-colors duration-200 hover:border-[#b0c8f8] focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15 focus:outline-none"
+              >
+                {[10, 20, 50, 100].map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div />
 
-      {/* Table card */}
+            <button
+              type="button"
+              onClick={onToggleSort}
+              className={cn(
+                "flex size-10 items-center justify-center rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 text-[#565e74]",
+                "hover:border-[#894d0d]/40 hover:bg-white hover:text-[#894d0d]",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#894d0d]/15",
+              )}
+              aria-label={`Sort ${sortOrder === "asc" ? "ascending" : "descending"}`}
+            >
+              <ArrowDownUp className="size-4" strokeWidth={1.5} />
+            </button>
+          </div>
+        </div>
+      </div>{" "}
+      {/* Corrected: Filter bar ends here */}
+      {/* 2. Table card container (Now sitting beautifully below the filters) */}
       <div className="overflow-hidden rounded-xl border border-[#d9e3f4]/80 bg-white shadow-[0_16px_48px_-20px_rgba(15,23,42,0.08)]">
         <div className="overflow-x-auto">
           <table className="w-full min-w-225 border-collapse">

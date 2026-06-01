@@ -1,3 +1,4 @@
+import prisma from "@/shared/db/prisma";
 import { CategoryGetSchema } from "@/shared/lib/zods/category.zod";
 import { Prisma, PrismaClient } from "@prisma/client";
 
@@ -56,18 +57,6 @@ const categoryRepository = {
       select: {
         products: {
           select: {
-            stocks: {
-              where: {
-                type: "READY",
-                OR: [
-                  { expiredAt: null }, // Keep it if it has no expiry date
-                  { expiredAt: { gte: new Date() } }, // Keep it if it's not expired yet
-                ],
-              },
-              select: {
-                quantity: true,
-              },
-            },
             id: true,
           },
         },
@@ -93,14 +82,15 @@ const categoryRepository = {
       take: params.dataPerPage,
     });
 
-    return categories.map((category) => ({
-      ...category,
-      totalProducts: category.products.length,
-      products: category.products.map((product) => ({
-        ...product,
-        totalStock: product.stocks.reduce((sum, s) => sum + s.quantity, 0),
+    const totalCategoryData = await prisma.category.count({});
+
+    return {
+      categories: categories.map((category) => ({
+        ...category,
+        totalProducts: category.products.length,
       })),
-    }));
+      totalCategoryData,
+    };
   },
 
   get: async (

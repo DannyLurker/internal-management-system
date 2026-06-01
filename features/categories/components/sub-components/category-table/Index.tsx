@@ -8,6 +8,7 @@ import TableRow from "./TableRow";
 import type { CategoryGetSchema } from "@/shared/lib/zods/category.zod";
 
 type CategoryTableProps = {
+  totalCategoryData: number;
   categories: CategoryListItem[];
   isLoading: boolean;
   isError: boolean;
@@ -24,6 +25,7 @@ type CategoryTableProps = {
 };
 
 export default function CategoryTable({
+  totalCategoryData,
   categories,
   isLoading,
   isError,
@@ -38,7 +40,8 @@ export default function CategoryTable({
   onCreateFirst,
   onImportData,
 }: CategoryTableProps) {
-  const hasNextPage = categories.length === dataPerPage;
+  const totalPages = Math.ceil(totalCategoryData / dataPerPage);
+  const hasNextPage = page < totalPages;
   const hasPrevPage = page > 1;
   const rangeStart = categories.length === 0 ? 0 : (page - 1) * dataPerPage + 1;
   const rangeEnd = (page - 1) * dataPerPage + categories.length;
@@ -58,7 +61,7 @@ export default function CategoryTable({
     return (
       <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
         <div className="relative mb-8 w-full max-w-md overflow-hidden rounded-xl bg-[#e5eeff] shadow-[0_20px_48px_-20px_rgba(15,23,42,0.12)]">
-          <div className="aspect-[16/10] bg-[linear-gradient(135deg,#dfe9fa_0%,#eef4ff_45%,#d9e3f4_100%)]" />
+          <div className="aspect-16/10 bg-[linear-gradient(135deg,#dfe9fa_0%,#eef4ff_45%,#d9e3f4_100%)]" />
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="flex size-16 items-center justify-center rounded-2xl bg-white shadow-md ring-1 ring-[#eaf1ff]/80">
               <ClipboardCheck
@@ -110,7 +113,7 @@ export default function CategoryTable({
   return (
     <div className="overflow-hidden rounded-xl border border-[#d9e3f4]/80 bg-white shadow-[0_16px_48px_-20px_rgba(15,23,42,0.08)]">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px] border-collapse">
+        <table className="w-full min-w-160 border-collapse">
           <TableHeader
             sortBy={sortBy}
             sortOrder={sortOrder}
@@ -143,8 +146,11 @@ export default function CategoryTable({
             Showing{" "}
             <span className="font-semibold text-[#121c28]">{rangeStart}</span>{" "}
             to <span className="font-semibold text-[#121c28]">{rangeEnd}</span>{" "}
-            {rangeEnd === 1 ? "category" : "categories"}
-            {hasNextPage ? " (more on next page)" : ""}
+            of{" "}
+            <span className="font-semibold text-[#121c28]">
+              {totalCategoryData}
+            </span>{" "}
+            {totalCategoryData === 1 ? "category" : "categories"}
           </p>
           <div className="flex items-center gap-2">
             <button

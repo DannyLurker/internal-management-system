@@ -23,7 +23,8 @@ export type CategoryGetApiResponse = ApiResponse<
   CategoryGetServiceResult["category"]
 >;
 
-export type CategoryListItem = CategoryListServiceResult["categories"][number];
+export type CategoryListItem =
+  CategoryListServiceResult["categories"]["categories"][number];
 
 export type CategoryListApiResponse = ApiResponse<
   CategoryListServiceResult["categories"]

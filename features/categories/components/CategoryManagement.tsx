@@ -22,14 +22,13 @@ import CategoryFormDialog from "./sub-components/CategoryFormDialog";
 import CategoryDeleteModal from "./sub-components/CategoryDeleteModal";
 import type { CategorySortBy } from "./sub-components/category-table/TableHeader";
 
-const DATA_PER_PAGE = 10;
-
 export default function CategoryManagement() {
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] =
     useState<CategoryGetSchema["sortBy"]>("createdAt");
   const [sortOrder, setSortOrder] =
     useState<CategoryGetSchema["sortOrder"]>("desc");
+  const [itemDataPerPage, setItemDataPerPage] = useState(10);
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -54,7 +53,7 @@ export default function CategoryManagement() {
   const filters: CategoryGetSchema = useMemo(() => {
     const raw = {
       page,
-      dataPerPage: DATA_PER_PAGE,
+      dataPerPage: itemDataPerPage,
       sortBy,
       sortOrder,
       ...(debouncedSearch.trim().length >= 3
@@ -62,9 +61,12 @@ export default function CategoryManagement() {
         : {}),
     };
     return categoryGetSchema.parse(raw);
-  }, [page, sortBy, sortOrder, debouncedSearch]);
+  }, [page, sortBy, sortOrder, itemDataPerPage, debouncedSearch]);
 
-  const { data: categories, isLoading, isError } = useCategories(filters);
+  const { data, isLoading, isError } = useCategories(filters);
+
+  const categories = data?.data.categories;
+  const totalCategoryData = data?.data.totalCategoryData;
 
   const createMutation = useCreateCategory();
   const updateMutation = useUpdateCategory();
@@ -213,19 +215,38 @@ export default function CategoryManagement() {
               <option value="createdAt:asc">Last updated (oldest)</option>
             </select>
           </div>
+          <div className="flex items-center gap-2">
+            <span className="font-ochre-ui text-xs font-medium uppercase tracking-wide text-[#524439]/70">
+              Show:
+            </span>
+            <select
+              value={String(itemDataPerPage)}
+              onChange={(e) => {
+                setItemDataPerPage(Number(e.target.value));
+              }}
+              className="min-w-28 appearance-none rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 px-2 py-1.5 font-ochre-ui text-sm text-[#121c28] outline-none transition-colors duration-200 hover:border-[#b0c8f8] focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15 focus:outline-none"
+            >
+              {[10, 20, 50, 100].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </section>
 
       <div className="mt-8">
         <CategoryTable
-          categories={categories?.data ?? []}
+          totalCategoryData={totalCategoryData ?? 0}
+          categories={categories ?? []}
           isLoading={isLoading}
           isError={isError}
           sortBy={sortBy}
           sortOrder={sortOrder}
           onRequestSort={handleRequestSort}
           page={page}
-          dataPerPage={DATA_PER_PAGE}
+          dataPerPage={itemDataPerPage}
           onPageChange={setPage}
           onEdit={openEdit}
           onDelete={openDelete}

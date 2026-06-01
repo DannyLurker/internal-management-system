@@ -29,7 +29,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             {/* The Interceptor can now see the Session because it's a child of SessionProvider */}
             <InterceptorConfig />
             {children}
-            <Toaster position="top-right" richColors className="font-sans" />
+            <Toaster position="bottom-right" richColors className="font-sans" />
           </SidebarProvider>
         </LoadingProvider>
       </SessionProvider>
