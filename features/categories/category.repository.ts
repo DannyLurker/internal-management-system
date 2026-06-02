@@ -113,16 +113,19 @@ const categoryRepository = {
                   }
                 : undefined,
           },
-          include: {
-            stocks: {
-              where: {
-                type: "READY",
-                OR: [{ expiredAt: null }, { expiredAt: { gte: new Date() } }],
-              },
+          select: {
+            name: true,
+            userCreatedBy: {
               select: {
-                quantity: true,
+                name: true,
               },
             },
+            userUpdatedBy: {
+              select: {
+                name: true,
+              },
+            },
+            updatedAt: true,
           },
           orderBy: {
             createdAt:
@@ -150,7 +153,6 @@ const categoryRepository = {
           totalProducts: categories.products.length,
           products: categories.products.map((product) => ({
             ...product,
-            totalStock: product.stocks.reduce((sum, s) => sum + s.quantity, 0),
           })),
         }
       : null;

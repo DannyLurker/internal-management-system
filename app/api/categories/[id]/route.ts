@@ -3,8 +3,7 @@ import {
   CategoryDeleteApiResponse,
   CategoryGetApiResponse,
 } from "@/features/categories/category.types";
-import { ApiResponse } from "@/shared/lib/api-client";
-import {
+import { 
   handleError,
   printConsoleError,
 } from "@/shared/lib/error-handlers/handleError";

@@ -2,6 +2,7 @@
 
 import { sharedButtonClasses } from "@/features/categories/category.styles";
 import type { CategoryListItem } from "@/features/categories/category.types";
+import { infoButtonClasses } from "@/features/locations/location.styles";
 import { cn } from "@/shared/lib/utils";
 import { Folder, Info, InfoIcon, Pencil, Trash2 } from "lucide-react";
 
@@ -16,17 +17,18 @@ function formatUpdatedAt(value: Date | string) {
 }
 
 type TableRowProps = {
+  onInfo: (categoryId: string) => void;
   category: CategoryListItem;
   onEdit: (category: CategoryListItem) => void;
   onDelete: (category: CategoryListItem) => void;
 };
 
 export default function TableRow({
+  onInfo,
   category,
   onEdit,
   onDelete,
 }: TableRowProps) {
-  console.log(category);
   return (
     <tr className="border-b border-[#eef4ff] last:border-0 hover:bg-[#f8f9ff]/80">
       <td className="px-4 py-3 align-middle">
@@ -49,18 +51,14 @@ export default function TableRow({
       </td>
       <td className="px-4 py-3 align-middle text-end">
         <div className="inline-flex items-center gap-1">
-          {/* <button
+          <button
             type="button"
-            onClick={() => onEdit(category)}
-            className={cn(
-              sharedButtonClasses,
-
-              "hover:bg-[#eef4ff] hover:text-[#121c28]",
-            )}
+            onClick={() => onInfo(category.id)}
+            className={infoButtonClasses}
             aria-label={`View details for ${category.name}`}
           >
             <Info className="size-4" strokeWidth={1.5} />
-          </button> */}
+          </button>
 
           <button
             type="button"
