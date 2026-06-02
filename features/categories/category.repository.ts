@@ -103,6 +103,16 @@ const categoryRepository = {
         id: categoryId,
       },
       include: {
+        userCreatedBy: {
+          select: {
+            name: true,
+          },
+        },
+        userUpdatedBy: {
+          select: {
+            name: true,
+          },
+        },
         products: {
           where: {
             name:
@@ -147,15 +157,28 @@ const categoryRepository = {
       },
     });
 
-    return categories
-      ? {
-          ...categories,
-          totalProducts: categories.products.length,
-          products: categories.products.map((product) => ({
-            ...product,
-          })),
-        }
-      : null;
+    if (!categories) return null;
+
+    const totalProducts = await tx.item.count({
+      where: {
+        categoryId: categoryId,
+        name:
+          params.search && params.search.length >= 3
+            ? {
+                contains: params.search,
+                mode: "insensitive",
+              }
+            : undefined,
+      },
+    });
+
+    return {
+      ...categories,
+      totalProducts,
+      products: categories.products.map((product) => ({
+        ...product,
+      })),
+    };
   },
 };
 

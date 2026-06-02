@@ -1,5 +1,5 @@
 import prisma from "@/shared/db/prisma";
-import { unauthorized } from "@/shared/lib/error-handlers";
+import { badRequest, unauthorized } from "@/shared/lib/error-handlers";
 import { canManageItem } from "@/shared/lib/validations/user-access-validation";
 import sessionValidation from "@/shared/lib/validations/user-session-validation";
 import {
@@ -148,7 +148,16 @@ const itemService = {
     }
 
     const result = await prisma.$transaction(async (tx) => {
+      const item = await itemRepository.getById(itemId, tx);
+
+      if (item?.isActive) {
+        throw badRequest(
+          "You cannot delete an active item. Please deactivate it first.",
+        );
+      }
+
       const deletedItem = await itemRepository.delete(itemId, tx);
+
       await auditLogsRepository.create(
         {
           userId: session.id,

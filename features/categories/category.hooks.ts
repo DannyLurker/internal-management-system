@@ -19,11 +19,12 @@ import {
 
 export const useCategory = (
   categoryId: string,
+  filters?: CategoryGetSchema,
   options?: Partial<UseQueryOptions<CategoryGetApiResponse>>,
 ) => {
   return useQuery({
-    queryKey: CATEGORY_KEYS.detail(categoryId),
-    queryFn: () => categoryApi.get(categoryId),
+    queryKey: CATEGORY_KEYS.detail(categoryId, filters),
+    queryFn: () => categoryApi.get(categoryId, filters),
     enabled: Boolean(categoryId),
     staleTime: 1000 * 60 * 5,
     ...options,

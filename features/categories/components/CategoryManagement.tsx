@@ -20,6 +20,7 @@ import type { CategoryListItem } from "@/features/categories/category.types";
 import CategoryTable from "./sub-components/category-table/Index";
 import CategoryFormDialog from "./sub-components/CategoryFormDialog";
 import CategoryDeleteModal from "./sub-components/CategoryDeleteModal";
+import CategoryInfoPanel from "./sub-components/category-table/CategoryInfoPanel";
 import type { CategorySortBy } from "./sub-components/category-table/TableHeader";
 
 export default function CategoryManagement() {
@@ -280,6 +281,12 @@ export default function CategoryManagement() {
         isDeleting={deleteMutation.isPending}
         onClose={closeDelete}
         onConfirm={handleConfirmDelete}
+      />
+
+      <CategoryInfoPanel
+        open={selectedCategoryId !== null}
+        categoryId={selectedCategoryId ?? ""}
+        onClose={() => setSelectedCategoryId(null)}
       />
     </div>
   );
