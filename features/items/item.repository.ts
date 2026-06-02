@@ -134,6 +134,7 @@ const itemRepository = {
     data: ItemUpdateSchema,
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
+
     return await tx.item.update({
       where: { id: data.itemId },
       data: {
@@ -145,6 +146,7 @@ const itemRepository = {
         attributes: data.attributes,
         updatedBy: userId,
         minThreshold: data.minThreshold ? data.minThreshold : undefined,
+        isActive: data.isActive,
       },
     });
   },

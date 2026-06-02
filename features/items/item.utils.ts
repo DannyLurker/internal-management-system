@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import type { ItemStockStatus } from "./item.types";
+import type { AttributeRow, ItemStockStatus } from "./item.types";
 
 export const EXPIRING_WINDOW_DAYS = 14;
 
@@ -72,4 +72,24 @@ export function mapItemListRow<T extends ItemWithStocks>(item: T) {
       : null,
     reason: stockMovements?.[0]?.reason ?? null,
   };
+}
+
+export function parseAttributes(raw: unknown): AttributeRow[] {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return [{ key: "", value: "" }];
+  }
+  const entries = Object.entries(raw as Record<string, unknown>);
+  if (entries.length === 0) return [{ key: "", value: "" }];
+  return entries.map(([key, value]) => ({
+    key,
+    value: String(value ?? ""),
+  }));
+}
+
+export function attributesToRecord(rows: AttributeRow[]) {
+  return rows.reduce<Record<string, unknown>>((acc, row) => {
+    const key = row.key.trim();
+    if (key) acc[key] = row.value;
+    return acc;
+  }, {});
 }

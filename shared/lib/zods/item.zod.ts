@@ -65,13 +65,14 @@ export type ItemGetSchema = z.infer<typeof itemGetSchema>;
 
 export const itemUpdateSchema = z.object({
   itemId: z.string().trim().min(1),
-  categoryId: z.string().trim().min(3),
+  categoryId: z.string().trim().min(3).optional(),
   name: z.string().trim().min(1),
   description: z.string().trim().min(1),
   image: z.string().optional(),
   sellingPrice: z.number().min(1).optional(),
   attributes: z.record(z.any(), z.any()).optional().default({}),
   minThreshold: z.number().optional(),
+  isActive: z.boolean().default(true),
 });
 
 export type ItemUpdateSchema = z.infer<typeof itemUpdateSchema>;

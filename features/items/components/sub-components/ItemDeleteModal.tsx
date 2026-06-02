@@ -27,13 +27,12 @@ export default function ItemDeleteModal({
 
   const handleConfirm = async () => {
     if (!item) return;
+
     try {
       await deleteMutation.mutateAsync(item.id);
       onOpenChange(false);
       onSuccess();
-    } catch {
-      /* API client surfaces errors */
-    }
+    } catch {}
   };
 
   return (
@@ -67,7 +66,11 @@ export default function ItemDeleteModal({
           >
             <div className="flex flex-col items-center px-6 pb-2 pt-8 text-center">
               <span className="flex size-12 items-center justify-center rounded-xl bg-[#ffdad6]/90 text-[#ba1a1a]">
-                <AlertTriangle className="size-6" strokeWidth={1.5} aria-hidden />
+                <AlertTriangle
+                  className="size-6"
+                  strokeWidth={1.5}
+                  aria-hidden
+                />
               </span>
               <h2
                 id={titleId}
@@ -84,7 +87,9 @@ export default function ItemDeleteModal({
                   {item?.name ?? "this item"}
                 </span>{" "}
                 item. This action is{" "}
-                <span className="font-semibold text-[#ba1a1a]">irreversible</span>{" "}
+                <span className="font-semibold text-[#ba1a1a]">
+                  irreversible
+                </span>{" "}
                 and will remove all associated stock and financial history.
               </p>
             </div>

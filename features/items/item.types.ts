@@ -22,3 +22,8 @@ export type ItemUpdateApiResponse = ApiResponse<null>;
 export type ItemDeleteApiResponse = ApiResponse<null>;
 
 export type ItemStockStatus = (typeof itemStockStatusArray)[number];
+
+// Frontend types
+export type AttributeRow = { key: string; value: string };
+
+export type DeleteOrActivateStatus = "DELETE" | "INACTIVE" | "ACTIVE";

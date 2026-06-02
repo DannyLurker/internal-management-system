@@ -21,7 +21,7 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/shared/components/ui/select";
-import type { Item } from "@/features/items/item.types";
+import type { AttributeRow, Item } from "@/features/items/item.types";
 import { useCreateItem, useUpdateItem } from "@/features/items/item.hooks";
 import {
   itemCreateSchema,
@@ -30,11 +30,11 @@ import {
   type ItemUpdateSchema,
 } from "@/shared/lib/zods/item.zod";
 import { cn } from "@/shared/lib/utils";
+import { attributesToRecord, parseAttributes } from "../../item.utils";
+import { inputClass } from "../../item.style";
 
 type LocationOption = { id: string; name: string };
 type CategoryOption = { id: string; name: string };
-
-type AttributeRow = { key: string; value: string };
 
 type ItemFormDialogProps = {
   open: boolean;
@@ -44,29 +44,6 @@ type ItemFormDialogProps = {
   locations: LocationOption[];
   categories: CategoryOption[];
 };
-
-const inputClass =
-  "rounded border-[#d9e3f4] bg-white font-ochre-ui text-sm focus-visible:border-[#894d0d]/50 focus-visible:ring-[#894d0d]/25";
-
-function parseAttributes(raw: unknown): AttributeRow[] {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
-    return [{ key: "", value: "" }];
-  }
-  const entries = Object.entries(raw as Record<string, unknown>);
-  if (entries.length === 0) return [{ key: "", value: "" }];
-  return entries.map(([key, value]) => ({
-    key,
-    value: String(value ?? ""),
-  }));
-}
-
-function attributesToRecord(rows: AttributeRow[]) {
-  return rows.reduce<Record<string, unknown>>((acc, row) => {
-    const key = row.key.trim();
-    if (key) acc[key] = row.value;
-    return acc;
-  }, {});
-}
 
 export default function ItemFormDialog({
   open,

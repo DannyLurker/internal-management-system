@@ -14,6 +14,7 @@ import ItemTable, {
 } from "./sub-components/item-table/Index";
 import ItemFormDialog from "./sub-components/ItemFormDialog";
 import ItemDeleteModal from "./sub-components/ItemDeleteModal";
+import ItemActiveOrInactiveModal from "./sub-components/ItemActiveOrInactiveModal";
 
 type LocationOption = { id: string; name: string };
 
@@ -36,6 +37,9 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
   const [formOpen, setFormOpen] = useState(false);
   const [editItem, setEditItem] = useState<Item | null>(null);
   const [deleteItem, setDeleteItem] = useState<Item | null>(null);
+  const [statusChangeItem, setStatusChangeItem] = useState<Item | null>(null);
+  const [statusChangeStatus, setStatusChangeStatus] =
+    useState<"ACTIVE" | "INACTIVE">("INACTIVE");
 
   useEffect(() => {
     const id = window.setTimeout(
@@ -113,6 +117,11 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
     setDeleteItem(item);
   }, []);
 
+  const openStatusChange = useCallback((item: Item, status: "ACTIVE" | "INACTIVE") => {
+    setStatusChangeItem(item);
+    setStatusChangeStatus(status);
+  }, []);
+
   const handleFormOpenChange = useCallback((open: boolean) => {
     setFormOpen(open);
     if (!open) setEditItem(null);
@@ -120,6 +129,10 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
 
   const handleDeleteOpenChange = useCallback((open: boolean) => {
     if (!open) setDeleteItem(null);
+  }, []);
+
+  const handleStatusChangeOpenChange = useCallback((open: boolean) => {
+    if (!open) setStatusChangeItem(null);
   }, []);
 
   const handleRequestSort = useCallback((column: ItemGetSchema["sortBy"]) => {
@@ -150,6 +163,10 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
 
   const handleDeleteSuccess = useCallback(() => {
     setDeleteItem(null);
+  }, []);
+
+  const handleStatusChangeSuccess = useCallback(() => {
+    setStatusChangeItem(null);
   }, []);
 
   return (
@@ -196,6 +213,7 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
           onPageChange={setPage}
           categoryOptions={categoryOptions}
           onEdit={openEdit}
+          onStatusChange={openStatusChange}
           onDelete={openDelete}
         />
       </div>
@@ -214,6 +232,14 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
         onOpenChange={handleDeleteOpenChange}
         item={deleteItem}
         onSuccess={handleDeleteSuccess}
+      />
+
+      <ItemActiveOrInactiveModal
+        open={statusChangeItem != null}
+        onOpenChange={handleStatusChangeOpenChange}
+        item={statusChangeItem}
+        onSuccess={handleStatusChangeSuccess}
+        status={statusChangeStatus}
       />
     </div>
   );

@@ -49,6 +49,9 @@ export default function TableHeader({
           </button>
         </th>
         <th className="px-4 align-middle font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
+          STATUS
+        </th>
+        <th className="px-4 align-middle font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
           CATEGORY
         </th>
         <th className="px-4 align-middle font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">

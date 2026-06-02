@@ -9,7 +9,11 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { Input } from "@/shared/components/ui/input";
-import type { Item, ItemStockStatus } from "@/features/items/item.types";
+import type {
+  DeleteOrActivateStatus,
+  Item,
+  ItemStockStatus,
+} from "@/features/items/item.types";
 import { cn } from "@/shared/lib/utils";
 import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
@@ -38,6 +42,7 @@ type ItemTableProps = {
   onPageChange: (page: number) => void;
   categoryOptions: { id: string; name: string }[];
   onEdit: (item: Item) => void;
+  onStatusChange: (item: Item, status: "ACTIVE" | "INACTIVE") => void;
   onDelete: (item: Item) => void;
 };
 
@@ -66,6 +71,7 @@ export default function ItemTable({
   onPageChange,
   categoryOptions,
   onEdit,
+  onStatusChange,
   onDelete,
 }: ItemTableProps) {
   const totalPages = Math.ceil(totalItems / dataPerPage);
@@ -223,6 +229,7 @@ export default function ItemTable({
                     key={item.id}
                     item={item}
                     onEdit={onEdit}
+                    onStatusChange={onStatusChange}
                     onDelete={onDelete}
                   />
                 ))

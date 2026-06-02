@@ -186,14 +186,14 @@ model Category {
 }
 
 model Item {
-  id           String   @id @default(cuid())
-  name         String   @unique
+  id           String  @id @default(cuid())
+  name         String  @unique
   image        String?
   description  String
-  sellingPrice Decimal?
+  sellingPrice Int?
   attributes   Json?
-  minThreshold Int      @default(0)
-  isActive     Boolean  @default(true)
+  minThreshold Int     @default(0)
+  isActive     Boolean @default(true)
 
   stockMovements StockMovement[]
   categoryId     String?
@@ -237,7 +237,7 @@ model Stock {
 model StockMovement {
   id        String       @id @default(cuid())
   quantity  Int
-  totalCost Decimal?
+  totalCost Int?
   type      MovementType
   reason    String?
 
@@ -265,7 +265,7 @@ model Order {
   id             String  @id @default(cuid())
   roomNumber     String?
   guestName      String?
-  totalAmount    Decimal @default(0)
+  totalAmount    Int     @default(0)
   isBilledToRoom Boolean @default(true)
 
   items          OrderItem[]
@@ -279,9 +279,9 @@ model Order {
 }
 
 model OrderItem {
-  id          String  @id @default(cuid())
+  id          String @id @default(cuid())
   quantity    Int
-  priceAtSale Decimal
+  priceAtSale Int
 
   orderId String
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
