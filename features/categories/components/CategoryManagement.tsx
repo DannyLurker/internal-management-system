@@ -35,6 +35,9 @@ export default function CategoryManagement() {
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "update">("create");
   const [editTarget, setEditTarget] = useState<CategoryListItem | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null,
+  );
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<CategoryListItem | null>(
@@ -252,6 +255,7 @@ export default function CategoryManagement() {
           onDelete={openDelete}
           onCreateFirst={openCreate}
           onImportData={handleImportPlaceholder}
+          onInfo={(categoryId) => setSelectedCategoryId(categoryId)}
         />
       </div>
 

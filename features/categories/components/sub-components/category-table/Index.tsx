@@ -13,6 +13,7 @@ import TableRow from "./TableRow";
 import type { CategoryGetSchema } from "@/shared/lib/zods/category.zod";
 
 type CategoryTableProps = {
+  onInfo: (categoryId: string) => void;
   totalCategoryData: number;
   categories: CategoryListItem[];
   isLoading: boolean;
@@ -42,6 +43,7 @@ export default function CategoryTable({
   onPageChange,
   onEdit,
   onDelete,
+  onInfo,
   onCreateFirst,
   onImportData,
 }: CategoryTableProps) {
@@ -139,6 +141,7 @@ export default function CategoryTable({
                     category={c}
                     onEdit={onEdit}
                     onDelete={onDelete}
+                    onInfo={onInfo}
                   />
                 ))}
           </tbody>
