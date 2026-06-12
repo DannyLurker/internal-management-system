@@ -55,7 +55,7 @@ const categoryRepository = {
             : undefined,
       },
       select: {
-        products: {
+        items: {
           select: {
             id: true,
           },
@@ -87,7 +87,7 @@ const categoryRepository = {
     return {
       categories: categories.map((category) => ({
         ...category,
-        totalProducts: category.products.length,
+        totalProducts: category.items.length,
       })),
       totalCategoryData,
     };
@@ -113,7 +113,7 @@ const categoryRepository = {
             name: true,
           },
         },
-        products: {
+        items: {
           where: {
             name:
               params.search && params.search.length >= 3
@@ -175,8 +175,8 @@ const categoryRepository = {
     return {
       ...categories,
       totalProducts,
-      products: categories.products.map((product) => ({
-        ...product,
+      products: categories.items.map((item) => ({
+        ...item,
       })),
     };
   },

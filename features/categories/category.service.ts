@@ -8,8 +8,11 @@ import {
 } from "@/shared/lib/zods/category.zod";
 import categoryRepository from "./category.repository";
 import prisma from "@/shared/db/prisma";
-import { canManageCategory } from "@/shared/lib/validations/user-access-validation";
-import { forbidden } from "@/shared/lib/error-handlers";
+import {
+  canDeleteCategory,
+  canManageCategory,
+} from "@/shared/lib/validations/user-access-validation";
+import { badRequest, forbidden } from "@/shared/lib/error-handlers";
 import auditLogsRepository from "../audit-logs/audit-log.repository";
 
 const categoryService = {
@@ -131,7 +134,7 @@ const categoryService = {
   delete: async (categoryId: string) => {
     const session = await sessionValidation();
 
-    if (!canManageCategory(session.role)) {
+    if (!canDeleteCategory(session.role)) {
       throw forbidden("You're not allowed to access this feature");
     }
 
@@ -139,7 +142,21 @@ const categoryService = {
       // Get existing category for audit log before deletion
       const existingCategory = await tx.category.findUnique({
         where: { id: categoryId },
+        select: {
+          name: true,
+          items: {
+            select: {
+              id: true,
+            },
+            take: 1,
+          },
+        },
       });
+
+      if (existingCategory?.items && existingCategory?.items.length > 0)
+        throw badRequest(
+          "Item was found in this category. Migrate all the items before deleting",
+        );
 
       const category = await categoryRepository.delete(categoryId, tx);
 

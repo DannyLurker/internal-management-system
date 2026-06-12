@@ -1,6 +1,9 @@
 import prisma from "@/shared/db/prisma";
 import { badRequest, unauthorized } from "@/shared/lib/error-handlers";
-import { canManageItem } from "@/shared/lib/validations/user-access-validation";
+import {
+  canDeleteItem,
+  canManageItem,
+} from "@/shared/lib/validations/user-access-validation";
 import sessionValidation from "@/shared/lib/validations/user-session-validation";
 import {
   itemCreateSchema,
@@ -143,7 +146,7 @@ const itemService = {
 
   delete: async (itemId: string) => {
     const session = await sessionValidation();
-    if (!canManageItem(session.role)) {
+    if (!canDeleteItem(session.role)) {
       throw unauthorized("You're not allowed to access this feature");
     }
 

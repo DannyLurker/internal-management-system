@@ -38,8 +38,9 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
   const [editItem, setEditItem] = useState<Item | null>(null);
   const [deleteItem, setDeleteItem] = useState<Item | null>(null);
   const [statusChangeItem, setStatusChangeItem] = useState<Item | null>(null);
-  const [statusChangeStatus, setStatusChangeStatus] =
-    useState<"ACTIVE" | "INACTIVE">("INACTIVE");
+  const [statusChangeStatus, setStatusChangeStatus] = useState<
+    "ACTIVE" | "INACTIVE"
+  >("INACTIVE");
 
   useEffect(() => {
     const id = window.setTimeout(
@@ -117,10 +118,13 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
     setDeleteItem(item);
   }, []);
 
-  const openStatusChange = useCallback((item: Item, status: "ACTIVE" | "INACTIVE") => {
-    setStatusChangeItem(item);
-    setStatusChangeStatus(status);
-  }, []);
+  const openStatusChange = useCallback(
+    (item: Item, status: "ACTIVE" | "INACTIVE") => {
+      setStatusChangeItem(item);
+      setStatusChangeStatus(status);
+    },
+    [],
+  );
 
   const handleFormOpenChange = useCallback((open: boolean) => {
     setFormOpen(open);

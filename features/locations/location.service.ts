@@ -1,6 +1,9 @@
 import prisma from "@/shared/db/prisma";
-import { forbidden, notFound } from "@/shared/lib/error-handlers";
-import { canManageLocation } from "@/shared/lib/validations/user-access-validation";
+import { badRequest, forbidden, notFound } from "@/shared/lib/error-handlers";
+import {
+  canDeleteLocation,
+  canManageLocation,
+} from "@/shared/lib/validations/user-access-validation";
 import sessionValidation from "@/shared/lib/validations/user-session-validation";
 import {
   locationCreateSchema,
@@ -299,7 +302,7 @@ const locationService = {
   delete: async (locationId: string) => {
     const session = await sessionValidation();
 
-    if (!canManageLocation(session.role)) {
+    if (!canDeleteLocation(session.role)) {
       throw forbidden("You're not allowed to access this feature");
     }
 
@@ -309,6 +312,12 @@ const locationService = {
         name: true,
         type: true,
         description: true,
+        stocks: {
+          select: {
+            id: true,
+          },
+          take: 1,
+        },
       });
 
       const existing = await locationRepository.get(
@@ -316,7 +325,13 @@ const locationService = {
         selectData,
         tx,
       );
+
       if (!existing) throw notFound("Location not found");
+
+      if (existing.id)
+        throw badRequest(
+          "Item was found in this location. Migrate all the item before deleting.",
+        );
 
       const location = await locationRepository.delete(locationId, tx);
 

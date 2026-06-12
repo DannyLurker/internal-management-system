@@ -17,3 +17,15 @@ export const canManageCategory = (role: Roles) => {
 export const canManageItem = (role: Roles) => {
   return PERMISSIONS.MANAGE_ITEM.includes(role);
 };
+
+export const canDeleteLocation = (role: Roles) => {
+  return role === "HOTEL_MANAGER";
+};
+
+export const canDeleteCategory = (role: Roles) => {
+  return role === "HOTEL_MANAGER";
+};
+
+export const canDeleteItem = (role: Roles) => {
+  return role === "HOTEL_MANAGER";
+};

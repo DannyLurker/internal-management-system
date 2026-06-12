@@ -8,6 +8,8 @@ import {
 } from "@/features/locations/location.styles";
 import { formatLocationTypeBadge } from "@/features/locations/location.utils";
 import { cn } from "@/shared/lib/utils";
+import { useSession } from "next-auth/react";
+import { canDeleteLocation } from "@/shared/lib/validations/user-access-validation";
 
 type TableRowProps = {
   location: LocationListItem;
@@ -22,6 +24,8 @@ export default function TableRow({
   onEdit,
   onDelete,
 }: TableRowProps) {
+  const { data } = useSession();
+
   return (
     <tr className="border-b border-[#eef4ff] last:border-0 hover:bg-[#f8f9ff]/80">
       <td className="px-4 py-3 align-middle">
@@ -62,18 +66,20 @@ export default function TableRow({
           >
             <Pencil className="size-4" strokeWidth={1.5} />
           </button>
-          <button
-            type="button"
-            onClick={() => onDelete(location)}
-            className={cn(
-              sharedButtonClasses,
-              "hover:bg-[#ffdad6]/60 hover:text-[#ba1a1a]",
-              "focus-visible:ring-[#ba1a1a]",
-            )}
-            aria-label={`Delete ${location.name}`}
-          >
-            <Trash2 className="size-4" strokeWidth={1.5} />
-          </button>
+          {data?.user.role && canDeleteLocation(data?.user.role) && (
+            <button
+              type="button"
+              onClick={() => onDelete(location)}
+              className={cn(
+                sharedButtonClasses,
+                "hover:bg-[#ffdad6]/60 hover:text-[#ba1a1a]",
+                "focus-visible:ring-[#ba1a1a]",
+              )}
+              aria-label={`Delete ${location.name}`}
+            >
+              <Trash2 className="size-4" strokeWidth={1.5} />
+            </button>
+          )}
         </div>
       </td>
     </tr>

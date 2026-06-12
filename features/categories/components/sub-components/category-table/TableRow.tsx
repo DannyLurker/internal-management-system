@@ -4,7 +4,9 @@ import { sharedButtonClasses } from "@/features/categories/category.styles";
 import type { CategoryListItem } from "@/features/categories/category.types";
 import { infoButtonClasses } from "@/features/locations/location.styles";
 import { cn } from "@/shared/lib/utils";
+import { canDeleteCategory } from "@/shared/lib/validations/user-access-validation";
 import { Folder, Info, InfoIcon, Pencil, Trash2 } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 function formatUpdatedAt(value: Date | string) {
   return new Intl.DateTimeFormat("en-US", {
@@ -29,6 +31,8 @@ export default function TableRow({
   onEdit,
   onDelete,
 }: TableRowProps) {
+  const { data } = useSession();
+
   return (
     <tr className="border-b border-[#eef4ff] last:border-0 hover:bg-[#f8f9ff]/80">
       <td className="px-4 py-3 align-middle">
@@ -42,7 +46,7 @@ export default function TableRow({
         </div>
       </td>
       <td className="px-4 py-3 align-middle">
-        <span className="inline-flex min-w-[2.5rem] items-center justify-center rounded-md bg-[#121c28] px-2 py-0.5 font-ochre-ui text-xs font-semibold text-white">
+        <span className="inline-flex min-w-10 items-center justify-center rounded-md bg-[#121c28] px-2 py-0.5 font-ochre-ui text-xs font-semibold text-white">
           {category.totalProducts}
         </span>
       </td>
@@ -73,19 +77,21 @@ export default function TableRow({
             <Pencil className="size-4" strokeWidth={1.5} />
           </button>
 
-          <button
-            type="button"
-            onClick={() => onDelete(category)}
-            className={cn(
-              sharedButtonClasses,
+          {data?.user.role && canDeleteCategory(data.user.role) && (
+            <button
+              type="button"
+              onClick={() => onDelete(category)}
+              className={cn(
+                sharedButtonClasses,
 
-              "hover:bg-[#ffdad6]/60 hover:text-[#ba1a1a]",
-              "focus-visible:ring-[#ba1a1a]",
-            )}
-            aria-label={`Delete ${category.name}`}
-          >
-            <Trash2 className="size-4" strokeWidth={1.5} />
-          </button>
+                "hover:bg-[#ffdad6]/60 hover:text-[#ba1a1a]",
+                "focus-visible:ring-[#ba1a1a]",
+              )}
+              aria-label={`Delete ${category.name}`}
+            >
+              <Trash2 className="size-4" strokeWidth={1.5} />
+            </button>
+          )}
         </div>
       </td>
     </tr>

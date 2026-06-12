@@ -172,9 +172,9 @@ model Location {
 }
 
 model Category {
-  id       String @id @default(cuid())
-  name     String @unique
-  products Item[]
+  id    String @id @default(cuid())
+  name  String @unique
+  items Item[]
 
   createdBy     String?
   updatedBy     String?
@@ -220,7 +220,7 @@ model Stock {
   itemId     String
   item       Item      @relation(fields: [itemId], references: [id], onDelete: Cascade)
   locationId String?
-  location   Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  location   Location? @relation(fields: [locationId], references: [id])
 
   createdBy String
   creator   User   @relation(fields: [createdBy], references: [id])

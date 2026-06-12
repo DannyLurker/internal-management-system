@@ -9,6 +9,8 @@ import {
 } from "@/features/items/item.utils";
 import { cn } from "@/shared/lib/utils";
 import { formatItemDate, formatItemPrice } from "@/shared/lib/formatter";
+import { useSession } from "next-auth/react";
+import { canDeleteItem } from "@/shared/lib/validations/user-access-validation";
 
 type TableRowProps = {
   item: Item;
@@ -23,6 +25,8 @@ export default function TableRow({
   onStatusChange,
   onDelete,
 }: TableRowProps) {
+  const { data } = useSession();
+
   const status = item.status;
   const categoryLabel = item.category?.name ?? "General";
 
@@ -60,7 +64,9 @@ export default function TableRow({
         <span
           className={cn(
             "inline-flex rounded-full border px-2.5 py-0.5 font-ochre-ui text-[10px] font-semibold uppercase tracking-wider",
-            item.isActive ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800",
+            item.isActive
+              ? "bg-emerald-100 text-emerald-800"
+              : "bg-rose-100 text-rose-800",
           )}
         >
           {item.isActive ? "ACTIVE" : "INACTIVE"}
@@ -144,25 +150,27 @@ export default function TableRow({
             </button>
           )}
 
-          {!item.isActive && (
-            <button
-              type="button"
-              onClick={() => {
-                onDelete(item);
-              }}
-              className={cn(
-                "rounded-md p-2 outline-none inline-flex items-center justify-center transition-all duration-200 ease-out",
-                "bg-transparent text-[#565e74]",
-                "hover:-translate-y-0.5 active:translate-y-0",
-                "hover:shadow-[0_8px_16px_-6px_rgba(15,23,42,0.08)]",
-                "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#ba1a1a]",
-                "hover:bg-[#ffdad6]/60 hover:text-[#ba1a1a]",
-              )}
-              aria-label={`Delete ${item.name}`}
-            >
-              <Trash2 className="size-4" strokeWidth={1.5} />
-            </button>
-          )}
+          {!item.isActive &&
+            data?.user.role &&
+            canDeleteItem(data?.user.role) && (
+              <button
+                type="button"
+                onClick={() => {
+                  onDelete(item);
+                }}
+                className={cn(
+                  "rounded-md p-2 outline-none inline-flex items-center justify-center transition-all duration-200 ease-out",
+                  "bg-transparent text-[#565e74]",
+                  "hover:-translate-y-0.5 active:translate-y-0",
+                  "hover:shadow-[0_8px_16px_-6px_rgba(15,23,42,0.08)]",
+                  "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#ba1a1a]",
+                  "hover:bg-[#ffdad6]/60 hover:text-[#ba1a1a]",
+                )}
+                aria-label={`Delete ${item.name}`}
+              >
+                <Trash2 className="size-4" strokeWidth={1.5} />
+              </button>
+            )}
         </div>
       </td>
     </tr>
