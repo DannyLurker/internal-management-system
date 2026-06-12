@@ -3,6 +3,7 @@ import {
   dataPerPage,
   page,
   sortItemByEnum,
+  sortItemDetailByEnum,
   sortOrderEnum,
   statusItemEnum,
 } from "./general.zod";
@@ -62,6 +63,13 @@ export const itemGetSchema = z.object({
 });
 
 export type ItemGetSchema = z.infer<typeof itemGetSchema>;
+
+export const itemGetDetailSchema = z.object({
+  page,
+  dataPerPage,
+  sortBy: sortItemDetailByEnum.default("quantity"),
+  orderBy: sortOrderEnum.default("asc"),
+});
 
 export const itemUpdateSchema = z.object({
   itemId: z.string().trim().min(1),

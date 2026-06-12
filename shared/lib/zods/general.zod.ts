@@ -9,6 +9,7 @@ export const sortOrderEnum = z.enum(["asc", "desc"]).default("asc");
 
 export const userActionEnum = z.enum(["CREATE", "UPDATE", "DELETE"]);
 export const sortItemByEnum = z.enum(["name", "createdAt"]).default("name");
+export const sortItemDetailByEnum = z.enum(["quantity", "updatedAt"]);
 export const statusItemEnum = z.enum(itemStockStatusArray);
 export const sortItemEnumAtLocation = z
   .enum(["name", "stockType"])
@@ -21,6 +22,15 @@ export const sortLocationEnum = z
   .enum(["name", "createdAt", "type", "updatedAt"])
   .default("type");
 export const locationEnum = z.enum(Object.values(LocationType));
+
+export const stockEnum = z.enum(Object.values(StockType));
+export const stockSortByEnum = z.enum([
+  "quantity",
+  "type",
+  "expiredAt",
+  "createdAt",
+  "updatedAt",
+]);
 
 export const generateReadableError = (issue: z.core.$ZodIssue): string => {
   const fieldName = issue.path.join(".");
