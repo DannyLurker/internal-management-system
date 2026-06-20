@@ -1,6 +1,5 @@
 import { cn } from "@/shared/lib/utils";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import React from "react";
 
 interface SidebarLogoProps {
   isExpanded: boolean;

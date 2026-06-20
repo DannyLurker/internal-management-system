@@ -30,7 +30,7 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
   const [tableFilters, setTableFilters] = useState<ItemTableFilters>({
     search: "",
     categoryId: "ALL",
-    status: "ALL",
+    activeStatus: undefined,
   });
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -57,7 +57,7 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
     sortBy,
     orderBy,
     tableFilters.categoryId,
-    tableFilters.status,
+    tableFilters.activeStatus,
   ]);
 
   const categoryListParams = useMemo(
@@ -86,7 +86,12 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
         tableFilters.categoryId !== "ALL" ? tableFilters.categoryId : undefined,
       search:
         debouncedSearch.trim().length >= 3 ? debouncedSearch.trim() : undefined,
-      status: tableFilters.status !== "ALL" ? tableFilters.status : undefined,
+      status:
+        tableFilters.activeStatus === undefined
+          ? undefined
+          : tableFilters.activeStatus
+            ? "true"
+            : "false",
     };
     return itemGetSchema.parse(raw);
   }, [
@@ -95,7 +100,7 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
     orderBy,
     debouncedSearch,
     tableFilters.categoryId,
-    tableFilters.status,
+    tableFilters.activeStatus,
     dataPerPage,
   ]);
 

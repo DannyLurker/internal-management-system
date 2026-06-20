@@ -1,10 +1,13 @@
-import {
-  ItemCreateSchema,
-  ItemGetSchema,
-  ItemUpdateSchema,
-} from "@/shared/lib/zods/item.zod";
+import { ItemCreateSchema, ItemUpdateSchema } from "@/shared/lib/zods/item.zod";
 import { Prisma, PrismaClient } from "@prisma/client";
-import { EXPIRING_WINDOW_DAYS } from "./item.utils";
+
+export const createSelectItemData = <T extends Prisma.ItemSelect>(
+  select: T,
+): T => select;
+
+export const createIncludeItemData = <T extends Prisma.ItemSelect>(
+  select: T,
+): T => select;
 
 const itemRepository = {
   create: async (
@@ -65,68 +68,33 @@ const itemRepository = {
     });
   },
 
-  getManyRawData: async (
-    params: ItemGetSchema,
+  getManyInclude: async <T extends Prisma.ItemSelect>(
+    where: Prisma.ItemWhereInput,
+    include: Prisma.Subset<T, Prisma.ItemInclude>,
+    skip: number | undefined,
+    take: number | undefined,
+    sortBy: string,
+    orderBy: "asc" | "desc",
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
-    const whereClause: Prisma.ItemWhereInput = {};
+    return await tx.item.findMany({
+      where,
+      include,
+      skip,
+      take,
+      orderBy: {
+        [sortBy]: orderBy,
+      },
+    });
+  },
 
-    if (params.search && params.search.length >= 3) {
-      whereClause.name = { contains: params.search, mode: "insensitive" };
-    }
-    if (params.isByCategory && params.categoryId) {
-      whereClause.categoryId = params.categoryId;
-    }
-
-    const expiringWindow = new Date();
-    expiringWindow.setDate(expiringWindow.getDate() + EXPIRING_WINDOW_DAYS);
-
-    if (params.status === "OUT_OF_STOCK") {
-      whereClause.stocks = { none: { type: "READY", quantity: { gt: 0 } } };
-    } else if (params.status === "EXPIRING_SOON") {
-      whereClause.stocks = {
-        some: {
-          type: "READY",
-          expiredAt: { lte: expiringWindow, gte: new Date() },
-        },
-      };
-    }
-
-    const requiresInMemoryProcessing =
-      params.status === "LOW_STOCK" || params.status === "IN_STOCK";
-
-    const skip =
-      params.isTakeAll || requiresInMemoryProcessing
-        ? undefined
-        : (params.page - 1) * params.dataPerPage;
-
-    const take =
-      params.isTakeAll || requiresInMemoryProcessing
-        ? undefined
-        : params.dataPerPage;
-
-    const [items, totalItemsCount] = await Promise.all([
-      tx.item.findMany({
-        where: whereClause,
-        include: {
-          category: { select: { id: true, name: true } },
-          stocks: {
-            where: { type: "READY", quantity: { gte: 0 } },
-            select: { quantity: true, expiredAt: true },
-          },
-        },
-        skip,
-        take,
-        orderBy: { [params.sortBy]: params.orderBy },
-      }),
-      tx.item.count({ where: whereClause }),
-    ]);
-
-    return {
-      items,
-      totalItemsCount,
-      wasPaginatedByDb: !requiresInMemoryProcessing,
-    };
+  countItems: async (
+    where: Prisma.ItemWhereInput,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    return await tx.item.count({
+      where,
+    });
   },
 
   update: async (
@@ -134,7 +102,6 @@ const itemRepository = {
     data: ItemUpdateSchema,
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
-
     return await tx.item.update({
       where: { id: data.itemId },
       data: {

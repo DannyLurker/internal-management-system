@@ -278,27 +278,38 @@ export async function createStocksSeed(
       continue;
     }
 
-    await prisma.stock.upsert({
+    const existingStock = await prisma.stock.findFirst({
       where: {
-        itemId_locationId_type: {
+        itemId: item.id,
+        locationId: location.id,
+        type: stockEntry.type,
+        expiredAt: stockEntry.expiredAt ? new Date(stockEntry.expiredAt) : null,
+      },
+    });
+
+    if (existingStock) {
+      // 2. If it exists, update the record using its unique ID
+      await prisma.stock.update({
+        where: { id: existingStock.id },
+        data: {
+          quantity: existingStock.quantity + stockEntry.quantity,
+        },
+      });
+    } else {
+      // 3. If it doesn't exist, build a brand new record
+      await prisma.stock.create({
+        data: {
           itemId: item.id,
           locationId: location.id,
           type: stockEntry.type,
+          quantity: stockEntry.quantity,
+          expiredAt: stockEntry.expiredAt
+            ? new Date(stockEntry.expiredAt)
+            : null,
+          createdBy: housekeepingUser.id, // Ensure you map your required creator relation field here
         },
-      },
-      update: {
-        quantity: stockEntry.quantity,
-        expiredAt: stockEntry.expiredAt ?? null,
-      },
-      create: {
-        itemId: item.id,
-        locationId: location.id,
-        quantity: stockEntry.quantity,
-        type: stockEntry.type,
-        createdBy: housekeepingUser.id,
-        ...(stockEntry.expiredAt && { expiredAt: stockEntry.expiredAt }),
-      },
-    });
+      });
+    }
     stockCount++;
   }
 

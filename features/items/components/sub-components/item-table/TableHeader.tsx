@@ -61,9 +61,6 @@ export default function TableHeader({
           PRICE
         </th>
         <th className="px-4 align-middle font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
-          STATUS
-        </th>
-        <th className="px-4 align-middle font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
           <button
             type="button"
             onClick={() => onRequestSort("createdAt")}

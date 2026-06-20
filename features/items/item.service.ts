@@ -12,9 +12,10 @@ import {
   itemUpdateSchema,
   ItemUpdateSchema,
 } from "@/shared/lib/zods/item.zod";
-import itemRepository from "./item.repository";
+import itemRepository, { createIncludeItemData } from "./item.repository";
 import auditLogsRepository from "../audit-logs/audit-log.repository";
 import { mapItemListRow } from "./item.utils";
+import { Prisma } from "@prisma/client";
 
 const itemService = {
   create: async (rawData: ItemCreateSchema) => {
@@ -61,37 +62,54 @@ const itemService = {
       throw unauthorized("You're not allowed to access this feature");
     }
 
-    const { items, totalItemsCount, wasPaginatedByDb } =
-      await itemRepository.getManyRawData(validatedParams, prisma);
+    const whereClause: Prisma.ItemWhereInput = {
+      isActive: validatedParams.status,
+    };
 
-    const processedItems = items.map((item) => mapItemListRow(item));
-
-    let filteredItems = processedItems;
-    if (!wasPaginatedByDb && validatedParams.status) {
-      filteredItems = processedItems.filter(
-        (item) => item.status === validatedParams.status,
-      );
+    if (validatedParams.search && validatedParams.search.length >= 3) {
+      whereClause.name = {
+        contains: validatedParams.search,
+        mode: "insensitive",
+      };
+    }
+    if (validatedParams.isByCategory && validatedParams.categoryId) {
+      whereClause.categoryId = validatedParams.categoryId;
     }
 
-    let finalItems = filteredItems;
-    let finalTotal = totalItemsCount;
+    // Pagination
+    const skip = (validatedParams.page - 1) * validatedParams.dataPerPage;
 
-    if (!wasPaginatedByDb) {
-      finalTotal = filteredItems.length;
-      const skip = validatedParams.isTakeAll
-        ? 0
-        : (validatedParams.page - 1) * validatedParams.dataPerPage;
-      const limit = validatedParams.isTakeAll
-        ? finalTotal
-        : validatedParams.dataPerPage;
-      finalItems = filteredItems.slice(skip, skip + limit);
-    }
+    const take = validatedParams.dataPerPage;
+
+    const includeQuery = createIncludeItemData({
+      stocks: {
+        where: {},
+        select: { quantity: true, expiredAt: true },
+      },
+      category: { select: { id: true, name: true } },
+    });
+
+    const [items, totalItems] = await Promise.all([
+      await itemRepository.getManyInclude(
+        whereClause,
+        includeQuery,
+        skip,
+        take,
+        validatedParams.sortBy,
+        validatedParams.orderBy,
+        prisma,
+      ),
+      await itemRepository.countItems(whereClause, prisma),
+    ]);
+
+    // Add status field
+    const formattedItems = items.map((item) => mapItemListRow(item));
 
     return {
-      message: "Items retrieved successfully",
+      message: `Item data retrieved successfully`,
       data: {
-        items: finalItems,
-        totalItems: finalTotal,
+        items: formattedItems,
+        totalItems,
       },
     };
   },

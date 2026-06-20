@@ -5,7 +5,7 @@ import type { CategoryListItem } from "@/features/categories/category.types";
 import { infoButtonClasses } from "@/features/locations/location.styles";
 import { cn } from "@/shared/lib/utils";
 import { canDeleteCategory } from "@/shared/lib/validations/user-access-validation";
-import { Folder, Info, InfoIcon, Pencil, Trash2 } from "lucide-react";
+import { Folder, Info, Pencil, Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 function formatUpdatedAt(value: Date | string) {

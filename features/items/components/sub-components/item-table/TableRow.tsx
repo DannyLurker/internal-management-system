@@ -2,11 +2,7 @@
 
 import Image from "next/image";
 import { Pencil, PowerIcon, PowerOff, Trash2 } from "lucide-react";
-import type { DeleteOrActivateStatus, Item } from "@/features/items/item.types";
-import {
-  ITEM_STATUS_LABELS,
-  ITEM_STATUS_STYLES,
-} from "@/features/items/item.utils";
+import type { Item } from "@/features/items/item.types";
 import { cn } from "@/shared/lib/utils";
 import { formatItemDate, formatItemPrice } from "@/shared/lib/formatter";
 import { useSession } from "next-auth/react";
@@ -27,7 +23,6 @@ export default function TableRow({
 }: TableRowProps) {
   const { data } = useSession();
 
-  const status = item.status;
   const categoryLabel = item.category?.name ?? "General";
 
   return (
@@ -83,16 +78,7 @@ export default function TableRow({
       <td className="px-4 py-3 align-middle font-ochre-ui text-sm text-[#121c28]">
         {formatItemPrice(item.sellingPrice)}
       </td>
-      <td className="px-4 py-3 align-middle">
-        <span
-          className={cn(
-            "inline-flex rounded-full border px-2.5 py-0.5 font-ochre-ui text-[10px] font-semibold uppercase tracking-wider",
-            ITEM_STATUS_STYLES[status],
-          )}
-        >
-          {ITEM_STATUS_LABELS[status]}
-        </span>
-      </td>
+
       <td className="px-4 py-3 align-middle font-ochre-ui text-sm text-[#524439]">
         {formatItemDate(item.updatedAt)}
       </td>

@@ -4,7 +4,6 @@ import {
   CategoryListApiResponse,
   CategoryUpdateApiResponse,
 } from "@/features/categories/category.types";
-import { ApiResponse } from "@/shared/lib/api-client";
 import {
   handleError,
   printConsoleError,

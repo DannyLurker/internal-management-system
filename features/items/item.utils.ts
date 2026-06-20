@@ -9,6 +9,7 @@ export const itemStockStatusArray = [
   "LOW_STOCK",
   "OUT_OF_STOCK",
   "EXPIRING_SOON",
+  "EXPIRED",
 ] as const;
 
 export const ITEM_STATUS_LABELS: Record<ItemStockStatus, string> = {
@@ -17,6 +18,7 @@ export const ITEM_STATUS_LABELS: Record<ItemStockStatus, string> = {
   LOW_STOCK: "LOW STOCK",
   OUT_OF_STOCK: "OUT OF STOCK",
   EXPIRING_SOON: "EXPIRING SOON",
+  EXPIRED: "EXPIRED",
 };
 
 export const ITEM_STATUS_STYLES: Record<ItemStockStatus, string> = {
@@ -25,6 +27,7 @@ export const ITEM_STATUS_STYLES: Record<ItemStockStatus, string> = {
   LOW_STOCK: "border-amber-500/70 text-amber-800",
   OUT_OF_STOCK: "border-red-500/70 text-red-800",
   EXPIRING_SOON: "border-[#857467]/50 text-[#524439]",
+  EXPIRED: "border-black text-[#524439]",
 };
 
 type ItemWithStocks = {
@@ -39,34 +42,13 @@ type ItemWithStocks = {
 
 export function mapItemListRow<T extends ItemWithStocks>(item: T) {
   const { stocks, stockMovements, ...rest } = item;
+
   const totalStock = stocks.reduce((sum, s) => sum + s.quantity, 0);
-
-  const expiryDates = stocks
-    .map((s) => s.expiredAt)
-    .filter((d): d is Date => d != null)
-    .sort((a, b) => a.getTime() - b.getTime());
-
-  const expiringWindow = new Date();
-  expiringWindow.setDate(expiringWindow.getDate() + EXPIRING_WINDOW_DAYS);
-
-  const hasExpiringStock = stocks.some(
-    (s) =>
-      s.expiredAt &&
-      new Date(s.expiredAt) <= expiringWindow &&
-      new Date(s.expiredAt) >= new Date(),
-  );
-
-  let status: ItemStockStatus = "IN_STOCK";
-  if (totalStock === 0) status = "OUT_OF_STOCK";
-  else if (hasExpiringStock) status = "EXPIRING_SOON";
-  else if (totalStock <= item.minThreshold) status = "LOW_STOCK";
 
   return {
     ...rest,
     stocks,
     totalStock,
-    status,
-    nearestExpiredAt: expiryDates[0] ?? null,
     totalCost: stockMovements?.[0]?.totalCost
       ? Number(stockMovements[0].totalCost)
       : null,

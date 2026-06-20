@@ -9,11 +9,7 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { Input } from "@/shared/components/ui/input";
-import type {
-  DeleteOrActivateStatus,
-  Item,
-  ItemStockStatus,
-} from "@/features/items/item.types";
+import type { Item } from "@/features/items/item.types";
 import { cn } from "@/shared/lib/utils";
 import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
@@ -22,7 +18,7 @@ import type { ItemGetSchema } from "@/shared/lib/zods/item.zod";
 export type ItemTableFilters = {
   search: string;
   categoryId: string;
-  status: ItemStockStatus | "ALL";
+  activeStatus: true | false | undefined;
 };
 
 type ItemTableProps = {
@@ -45,14 +41,6 @@ type ItemTableProps = {
   onStatusChange: (item: Item, status: "ACTIVE" | "INACTIVE") => void;
   onDelete: (item: Item) => void;
 };
-
-const STATUS_OPTIONS: { value: ItemStockStatus | "ALL"; label: string }[] = [
-  { value: "ALL", label: "All" },
-  { value: "IN_STOCK", label: "In stock" },
-  { value: "LOW_STOCK", label: "Low stock" },
-  { value: "OUT_OF_STOCK", label: "Out of stock" },
-  { value: "EXPIRING_SOON", label: "Expiring soon" },
-];
 
 export default function ItemTable({
   items,
@@ -136,26 +124,27 @@ export default function ItemTable({
           </Select>
 
           <Select
-            value={filters.status}
+            value={
+              filters.activeStatus === true
+                ? "Active"
+                : filters.activeStatus === false
+                  ? "Inactive"
+                  : "All"
+            }
             onValueChange={(value) =>
               onFiltersChange({
-                status: value as ItemStockStatus,
+                activeStatus:
+                  value === "undefined" ? undefined : value === "Active",
               })
             }
           >
             <SelectTrigger className="h-10 min-w-36 rounded-lg border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15">
-              <SelectValue>
-                {filters.status === "ALL"
-                  ? "Status: All"
-                  : `Status: ${STATUS_OPTIONS.find((s) => s.value === filters.status)?.label}`}
-              </SelectValue>
+              <SelectValue placeholder="Active / Inactive" />
             </SelectTrigger>
             <SelectContent>
-              {STATUS_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  Status: {opt.label}
-                </SelectItem>
-              ))}
+              <SelectItem value="undefined">All</SelectItem>
+              <SelectItem value="Active">Active</SelectItem>
+              <SelectItem value="Inactive">Inactive</SelectItem>
             </SelectContent>
           </Select>
 

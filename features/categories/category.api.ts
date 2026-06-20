@@ -1,4 +1,4 @@
-import { api, ApiResponse } from "@/shared/lib/api-client";
+import { api } from "@/shared/lib/api-client";
 import {
   CategoryCreateApiResponse,
   CategoryDeleteApiResponse,

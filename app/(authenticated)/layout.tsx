@@ -16,7 +16,7 @@ export default function AuthenticatedLayout({
   const router = useRouter();
   const { isOpen } = useGlobalSidebar();
   const { setIsLoading } = useGlobalLoading();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
 
   useEffect(() => {
     if (status === "unauthenticated") {

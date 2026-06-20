@@ -5,7 +5,6 @@ import {
   sortItemByEnum,
   sortItemDetailByEnum,
   sortOrderEnum,
-  statusItemEnum,
 } from "./general.zod";
 
 export const itemCreateSchema = z.object({
@@ -55,11 +54,21 @@ export const itemGetSchema = z.object({
     .preprocess((val) => val === "true", z.boolean())
     .default(false),
   categoryId: z.string().optional(),
-  isTakeAll: z.preprocess((val) => val === "true", z.boolean()).default(false),
+  // isTakeAll: z.preprocess((val) => val === "true", z.boolean()).default(false),
   search: z.string().trim().optional(),
   sortBy: sortItemByEnum,
   orderBy: sortOrderEnum.default("asc"),
-  status: statusItemEnum.default("ALL"),
+  status: z
+    .preprocess((val) => {
+      if (typeof val == "boolean") return val;
+
+      if (typeof val == "undefined" || typeof val === null || val === "")
+        return undefined;
+
+      if (val === "true") return true;
+      if (val === "false") return false;
+    }, z.boolean().optional())
+    .optional(),
 });
 
 export type ItemGetSchema = z.infer<typeof itemGetSchema>;

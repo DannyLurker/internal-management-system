@@ -4,7 +4,7 @@ import { useEffect, useId } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, ImageIcon, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import type { CategoryListItem } from "@/features/categories/category.types";
 import {
