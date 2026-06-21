@@ -50,6 +50,20 @@ export const stockRepository = {
     });
   },
 
+  countQuantity: async (
+    where: Prisma.StockWhereInput,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    const result = await tx.stock.aggregate({
+      where,
+      _sum: {
+        quantity: true,
+      },
+    });
+
+    return result._sum.quantity ?? 0;
+  },
+
   update: async (
     stockId: string,
     data: Prisma.StockUpdateInput,

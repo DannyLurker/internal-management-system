@@ -73,10 +73,7 @@ export default function TableRow({
         </span>
       </td>
       <td className="px-4 py-3 align-middle font-ochre-ui text-sm text-[#121c28]">
-        {item.totalStock}
-      </td>
-      <td className="px-4 py-3 align-middle font-ochre-ui text-sm text-[#121c28]">
-        {formatItemPrice(item.sellingPrice)}
+        {item.sellingPrice ? formatItemPrice(item.sellingPrice) : "-"}
       </td>
 
       <td className="px-4 py-3 align-middle font-ochre-ui text-sm text-[#524439]">

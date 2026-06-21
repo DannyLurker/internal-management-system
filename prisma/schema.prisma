@@ -86,7 +86,8 @@ model User {
   updatedItems      Item[]          @relation("ItemsUpdater")
   createdLocations  Location[]      @relation("LocationCreator")
   updatedLocations  Location[]      @relation("LocationUpdater")
-  stocks            Stock[]
+  createdStocks     Stock[]         @relation("StockCreator")
+  updatedStocks     Stock[]         @relation("StockUpdater")
   orders            Order[]
   logs              AuditLog[]
   stockMovements    StockMovement[]
@@ -223,7 +224,9 @@ model Stock {
   location   Location? @relation(fields: [locationId], references: [id])
 
   createdBy String
-  creator   User   @relation(fields: [createdBy], references: [id])
+  creator   User   @relation("StockCreator", fields: [createdBy], references: [id])
+  updatedBy String
+  updater   User   @relation("StockUpdater", fields: [updatedBy], references: [id])
 
   movements StockMovement[]
 

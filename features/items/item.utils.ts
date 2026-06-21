@@ -43,12 +43,9 @@ type ItemWithStocks = {
 export function mapItemListRow<T extends ItemWithStocks>(item: T) {
   const { stocks, stockMovements, ...rest } = item;
 
-  const totalStock = stocks.reduce((sum, s) => sum + s.quantity, 0);
-
   return {
     ...rest,
     stocks,
-    totalStock,
     totalCost: stockMovements?.[0]?.totalCost
       ? Number(stockMovements[0].totalCost)
       : null,

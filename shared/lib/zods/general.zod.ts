@@ -9,12 +9,17 @@ export const sortOrderEnum = z.enum(["asc", "desc"]).default("asc");
 
 export const userActionEnum = z.enum(["CREATE", "UPDATE", "DELETE"]);
 export const sortItemByEnum = z.enum(["name", "createdAt"]).default("name");
-export const sortItemDetailByEnum = z.enum(["quantity", "updatedAt"]);
+export const sortItemDetailByEnum = z.enum(["quantity", "updatedAt", "status"]);
+
 export const statusItemEnum = z.enum(itemStockStatusArray);
 export const sortItemEnumAtLocation = z
   .enum(["name", "stockType"])
   .default("name");
-export const stockStatusEnum = z.enum(Object.values(StockType));
+export const stockStatusEnum = z.enum([
+  ...Object.values(StockType),
+  "EXPIRING_SOON",
+  "ALL",
+]);
 
 export const entityEnum = z.enum(Object.values(Entity));
 

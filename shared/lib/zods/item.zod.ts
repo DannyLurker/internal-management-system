@@ -5,6 +5,7 @@ import {
   sortItemByEnum,
   sortItemDetailByEnum,
   sortOrderEnum,
+  stockStatusEnum,
 } from "./general.zod";
 
 export const itemCreateSchema = z.object({
@@ -47,7 +48,7 @@ export const itemCreateSchema = z.object({
 
 export type ItemCreateSchema = z.infer<typeof itemCreateSchema>;
 
-export const itemGetSchema = z.object({
+export const itemGetManyschema = z.object({
   page,
   dataPerPage,
   isByCategory: z
@@ -71,14 +72,17 @@ export const itemGetSchema = z.object({
     .optional(),
 });
 
-export type ItemGetSchema = z.infer<typeof itemGetSchema>;
+export type ItemGetManySchema = z.infer<typeof itemGetManyschema>;
 
 export const itemGetDetailSchema = z.object({
-  page,
-  dataPerPage,
+  itemStockPage: page,
+  itemStocksPerpage: dataPerPage,
   sortBy: sortItemDetailByEnum.default("quantity"),
   orderBy: sortOrderEnum.default("asc"),
+  status: stockStatusEnum.default("ALL"),
 });
+
+export type ItemGetDetailSchema = z.infer<typeof itemGetDetailSchema>;
 
 export const itemUpdateSchema = z.object({
   itemId: z.string().trim().min(1),

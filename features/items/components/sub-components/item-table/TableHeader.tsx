@@ -1,7 +1,7 @@
 "use client";
 import { cn } from "@/shared/lib/utils";
-import type { ItemGetSchema } from "@/shared/lib/zods/item.zod";
-type SortBy = ItemGetSchema["sortBy"];
+import { ItemGetManySchema } from "@/shared/lib/zods/item.zod";
+type SortBy = ItemGetManySchema["sortBy"];
 type TableHeaderProps = {
   sortBy: SortBy;
   sortOrder: "asc" | "desc";
@@ -53,9 +53,6 @@ export default function TableHeader({
         </th>
         <th className="px-4 align-middle font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
           CATEGORY
-        </th>
-        <th className="px-4 align-middle font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
-          STOCK
         </th>
         <th className="px-4 align-middle font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
           PRICE

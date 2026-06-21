@@ -15,11 +15,14 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const result = await itemService.getById(id);
+    const { searchParams } = new URL(request.url);
+    const rawParams = Object.fromEntries(searchParams.entries());
+
+    const result = await itemService.getById(id, rawParams);
 
     const response: ItemGetByIdApiResponse = {
       message: result.message,
-      data: result.item,
+      data: result.data,
       status: 200,
     };
 

@@ -8,14 +8,19 @@ import sessionValidation from "@/shared/lib/validations/user-session-validation"
 import {
   itemCreateSchema,
   ItemCreateSchema,
-  itemGetSchema,
+  itemGetDetailSchema,
+  itemGetManyschema,
   itemUpdateSchema,
   ItemUpdateSchema,
 } from "@/shared/lib/zods/item.zod";
-import itemRepository, { createIncludeItemData } from "./item.repository";
+import itemRepository, {
+  createIncludeItemData,
+  createSelectItemData,
+} from "./item.repository";
 import auditLogsRepository from "../audit-logs/audit-log.repository";
-import { mapItemListRow } from "./item.utils";
-import { Prisma } from "@prisma/client";
+import { EXPIRING_WINDOW_DAYS, mapItemListRow } from "./item.utils";
+import { Prisma, StockType } from "@prisma/client";
+import { stockRepository } from "../stocks/stock.repository";
 
 const itemService = {
   create: async (rawData: ItemCreateSchema) => {
@@ -56,7 +61,7 @@ const itemService = {
 
   getMany: async (rawParams: Record<string, string>) => {
     const session = await sessionValidation();
-    const validatedParams = itemGetSchema.parse(rawParams);
+    const validatedParams = itemGetManyschema.parse(rawParams);
 
     if (!canManageItem(session.role)) {
       throw unauthorized("You're not allowed to access this feature");
@@ -114,17 +119,103 @@ const itemService = {
     };
   },
 
-  getById: async (itemId: string) => {
+  getById: async (itemId: string, rawParams: Record<string, string>) => {
     const session = await sessionValidation();
 
     if (!canManageItem(session.role)) {
       throw unauthorized("You're not allowed to access this feature");
     }
 
-    const result = await itemRepository.getById(itemId, prisma);
+    if (!itemId) throw badRequest("Item id is missing");
+
+    const validatedParams = itemGetDetailSchema.parse(rawParams);
+
+    const stockWhereClause: Prisma.StockWhereInput = {};
+    const today = new Date();
+
+    const expiringWindow = new Date();
+    expiringWindow.setDate(expiringWindow.getDate() + EXPIRING_WINDOW_DAYS);
+
+    if (validatedParams.sortBy === "status") {
+      const nonSqlQueryStatus = ["READY", "DAMAGED", "DIRTY"] as StockType[];
+
+      if (nonSqlQueryStatus.includes(validatedParams.status as StockType)) {
+        stockWhereClause.type = validatedParams.status as StockType;
+      }
+
+      if (validatedParams.status === "EXPIRED") {
+        stockWhereClause.OR = [{ type: "EXPIRED" }, { type: "READY" }];
+        stockWhereClause.expiredAt = {
+          lt: today,
+        };
+      }
+
+      if (validatedParams.status === "EXPIRING_SOON") {
+        stockWhereClause.OR = [{ type: "READY" }, { type: "EXPIRED" }];
+        stockWhereClause.expiredAt = {
+          gte: today,
+          lte: expiringWindow,
+        };
+      }
+    }
+
+    const skipItemStocks =
+      (validatedParams.itemStockPage - 1) * validatedParams.itemStocksPerpage;
+
+    const takeItemStocksPerPage = validatedParams.itemStocksPerpage;
+
+    const itemSelectField = createSelectItemData({
+      name: true,
+      updatedAt: true,
+      createdBy: true,
+      updatedBy: true,
+      minThreshold: true,
+      description: true,
+      image: true,
+      category: true,
+      sellingPrice: true,
+      isActive: true,
+    });
+
+    const item = await itemRepository.getById(
+      itemId,
+      itemSelectField,
+      stockWhereClause,
+      skipItemStocks,
+      takeItemStocksPerPage,
+      validatedParams.sortBy,
+      validatedParams.orderBy,
+      prisma,
+    );
+
+    const totalReadyStock = await stockRepository.countQuantity(
+      {
+        type: "READY",
+        expiredAt: {
+          gte: today,
+        },
+      },
+      prisma,
+    );
+
+    const isStockLow = item && totalReadyStock <= item?.minThreshold;
+
+    const totalItemStocks = await stockRepository.countQuantity(
+      {
+        itemId: itemId,
+      },
+      prisma,
+    );
+
     return {
       message: "Item retrieved successfully",
-      item: result,
+      data: {
+        item: {
+          ...item,
+          isStockLow: isStockLow ? "Low in stock" : "-",
+        },
+        totalItemStocks,
+      },
     };
   },
 
@@ -169,7 +260,20 @@ const itemService = {
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      const item = await itemRepository.getById(itemId, tx);
+      const selectItemData = createSelectItemData({
+        isActive: true,
+      });
+
+      const item = await itemRepository.getById(
+        itemId,
+        selectItemData,
+        {},
+        undefined,
+        undefined,
+        "quantity",
+        "asc",
+        tx,
+      );
 
       if (item?.isActive) {
         throw badRequest(

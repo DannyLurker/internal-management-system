@@ -4,8 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useItems } from "@/features/items/item.hooks";
-import { itemGetSchema } from "@/shared/lib/zods/item.zod";
-import type { ItemGetSchema } from "@/shared/lib/zods/item.zod";
 import type { Item } from "@/features/items/item.types";
 import { useCategories } from "@/features/categories/category.hooks";
 import { categoryGetSchema } from "@/shared/lib/zods/category.zod";
@@ -15,6 +13,10 @@ import ItemTable, {
 import ItemFormDialog from "./sub-components/ItemFormDialog";
 import ItemDeleteModal from "./sub-components/ItemDeleteModal";
 import ItemActiveOrInactiveModal from "./sub-components/ItemActiveOrInactiveModal";
+import {
+  itemGetManyschema,
+  ItemGetManySchema,
+} from "@/shared/lib/zods/item.zod";
 
 type LocationOption = { id: string; name: string };
 
@@ -24,8 +26,8 @@ type ItemManagementProps = {
 
 export default function ItemManagement({ locations }: ItemManagementProps) {
   const [page, setPage] = useState(1);
-  const [sortBy, setSortBy] = useState<ItemGetSchema["sortBy"]>("name");
-  const [orderBy, setOrderBy] = useState<ItemGetSchema["orderBy"]>("asc");
+  const [sortBy, setSortBy] = useState<ItemGetManySchema["sortBy"]>("name");
+  const [orderBy, setOrderBy] = useState<ItemGetManySchema["orderBy"]>("asc");
   const [dataPerPage, setDataPerPage] = useState(10);
   const [tableFilters, setTableFilters] = useState<ItemTableFilters>({
     search: "",
@@ -74,7 +76,7 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
   const { data: categoriesResponse } = useCategories(categoryListParams);
   const categoryOptions = categoriesResponse?.data.categories ?? [];
 
-  const params: ItemGetSchema = useMemo(() => {
+  const params: ItemGetManySchema = useMemo(() => {
     const raw = {
       page,
       dataPerPage,
@@ -93,7 +95,7 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
             ? "true"
             : "false",
     };
-    return itemGetSchema.parse(raw);
+    return itemGetManyschema.parse(raw);
   }, [
     page,
     sortBy,
@@ -144,19 +146,22 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
     if (!open) setStatusChangeItem(null);
   }, []);
 
-  const handleRequestSort = useCallback((column: ItemGetSchema["sortBy"]) => {
-    setSortBy((prevColumn) => {
-      if (prevColumn === column) {
-        setOrderBy((o) => (o === "asc" ? "desc" : "asc"));
-        return prevColumn;
-      }
-      setOrderBy("asc");
-      return column;
-    });
-  }, []);
+  const handleRequestSort = useCallback(
+    (column: ItemGetManySchema["sortBy"]) => {
+      setSortBy((prevColumn: ItemGetManySchema["sortBy"]) => {
+        if (prevColumn === column) {
+          setOrderBy((o: string) => (o === "asc" ? "desc" : "asc"));
+          return prevColumn;
+        }
+        setOrderBy("asc");
+        return column;
+      });
+    },
+    [],
+  );
 
   const handleToggleSort = useCallback(() => {
-    setOrderBy((o) => (o === "asc" ? "desc" : "asc"));
+    setOrderBy((o: string) => (o === "asc" ? "desc" : "asc"));
   }, []);
 
   const handleFiltersChange = useCallback(
