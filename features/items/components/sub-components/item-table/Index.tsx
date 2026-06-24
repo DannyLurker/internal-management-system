@@ -13,7 +13,7 @@ import type { Item } from "@/features/items/item.types";
 import { cn } from "@/shared/lib/utils";
 import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
-import type { ItemGetSchema } from "@/shared/lib/zods/item.zod";
+import { ItemGetManySchema } from "@/shared/lib/zods/item.zod";
 
 export type ItemTableFilters = {
   search: string;
@@ -28,15 +28,16 @@ type ItemTableProps = {
   isError: boolean;
   filters: ItemTableFilters;
   onFiltersChange: (patch: Partial<ItemTableFilters>) => void;
-  sortBy: ItemGetSchema["sortBy"];
+  sortBy: ItemGetManySchema["sortBy"];
   sortOrder: "asc" | "desc";
-  onRequestSort: (column: ItemGetSchema["sortBy"]) => void;
+  onRequestSort: (column: ItemGetManySchema["sortBy"]) => void;
   onToggleSort: () => void;
   dataPerPage: number;
   onDataPerPageChange: (page: number) => void;
   page: number;
   onPageChange: (page: number) => void;
   categoryOptions: { id: string; name: string }[];
+  onInfo: (item: Item) => void;
   onEdit: (item: Item) => void;
   onStatusChange: (item: Item, status: "ACTIVE" | "INACTIVE") => void;
   onDelete: (item: Item) => void;
@@ -58,6 +59,7 @@ export default function ItemTable({
   page,
   onPageChange,
   categoryOptions,
+  onInfo,
   onEdit,
   onStatusChange,
   onDelete,
@@ -139,7 +141,13 @@ export default function ItemTable({
             }
           >
             <SelectTrigger className="h-10 min-w-36 rounded-lg border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15">
-              <SelectValue placeholder="Active / Inactive" />
+              <SelectValue placeholder="Active / Inactive">
+                {filters.activeStatus === true
+                  ? "Status: Active"
+                  : filters.activeStatus === false
+                    ? "Status: Inactive"
+                    : "Status: All"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="undefined">All</SelectItem>
@@ -217,6 +225,7 @@ export default function ItemTable({
                   <TableRow
                     key={item.id}
                     item={item}
+                    onInfo={onInfo}
                     onEdit={onEdit}
                     onStatusChange={onStatusChange}
                     onDelete={onDelete}

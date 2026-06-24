@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Pencil, PowerIcon, PowerOff, Trash2 } from "lucide-react";
+import { Info, Pencil, PowerIcon, PowerOff, Trash2 } from "lucide-react";
 import type { Item } from "@/features/items/item.types";
 import { cn } from "@/shared/lib/utils";
 import { formatItemDate, formatItemPrice } from "@/shared/lib/formatter";
@@ -10,6 +10,7 @@ import { canDeleteItem } from "@/shared/lib/validations/user-access-validation";
 
 type TableRowProps = {
   item: Item;
+  onInfo: (item: Item) => void;
   onEdit: (item: Item) => void;
   onStatusChange: (item: Item, status: "ACTIVE" | "INACTIVE") => void;
   onDelete: (item: Item) => void;
@@ -17,6 +18,7 @@ type TableRowProps = {
 
 export default function TableRow({
   item,
+  onInfo,
   onEdit,
   onStatusChange,
   onDelete,
@@ -81,6 +83,20 @@ export default function TableRow({
       </td>
       <td className="px-4 py-3 align-middle text-end">
         <div className="inline-flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => onInfo(item)}
+            className={cn(
+              "rounded-md p-2 outline-none inline-flex items-center justify-center transition-all duration-200 ease-out",
+              "bg-[#eef4ff] text-[#121c28] hover:bg-[#e5eeff] hover:text-[#894d0d]",
+              "hover:-translate-y-0.5 active:translate-y-0",
+              "hover:shadow-[0_8px_16px_-6px_rgba(15,23,42,0.08)]",
+              "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#894d0d]",
+            )}
+            aria-label={`View details for ${item.name}`}
+          >
+            <Info className="size-4" strokeWidth={1.5} />
+          </button>
           <button
             type="button"
             onClick={() => onEdit(item)}

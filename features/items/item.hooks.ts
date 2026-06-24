@@ -11,17 +11,19 @@ import itemApi from "./item.api";
 import { toast } from "sonner";
 import {
   ItemCreateSchema,
-  ItemGetSchema,
+  ItemGetDetailSchema,
+  ItemGetManySchema,
   ItemUpdateSchema,
 } from "@/shared/lib/zods/item.zod";
 
 export const useItem = (
   itemId: string,
+  params: ItemGetDetailSchema,
   options?: Partial<UseQueryOptions<ItemGetByIdApiResponse>>,
 ) => {
   return useQuery({
-    queryKey: ITEM_KEYS.detail(itemId),
-    queryFn: () => itemApi.getById(itemId),
+    queryKey: ITEM_KEYS.detail(itemId, params),
+    queryFn: () => itemApi.getById(itemId, params),
     enabled: Boolean(itemId),
     staleTime: 1000 * 60 * 5,
     ...options,
@@ -29,7 +31,7 @@ export const useItem = (
 };
 
 export const useItems = (
-  params: ItemGetSchema,
+  params: ItemGetManySchema,
   options?: Partial<UseQueryOptions<ItemGetManyApiResponse>>,
 ) => {
   return useQuery({

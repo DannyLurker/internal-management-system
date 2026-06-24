@@ -10,10 +10,10 @@ import { LOCATION_TYPE_OPTIONS } from "@/features/locations/location.utils";
 import { locationGetSchema } from "@/shared/lib/zods/location.zod";
 import type { LocationGetSchema } from "@/shared/lib/zods/location.zod";
 import { cn } from "@/shared/lib/utils";
-import LocationTable from "./sub-components/location-table/Index";
 import LocationInfoPanel from "./sub-components/location-table/LocationInfoPanel";
 import LocationFormDialog from "./sub-components/LocationFormDialog";
 import LocationDeleteModal from "./sub-components/LocationDeleteModal";
+import LocationTable from "./sub-components/location-table";
 
 const DATA_PER_PAGE_OPTIONS = [10, 20, 50, 100] as const;
 const SORT_BY_OPTIONS: LocationGetSchema["sortBy"][] = [

@@ -130,16 +130,19 @@ const itemService = {
 
     const validatedParams = itemGetDetailSchema.parse(rawParams);
 
-    const stockWhereClause: Prisma.StockWhereInput = {};
+    const stockWhereClause: Prisma.StockWhereInput = {
+      itemId: itemId,
+    };
     const today = new Date();
 
     const expiringWindow = new Date();
     expiringWindow.setDate(expiringWindow.getDate() + EXPIRING_WINDOW_DAYS);
 
     if (validatedParams.sortBy === "status") {
-      const nonSqlQueryStatus = ["READY", "DAMAGED", "DIRTY"] as StockType[];
+      // Non query status means that, you don't have to make any prisma logic like gte, lte, and etc. Just show something in one line like stockWhereClause.type = validatedParams.stateus
+      const nonQueryStatus = ["READY", "DAMAGED", "DIRTY"] as StockType[];
 
-      if (nonSqlQueryStatus.includes(validatedParams.status as StockType)) {
+      if (nonQueryStatus.includes(validatedParams.status as StockType)) {
         stockWhereClause.type = validatedParams.status as StockType;
       }
 
@@ -167,14 +170,17 @@ const itemService = {
     const itemSelectField = createSelectItemData({
       name: true,
       updatedAt: true,
-      createdBy: true,
-      updatedBy: true,
+      userCreatedBy: { select: { name: true } },
+      userUpdatedBy: { select: { name: true } },
       minThreshold: true,
       description: true,
       image: true,
       category: true,
       sellingPrice: true,
       isActive: true,
+      createdAt: true,
+      createdBy: true,
+      updatedBy: true,
     });
 
     const item = await itemRepository.getById(
@@ -188,8 +194,12 @@ const itemService = {
       prisma,
     );
 
+    // Count the row
+    const stockRows = await stockRepository.countRows(stockWhereClause, prisma);
+
     const totalReadyStock = await stockRepository.countQuantity(
       {
+        itemId: itemId,
         type: "READY",
         expiredAt: {
           gte: today,
@@ -198,7 +208,8 @@ const itemService = {
       prisma,
     );
 
-    const isStockLow = item && totalReadyStock <= item?.minThreshold;
+    const isStockLow =
+      item && totalReadyStock && totalReadyStock <= item?.minThreshold;
 
     const totalItemStocks = await stockRepository.countQuantity(
       {
@@ -214,7 +225,8 @@ const itemService = {
           ...item,
           isStockLow: isStockLow ? "Low in stock" : "-",
         },
-        totalItemStocks,
+        totalItemStockQuantity: totalItemStocks,
+        itemStockRows: stockRows,
       },
     };
   },

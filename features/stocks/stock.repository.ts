@@ -64,6 +64,17 @@ export const stockRepository = {
     return result._sum.quantity ?? 0;
   },
 
+  countRows: async (
+    where: Prisma.StockWhereInput,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    const result = await tx.stock.count({
+      where,
+    });
+
+    return result;
+  },
+
   update: async (
     stockId: string,
     data: Prisma.StockUpdateInput,

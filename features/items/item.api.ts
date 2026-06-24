@@ -1,5 +1,5 @@
 import { api } from "@/shared/lib/api-client";
-import { ItemCreateSchema, ItemUpdateSchema } from "@/shared/lib/zods/item.zod";
+import { ItemCreateSchema, ItemGetDetailSchema, ItemUpdateSchema } from "@/shared/lib/zods/item.zod";
 import {
   ItemCreateApiResponse,
   ItemDeleteApiResponse,
@@ -21,8 +21,10 @@ const itemApi = {
     return result.data;
   },
 
-  getById: async (id: string) => {
-    const result = await api.get<ItemGetByIdApiResponse>(`/items/${id}`);
+  getById: async (id: string, params?: ItemGetDetailSchema) => {
+    const result = await api.get<ItemGetByIdApiResponse>(`/items/${id}`, {
+      params,
+    });
 
     return result.data;
   },

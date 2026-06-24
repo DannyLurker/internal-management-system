@@ -7,9 +7,6 @@ import { useItems } from "@/features/items/item.hooks";
 import type { Item } from "@/features/items/item.types";
 import { useCategories } from "@/features/categories/category.hooks";
 import { categoryGetSchema } from "@/shared/lib/zods/category.zod";
-import ItemTable, {
-  type ItemTableFilters,
-} from "./sub-components/item-table/Index";
 import ItemFormDialog from "./sub-components/ItemFormDialog";
 import ItemDeleteModal from "./sub-components/ItemDeleteModal";
 import ItemActiveOrInactiveModal from "./sub-components/ItemActiveOrInactiveModal";
@@ -17,6 +14,8 @@ import {
   itemGetManyschema,
   ItemGetManySchema,
 } from "@/shared/lib/zods/item.zod";
+import ItemTable, { ItemTableFilters } from "./sub-components/item-table";
+import ItemInfoPanel from "./sub-components/item-table/ItemInfoPanel";
 
 type LocationOption = { id: string; name: string };
 
@@ -37,6 +36,7 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const [formOpen, setFormOpen] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [editItem, setEditItem] = useState<Item | null>(null);
   const [deleteItem, setDeleteItem] = useState<Item | null>(null);
   const [statusChangeItem, setStatusChangeItem] = useState<Item | null>(null);
@@ -226,6 +226,7 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
           page={page}
           onPageChange={setPage}
           categoryOptions={categoryOptions}
+          onInfo={(item) => setSelectedItemId(item.id)}
           onEdit={openEdit}
           onStatusChange={openStatusChange}
           onDelete={openDelete}
@@ -255,6 +256,15 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
         onSuccess={handleStatusChangeSuccess}
         status={statusChangeStatus}
       />
+
+      {selectedItemId ? (
+        <ItemInfoPanel
+          key={selectedItemId}
+          itemId={selectedItemId}
+          open={selectedItemId != null}
+          onClose={() => setSelectedItemId(null)}
+        />
+      ) : null}
     </div>
   );
 }

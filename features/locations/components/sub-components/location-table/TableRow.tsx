@@ -35,7 +35,7 @@ export default function TableRow({
           </p>
         </div>
       </td>
-      <td className="px-4 py-3 align-middle">
+      <td className="px-4 py-3 align-middle text-left">
         <span className="inline-flex items-center rounded-md bg-[#121c28] px-2.5 py-1 font-ochre-ui text-[10px] font-semibold uppercase tracking-wide text-white">
           {formatLocationTypeBadge(location.type)}
         </span>

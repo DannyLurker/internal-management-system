@@ -7,7 +7,7 @@ export default function TableHeader() {
         <th className="pb-3 pe-4 ps-4 pt-3 font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
           Name
         </th>
-        <th className="pb-3 pe-4 pt-3 font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
+        <th className="pb-3 px-4 pe-4 pt-3 font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
           Type
         </th>
         <th className="hidden px-4 pb-3 pe-4 pt-3 font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80 md:table-cell">

@@ -15,7 +15,7 @@ export type ItemListItem = ItemServiceGetMany["data"]["items"][number];
 export type Item = ItemListItem;
 
 // Api Response Types
-export type ItemGetByIdApiResponse = ApiResponse<ItemServiceGetById["item"]>;
+export type ItemGetByIdApiResponse = ApiResponse<ItemServiceGetById["data"]>;
 export type ItemGetManyApiResponse = ApiResponse<ItemServiceGetMany["data"]>;
 export type ItemCreateApiResponse = ApiResponse<null>;
 export type ItemUpdateApiResponse = ApiResponse<null>;
