@@ -61,7 +61,7 @@ export const stockRepository = {
       },
     });
 
-    return result._sum.quantity ?? 0;
+    return result._sum.quantity;
   },
 
   countRows: async (

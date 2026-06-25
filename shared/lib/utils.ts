@@ -14,3 +14,11 @@ export function formatTimestamp(value: Date | string): string {
     minute: "2-digit",
   }).format(new Date(value));
 }
+
+export function isInventoryChildActive(pathname: string, inventoryPaths: {}) {
+  for (const inventoryPath in inventoryPaths) {
+    if (pathname === inventoryPath) return true;
+  }
+
+  return false;
+}

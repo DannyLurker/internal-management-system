@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useItem } from "@/features/items/item.hooks";
 import { formatItemPrice } from "@/shared/lib/formatter";
@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { cn, formatTimestamp } from "@/shared/lib/utils";
+import { StockSortBy, StockSortOrder } from "@/features/stocks/stock.types";
 
 type ItemInfoPanelProps = {
   open: boolean;
@@ -28,11 +29,10 @@ export default function ItemInfoPanel({
 }: ItemInfoPanelProps) {
   const [itemStockPage, setItemStockPage] = useState(1);
   const [itemStocksPerpage, setItemStocksPerpage] = useState(10);
-  const [sortBy, setSortBy] = useState<"quantity" | "updatedAt" | "status">(
-    "quantity",
-  );
+  const [sortBy, setSortBy] = useState<StockSortBy>("quantity");
   const [orderBy, setOrderBy] = useState<"asc" | "desc">("asc");
-  const [status, setStatus] = useState<string>("ALL");
+  const [sortOrder, setSortOrder] = useState<StockSortOrder>("desc");
+  const [status, setStatus] = useState("ALL");
 
   useEffect(() => {
     setItemStockPage(1);
@@ -46,7 +46,18 @@ export default function ItemInfoPanel({
       orderBy,
       status: status === "ALL" ? undefined : status, // Clean up "ALL" string if backend expects undefined
     });
-  }, [itemStockPage, itemStocksPerpage, sortBy, orderBy, status]);
+  }, [itemStockPage, itemStocksPerpage, sortBy, orderBy, status, setStatus]);
+
+  const handleRequestSort = useCallback((column: StockSortBy) => {
+    setSortBy((prevColumn) => {
+      if (prevColumn === column) {
+        setSortOrder((o) => (o === "asc" ? "desc" : "asc"));
+        return prevColumn;
+      }
+      setSortOrder("asc");
+      return column;
+    });
+  }, []);
 
   const { data, isLoading, isError } = useItem(itemId, itemParams, {});
 
@@ -89,132 +100,139 @@ export default function ItemInfoPanel({
               ))}
             </div>
           ) : itemData ? (
-            <div className="grid grid-cols-1 gap-6 items-start lg:grid-cols-12">
-              {/* Left Column: Metadata */}
-              <div className="lg:col-span-5 space-y-4">
-                <div className="rounded-lg border border-[#eef4ff] bg-[#f8f9ff]/50 p-4">
+            <div className="grid grid-cols-2 gap-6 items-start ">
+              <div className="h-full">
+                <div className="h-full rounded-lg border border-[#eef4ff] bg-[#f8f9ff]/50 p-4">
                   {itemData.image ? (
-                    <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-[#eef4ff] bg-[#e5eeff] mb-4">
+                    <div className="relative h-full min-h-125 overflow-hidden">
                       <img
                         src={itemData.image}
                         alt={itemData.name}
-                        className="object-cover w-full h-full"
+                        className="h-full w-full object-cover"
                       />
                     </div>
                   ) : (
-                    <div className="flex aspect-video w-full items-center justify-center rounded-lg border border-[#eef4ff] bg-[#f8f9ff] mb-4 font-ochre-ui text-sm font-semibold uppercase text-[#565e74]">
+                    <div className="flex h-full min-h-125 items-center justify-center font-ochre-ui text-sm font-semibold uppercase text-[#565e74]">
                       No Image Available
                     </div>
                   )}
-
-                  <dl className="space-y-3 font-ochre-ui text-xs text-[#524439]">
-                    <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
-                      <dt className="text-[#524439]/70 font-medium">
-                        Category
-                      </dt>
-                      <dd className="font-semibold text-[#121c28]">
-                        {itemData.category?.name ?? "General"}
-                      </dd>
-                    </div>
-                    <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
-                      <dt className="text-[#524439]/70 font-medium">
-                        Selling Price
-                      </dt>
-                      <dd className="font-semibold text-[#121c28]">
-                        {itemData.sellingPrice
-                          ? formatItemPrice(itemData.sellingPrice)
-                          : "—"}
-                      </dd>
-                    </div>
-                    <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
-                      <dt className="text-[#524439]/70 font-medium">
-                        Stock Status
-                      </dt>
-                      <dd
-                        className={cn(
-                          "font-semibold",
-                          itemData.isStockLow === "Low in stock"
-                            ? "text-[#ba1a1a]"
-                            : "text-emerald-700",
-                        )}
-                      >
-                        {itemData.isStockLow === "Low in stock"
-                          ? "Low in stock"
-                          : "Normal"}
-                      </dd>
-                    </div>
-                    <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
-                      <dt className="text-[#524439]/70 font-medium">
-                        Min Threshold
-                      </dt>
-                      <dd className="font-semibold text-[#121c28]">
-                        {itemData.minThreshold}
-                      </dd>
-                    </div>
-                    <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
-                      <dt className="text-[#524439]/70 font-medium">
-                        Active Status
-                      </dt>
-                      <dd className="font-semibold">
-                        <span
+                </div>
+              </div>
+              <div className="h-full">
+                <div className="h-full rounded-lg border border-[#eef4ff] bg-[#f8f9ff]/50 p-4">
+                  <div className="rounded-lg">
+                    <dl className="space-y-3 font-ochre-ui text-xs text-[#524439]">
+                      <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                        <dt className="text-[#524439]/70 font-medium">
+                          Category
+                        </dt>
+                        <dd className="font-semibold text-[#121c28]">
+                          {itemData.category?.name ?? "General"}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                        <dt className="text-[#524439]/70 font-medium">
+                          Selling Price
+                        </dt>
+                        <dd className="font-semibold text-[#121c28]">
+                          {itemData.sellingPrice
+                            ? formatItemPrice(itemData.sellingPrice)
+                            : "—"}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                        <dt className="text-[#524439]/70 font-medium">
+                          Stock Status
+                        </dt>
+                        <dd
                           className={cn(
-                            "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
-                            itemData.isActive
-                              ? "bg-emerald-100 text-emerald-800"
-                              : "bg-rose-100 text-rose-800",
+                            "font-semibold",
+                            itemData.isStockLow === "Low in stock"
+                              ? "text-[#ba1a1a]"
+                              : "text-emerald-700",
                           )}
                         >
-                          {itemData.isActive ? "Active" : "Inactive"}
-                        </span>
-                      </dd>
-                    </div>
-                    <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
-                      <dt className="text-[#524439]/70 font-medium">
-                        Created by
-                      </dt>
-                      <dd className="font-semibold text-[#121c28]">
-                        {itemData.userCreatedBy?.name ?? "—"}
-                      </dd>
-                    </div>
-                    <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
-                      <dt className="text-[#524439]/70 font-medium">
-                        Updated by
-                      </dt>
-                      <dd className="font-semibold text-[#121c28]">
-                        {itemData.userUpdatedBy?.name ?? "—"}
-                      </dd>
-                    </div>
-                    <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
-                      <dt className="text-[#524439]/70 font-medium">Created</dt>
-                      <dd className="font-semibold text-[#121c28]">
-                        {itemData.createdAt
-                          ? formatTimestamp(itemData.createdAt)
-                          : "-"}
-                      </dd>
-                    </div>
-                    <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
-                      <dt className="text-[#524439]/70 font-medium">Updated</dt>
-                      <dd className="font-semibold text-[#121c28]">
-                        {itemData.updatedAt
-                          ? formatTimestamp(itemData.updatedAt)
-                          : "-"}
-                      </dd>
-                    </div>
-                    <div className="flex flex-col gap-1 pt-1">
-                      <dt className="text-[#524439]/70 font-medium">
-                        Description
-                      </dt>
-                      <dd className="font-normal text-[#121c28] whitespace-pre-wrap leading-relaxed text-left text-sm bg-white/70 border border-[#eef4ff] rounded-md p-2.5 mt-1">
-                        {itemData.description?.trim() ||
-                          "No description provided."}
-                      </dd>
-                    </div>
-                  </dl>
+                          {itemData.isStockLow === "Low in stock"
+                            ? "Low in stock"
+                            : "Normal"}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                        <dt className="text-[#524439]/70 font-medium">
+                          Min Threshold
+                        </dt>
+                        <dd className="font-semibold text-[#121c28]">
+                          {itemData.minThreshold}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                        <dt className="text-[#524439]/70 font-medium">
+                          Active Status
+                        </dt>
+                        <dd className="font-semibold">
+                          <span
+                            className={cn(
+                              "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+                              itemData.isActive
+                                ? "bg-emerald-100 text-emerald-800"
+                                : "bg-rose-100 text-rose-800",
+                            )}
+                          >
+                            {itemData.isActive ? "Active" : "Inactive"}
+                          </span>
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                        <dt className="text-[#524439]/70 font-medium">
+                          Created by
+                        </dt>
+                        <dd className="font-semibold text-[#121c28]">
+                          {itemData.userCreatedBy?.name ?? "—"}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                        <dt className="text-[#524439]/70 font-medium">
+                          Updated by
+                        </dt>
+                        <dd className="font-semibold text-[#121c28]">
+                          {itemData.userUpdatedBy?.name ?? "—"}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                        <dt className="text-[#524439]/70 font-medium">
+                          Created
+                        </dt>
+                        <dd className="font-semibold text-[#121c28]">
+                          {itemData.createdAt
+                            ? formatTimestamp(itemData.createdAt)
+                            : "-"}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                        <dt className="text-[#524439]/70 font-medium">
+                          Updated
+                        </dt>
+                        <dd className="font-semibold text-[#121c28]">
+                          {itemData.updatedAt
+                            ? formatTimestamp(itemData.updatedAt)
+                            : "-"}
+                        </dd>
+                      </div>
+                      <div className="flex flex-col gap-1 pt-1">
+                        <dt className="text-[#524439]/70 font-medium">
+                          Description
+                        </dt>
+                        <dd className="font-normal text-[#121c28] whitespace-pre-wrap leading-relaxed text-left text-sm bg-white/70 border border-[#eef4ff] rounded-md p-2.5 mt-1">
+                          {itemData.description?.trim() ||
+                            "No description provided."}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
                 </div>
               </div>
 
-              {/* Right Column: Stocks Table */}
-              <div className="lg:col-span-7 space-y-4">
+              <div className="space-y-4 col-span-2">
                 <div className="flex items-center justify-between border-b border-[#eef4ff] pb-2">
                   <h3 className="font-ochre-brand text-lg font-medium text-[#894d0d]">
                     Stock Distributions
@@ -245,26 +263,7 @@ export default function ItemInfoPanel({
                     </select>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <span className="font-ochre-ui text-xs font-medium uppercase tracking-wide text-[#524439]/70">
-                      Sort:
-                    </span>
-                    <select
-                      value={sortBy}
-                      onChange={(e) =>
-                        setSortBy(
-                          e.target.value as "quantity" | "updatedAt" | "status",
-                        )
-                      }
-                      className="min-w-28 appearance-none rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 px-2 py-1.5 font-ochre-ui text-sm text-[#121c28] outline-none transition-colors duration-200 hover:border-[#b0c8f8] focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15 focus:outline-none"
-                    >
-                      <option value="quantity">Quantity</option>
-                      <option value="status">Status</option>
-                      <option value="updatedAt">Updated At</option>
-                    </select>
-                  </div>
-
-                  {sortBy === "status" && (
+                  {
                     <div className="flex items-center gap-2">
                       <span className="font-ochre-ui text-xs font-medium uppercase tracking-wide text-[#524439]/70">
                         Status:
@@ -274,7 +273,7 @@ export default function ItemInfoPanel({
                         onChange={(e) => setStatus(e.target.value)}
                         className="min-w-28 appearance-none rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 px-2 py-1.5 font-ochre-ui text-sm text-[#121c28] outline-none transition-colors duration-200 hover:border-[#b0c8f8] focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15 focus:outline-none"
                       >
-                        <option value="ALL">All Statuses</option>
+                        <option value="ALL">Type: All</option>
                         <option value="READY">Ready</option>
                         <option value="DIRTY">Dirty</option>
                         <option value="DAMAGED">Damaged</option>
@@ -282,7 +281,7 @@ export default function ItemInfoPanel({
                         <option value="EXPIRING_SOON">Expiring Soon</option>
                       </select>
                     </div>
-                  )}
+                  }
 
                   <div className="flex items-center gap-1">
                     <button
@@ -317,6 +316,9 @@ export default function ItemInfoPanel({
                   totalStockRows={totalStockRows}
                   itemStockPage={itemStockPage}
                   itemStocksPerpage={itemStocksPerpage}
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                  onRequestSort={handleRequestSort}
                   onPageChange={setItemStockPage}
                 />
               </div>

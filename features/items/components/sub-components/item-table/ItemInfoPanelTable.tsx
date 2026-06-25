@@ -3,6 +3,8 @@
 import { ChevronsLeft, ChevronsRight } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { formatItemDate } from "@/shared/lib/formatter";
+import TableHeader from "@/features/stocks/components/sub-components/stock-table/TableHeader";
+import { StockSortBy } from "@/features/stocks/stock.types";
 
 type ItemStockItem = {
   quantity: number;
@@ -19,6 +21,9 @@ type ItemInfoPanelTableProps = {
   totalStockRows: number;
   itemStockPage: number;
   itemStocksPerpage: number;
+  sortBy: StockSortBy;
+  sortOrder: "asc" | "desc";
+  onRequestSort: (column: StockSortBy) => void;
   onPageChange: (page: number) => void;
 };
 
@@ -37,6 +42,9 @@ export default function ItemInfoPanelTable({
   totalStockRows,
   itemStockPage,
   itemStocksPerpage,
+  onRequestSort,
+  sortBy,
+  sortOrder,
   onPageChange,
 }: ItemInfoPanelTableProps) {
   const totalPages = Math.ceil(totalStockRows / itemStocksPerpage);
@@ -47,25 +55,12 @@ export default function ItemInfoPanelTable({
     <div className="flex flex-col gap-4">
       <div className="overflow-hidden rounded-lg border border-[#d9e3f4]/80">
         <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b border-[#d9e3f4] bg-[#f8f9ff]/60 text-left">
-              <th className="px-3 py-2.5 font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
-                Location
-              </th>
-              <th className="px-3 py-2.5 font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
-                Stock qty
-              </th>
-              <th className="px-3 py-2.5 font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
-                Type
-              </th>
-              <th className="px-3 py-2.5 font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
-                Expiration
-              </th>
-              <th className="px-3 py-2.5 font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
-                Last updated
-              </th>
-            </tr>
-          </thead>
+          <TableHeader
+            showItemName={false}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onRequestSort={onRequestSort}
+          />
           <tbody>
             {stocks.length === 0 ? (
               <tr>

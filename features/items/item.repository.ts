@@ -46,7 +46,7 @@ const itemRepository = {
           stockId: stock.id,
           quantity: data.stock?.quantity ? data.stock.quantity : 0,
           totalCost: data.stock?.totalCost ? data.stock.totalCost : 0,
-          reason: data.stock?.reason,
+          reason: data.stock.reason ?? "Initial",
           type: "RECEIVE",
           createdBy: userId,
           destinationLocationId: data.locationId,

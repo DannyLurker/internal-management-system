@@ -138,7 +138,7 @@ const itemService = {
     const expiringWindow = new Date();
     expiringWindow.setDate(expiringWindow.getDate() + EXPIRING_WINDOW_DAYS);
 
-    if (validatedParams.sortBy === "status") {
+    if (validatedParams.sortBy === "type") {
       // Non query status means that, you don't have to make any prisma logic like gte, lte, and etc. Just show something in one line like stockWhereClause.type = validatedParams.stateus
       const nonQueryStatus = ["READY", "DAMAGED", "DIRTY"] as StockType[];
 
@@ -168,6 +168,7 @@ const itemService = {
     const takeItemStocksPerPage = validatedParams.itemStocksPerpage;
 
     const itemSelectField = createSelectItemData({
+      id: true,
       name: true,
       updatedAt: true,
       userCreatedBy: { select: { name: true } },
@@ -201,15 +202,22 @@ const itemService = {
       {
         itemId: itemId,
         type: "READY",
-        expiredAt: {
-          gte: today,
-        },
+        OR: [
+          { expiredAt: null },
+          {
+            expiredAt: {
+              gte: today,
+            },
+          },
+        ],
       },
       prisma,
     );
 
     const isStockLow =
-      item && totalReadyStock && totalReadyStock <= item?.minThreshold;
+      item && totalReadyStock && totalReadyStock <= item?.minThreshold
+        ? true
+        : false;
 
     const totalItemStocks = await stockRepository.countQuantity(
       {

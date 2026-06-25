@@ -4,7 +4,9 @@ import {
   page,
   sortOrderEnum,
   stockEnum,
+  stockMovementTypeEnum,
   stockSortByEnum,
+  stockSpecificSortByEnum,
 } from "./general.zod";
 
 export const stockCreateSchema = z
@@ -37,25 +39,34 @@ export const stockCreateSchema = z
 
 export type StockCreateSchema = z.infer<typeof stockCreateSchema>;
 
-export const stockGetSchema = z.object({
+export const stockGetManySchema = z.object({
   searchQuery: z.string().trim().min(3).optional(),
   page: page,
   dataPerPage: dataPerPage,
   sortOrder: sortOrderEnum,
   sortBy: stockSortByEnum.default("createdAt"),
-  type: stockEnum,
+  type: stockEnum.optional(),
   locationId: z.string().optional(),
   itemId: z.string().optional(),
 });
 
-export type StockGetSchema = z.infer<typeof stockGetSchema>;
+export type StockGetManySchema = z.infer<typeof stockGetManySchema>;
+
+export const stockGetSpecificSchema = z.object({
+  page: page,
+  dataPerPage: dataPerPage,
+  sortOrder: sortOrderEnum,
+  sortBy: stockSpecificSortByEnum.default("createdAt"),
+  stockMovementType: stockMovementTypeEnum,
+});
+
+export type StockGetSpecificSchema = z.infer<typeof stockGetSpecificSchema>;
 
 export const stockUpdateSchema = z.object({
   stockId: z.string().trim().min(1),
-  quantity: z.number().min(1),
   type: stockEnum,
   locationId: z.string().trim().min(1),
-  expiredAt: z.date().optional(),
+  expiredAt: z.coerce.date().optional(),
 });
 
 export type StockUpdateSchema = z.infer<typeof stockUpdateSchema>;

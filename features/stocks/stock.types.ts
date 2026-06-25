@@ -1,11 +1,14 @@
 import { ApiResponse } from "@/shared/lib/api-client";
 import stockService from "./stock.service";
+import { StockGetManySchema } from "@/shared/lib/zods/stock.zod";
 
 type StockServiceGetManyResponse = Awaited<
   ReturnType<typeof stockService.getMany>
 >;
 
-type StockServiceGetByIdResponse = Awaited<ReturnType<typeof stockService.get>>;
+type StockServiceGetByIdResponse = Awaited<
+  ReturnType<typeof stockService.getById>
+>;
 
 export type Stock = StockServiceGetManyResponse["data"]["stocks"][number];
 
@@ -18,3 +21,7 @@ export type StockGetManyApiResponse = ApiResponse<
 export type StockGetByIdApiResponse = ApiResponse<
   StockServiceGetByIdResponse["data"]
 >;
+
+// Stock SortBy
+export type StockSortBy = StockGetManySchema["sortBy"];
+export type StockSortOrder = StockGetManySchema["sortOrder"];

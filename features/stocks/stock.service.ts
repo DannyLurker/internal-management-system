@@ -8,7 +8,7 @@ import sessionValidation from "@/shared/lib/validations/user-session-validation"
 import {
   stockCreateSchema,
   StockCreateSchema,
-  stockGetSchema,
+  stockGetManySchema,
   stockUpdateSchema,
   StockUpdateSchema,
 } from "@/shared/lib/zods/stock.zod";
@@ -142,7 +142,7 @@ const stockService = {
     };
   },
 
-  get: async (stockId: string) => {
+  getById: async (stockId: string) => {
     const session = await sessionValidation();
 
     if (!canManageItem(session.role)) {
@@ -194,7 +194,7 @@ const stockService = {
 
   getMany: async (params: { [key: string]: string }) => {
     const session = await sessionValidation();
-    const validatedParams = stockGetSchema.parse(params);
+    const validatedParams = stockGetManySchema.parse(params);
 
     if (!canManageItem(session.role)) {
       throw forbidden("You're not allowed to access this feature");
@@ -223,7 +223,7 @@ const stockService = {
       ];
     }
 
-    if (validatedParams.type) {
+    if (validatedParams.type && validatedParams.sortBy === "type") {
       whereQuery.type = validatedParams.type;
     }
     if (validatedParams.locationId) {
@@ -342,7 +342,6 @@ const stockService = {
       const stock = await stockRepository.update(
         validatedData.stockId,
         {
-          quantity: validatedData.quantity,
           type: validatedData.type as StockType,
           expiredAt: validatedData.expiredAt,
           location: {

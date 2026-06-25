@@ -37,7 +37,7 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const result = await stockService.get(id);
+    const result = await stockService.getById(id);
 
     const response: StockGetByIdApiResponse = {
       message: result.message,

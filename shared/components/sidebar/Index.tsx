@@ -1,7 +1,7 @@
 "use client";
 
 import { useGlobalSidebar } from "@/shared/lib/context/SidebarContext";
-import { cn } from "@/shared/lib/utils";
+import { cn, isInventoryChildActive } from "@/shared/lib/utils";
 import { usePathname } from "next/navigation";
 import SidebarLogo from "./SidebarLogo";
 import React, { useCallback, useEffect, useId, useRef, useState } from "react";
@@ -25,10 +25,7 @@ export default function Sidebar() {
   const mobileDrawerTitleId = useId();
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const inventoryChildActive =
-    pathname === paths.items ||
-    pathname === paths.categories ||
-    pathname === paths.locations;
+  const inventoryChildActive = isInventoryChildActive(pathname, paths);
 
   const [inventoryOpen, setInventoryOpen] = useState(
     inventoryChildActive || pathname.startsWith("/inventory"),
@@ -111,7 +108,7 @@ export default function Sidebar() {
 
   return (
     <>
-      <div className="hidden min-h-screen max-h-screen fixed shrink-0 md:flex">
+      <div className="hidden min-h-screen max-h-screen fixed shrink-0 md:flex z-9999">
         <aside
           className={cn(asideShell, isExpanded ? "w-65" : "w-18")}
           data-expanded={isExpanded ? "true" : "false"}

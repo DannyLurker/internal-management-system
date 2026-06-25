@@ -1,7 +1,7 @@
 "use client";
 
 import { Package, ChevronDown } from "lucide-react";
-import { cn } from "@/shared/lib/utils";
+import { cn, isInventoryChildActive } from "@/shared/lib/utils";
 import InventorySubLink from "./InventorySubLink";
 import CollapsedFlyoutLink from "./ColapsedFlyoutLink";
 import { navAmbient } from "../sidebar-link.styles";
@@ -33,11 +33,7 @@ export default function SidebarInventory({
   onKeyDown,
   inventoryFlyoutId,
 }: SidebarInventoryProps) {
-  const inventoryChildActive =
-    pathname === paths.items ||
-    pathname === paths.categories ||
-    pathname === paths.locations;
-
+  const inventoryChildActive = isInventoryChildActive(pathname, paths);
   if (isExpanded) {
     return (
       <div className="mt-1">
@@ -89,6 +85,16 @@ export default function SidebarInventory({
                   label="Items"
                   active={pathname === paths.items}
                 />
+                <InventorySubLink
+                  href={paths.stocks}
+                  label="Stocks"
+                  active={pathname === paths.stocks}
+                />
+                <InventorySubLink
+                  href={paths.stock_movements}
+                  label="Stock Movements"
+                  active={pathname === paths.stock_movements}
+                />
               </div>
             </div>
           </div>
@@ -131,7 +137,7 @@ export default function SidebarInventory({
               mass: 0.8,
             }}
             id={inventoryFlyoutId}
-            className="absolute inset-s-full top-0 z-9999 ms-2 w-44 rounded-[10px] border border-white/[0.07] bg-[#1e2733] p-2 shadow-2xl"
+            className="absolute inset-s-full top-0 z-auto ms-2 w-44 rounded-[10px] border border-white/[0.07] bg-[#1e2733] p-2 shadow-2xl"
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
           >
@@ -156,6 +162,16 @@ export default function SidebarInventory({
                 href={paths.items}
                 label="Items"
                 active={pathname === paths.items}
+              />
+              <CollapsedFlyoutLink
+                href={paths.stocks}
+                label="Stocks"
+                active={pathname === paths.stocks}
+              />
+              <CollapsedFlyoutLink
+                href={paths.stock_movements}
+                label="Stock Movements"
+                active={pathname === paths.stock_movements}
               />
             </div>
           </motion.div>

@@ -3,8 +3,8 @@ import {
   dataPerPage,
   page,
   sortItemByEnum,
-  sortItemDetailByEnum,
   sortOrderEnum,
+  stockSortByEnum,
   stockStatusEnum,
 } from "./general.zod";
 
@@ -77,7 +77,7 @@ export type ItemGetManySchema = z.infer<typeof itemGetManyschema>;
 export const itemGetDetailSchema = z.object({
   itemStockPage: page,
   itemStocksPerpage: dataPerPage,
-  sortBy: sortItemDetailByEnum.default("quantity"),
+  sortBy: stockSortByEnum.default("createdAt"),
   orderBy: sortOrderEnum.default("asc"),
   status: stockStatusEnum.default("ALL"),
 });

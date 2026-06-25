@@ -242,7 +242,7 @@ model StockMovement {
   quantity  Int
   totalCost Int?
   type      MovementType
-  reason    String?
+  reason    String
 
   itemId String
   item   Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)

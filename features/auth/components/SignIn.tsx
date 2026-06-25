@@ -1,27 +1,44 @@
 "use client";
-import { useState } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export default function SignIn() {
-  const [error, setError] = useState("");
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
+
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
+
+    const loginPromise = new Promise(async (resolve, reject) => {
+      try {
+        const result = await signIn("credentials", {
+          email,
+          password,
+          redirect: false,
+        });
+
+        if (result?.error) {
+          reject(new Error("Invalid credentials"));
+        } else {
+          resolve(result);
+        }
+      } catch (err) {
+        reject(err);
+      }
     });
-    if (result?.error) {
-      setError("Invalid email or password");
-    } else {
+
+    toast.promise(loginPromise, {
+      loading: "Signing you in...",
+      success: "Welcome back! Redirecting...",
+      error: (err) => err.message || "Failed to sign in",
+    });
+
+    try {
+      await loginPromise;
       window.location.href = "/";
-    }
+    } catch (err) {}
   };
 
   return (
@@ -35,11 +52,7 @@ export default function SignIn() {
             Please enter your details to sign in to your account.
           </p>
         </div>
-        {error && (
-          <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </div>
-        )}
+
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="space-y-2">
             <label

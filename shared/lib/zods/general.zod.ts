@@ -1,5 +1,5 @@
 import { itemStockStatusArray } from "@/features/items/item.utils";
-import { Entity, LocationType, StockType } from "@prisma/client";
+import { Entity, LocationType, MovementType, StockType } from "@prisma/client";
 import z from "zod";
 
 export const searchQuery = z.string().trim().min(3).optional();
@@ -36,6 +36,11 @@ export const stockSortByEnum = z.enum([
   "createdAt",
   "updatedAt",
 ]);
+// For specific stock information, that return stock movement as one of the data
+export const stockSpecificSortByEnum = z.enum(["createdAt", "type"]);
+
+export const stockMovementTypeEnum = z.enum(Object.values(MovementType));
+export const stockMovementSortByEnum = z.enum(["name", "createdAt", "type"]);
 
 export const generateReadableError = (issue: z.core.$ZodIssue): string => {
   const fieldName = issue.path.join(".");
