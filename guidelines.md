@@ -110,3 +110,4 @@ When pulling structural patterns or API lookups, favor reading raw text summarie
 - **Next.js AI Context Map:** `https://nextjs.org/llms.txt`
 - **Prisma Core Reference:** `https://raw.githubusercontent.com/prisma/prisma/main/README.md`
 - **TypeScript Language Specifications:** `https://www.typescriptlang.org/llms.txt`
+- **Design System Guidelines:** `DESIGN.MD` 
