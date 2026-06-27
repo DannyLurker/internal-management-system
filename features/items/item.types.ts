@@ -14,6 +14,10 @@ export type ItemListItem = ItemServiceGetMany["data"]["items"][number];
 /** List/detail shape used by the item management UI */
 export type Item = ItemListItem;
 
+export type StockInItemById =
+  | ItemServiceGetById["data"]["item"]["stocks"][number]
+  | undefined;
+
 // Api Response Types
 export type ItemGetByIdApiResponse = ApiResponse<ItemServiceGetById["data"]>;
 export type ItemGetManyApiResponse = ApiResponse<ItemServiceGetMany["data"]>;

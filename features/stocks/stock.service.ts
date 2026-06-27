@@ -391,7 +391,7 @@ const stockService = {
       throw forbidden("You're not allowed to access this feature");
     }
 
-    await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       const selectData = stockSelectData({
         id: true,
         quantity: true,
@@ -404,6 +404,11 @@ const stockService = {
             id: true,
           },
           take: 1,
+        },
+        item: {
+          select: {
+            id: true,
+          },
         },
       });
 
@@ -440,11 +445,14 @@ const stockService = {
         tx,
       );
 
-      return stock;
+      return { stock, itemId: existing.itemId };
     });
 
     return {
       message: `Stock deleted successfully`,
+      data: {
+        itemId: result.itemId,
+      },
     };
   },
 };

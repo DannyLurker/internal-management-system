@@ -75,6 +75,12 @@ const itemRepository = {
         stocks: {
           where: stockWhereClause,
           select: {
+            id: true,
+            item: {
+              select: {
+                name: true,
+              },
+            },
             quantity: true,
             type: true,
             updatedAt: true,

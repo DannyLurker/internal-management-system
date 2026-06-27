@@ -4,13 +4,14 @@ import { useId } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
-import type { Stock } from "@/features/stocks/stock.types";
+import type { StockDelete } from "@/features/stocks/stock.types";
 import { useDeleteItem } from "@/features/stocks/stock.hooks";
+import { createPortal } from "react-dom";
 
 type StockDeleteModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  stock: Stock | null;
+  stock: StockDelete | null;
   onSuccess: () => void;
 };
 
@@ -29,13 +30,13 @@ export default function StockDeleteModal({
     if (!stock) return;
 
     try {
-      await deleteMutation.mutateAsync(stock.id);
+      await deleteMutation.mutateAsync(stock.stockId);
       onOpenChange(false);
       onSuccess();
     } catch {}
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {open ? (
         <motion.div
@@ -84,11 +85,11 @@ export default function StockDeleteModal({
               <p className="font-ochre-ui text-sm leading-relaxed text-[#524439]">
                 You are about to delete the stock record for{" "}
                 <span className="font-semibold text-[#121c28]">
-                  {stock?.item.name ?? "this item"}
+                  {stock?.itemName ?? "this item"}
                 </span>{" "}
                 at{" "}
                 <span className="font-semibold text-[#121c28]">
-                  {stock?.location?.name ?? "unknown location"}
+                  {stock?.stockLocation ?? "unknown location"}
                 </span>
                 . This action is{" "}
                 <span className="font-semibold text-[#ba1a1a]">
@@ -123,6 +124,7 @@ export default function StockDeleteModal({
           </motion.div>
         </motion.div>
       ) : null}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

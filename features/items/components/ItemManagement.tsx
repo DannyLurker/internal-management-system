@@ -24,6 +24,7 @@ type ItemManagementProps = {
 };
 
 export default function ItemManagement({ locations }: ItemManagementProps) {
+  // Item Management part
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState<ItemGetManySchema["sortBy"]>("name");
   const [orderBy, setOrderBy] = useState<ItemGetManySchema["orderBy"]>("asc");
@@ -35,7 +36,7 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
   });
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  const [formOpen, setFormOpen] = useState(false);
+  const [itemFormOpen, setItemFormOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [editItem, setEditItem] = useState<Item | null>(null);
   const [deleteItem, setDeleteItem] = useState<Item | null>(null);
@@ -111,21 +112,21 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
   const dataItems = itemsResponse?.data.items ?? [];
   const totalItems = itemsResponse?.data.totalItems ?? 0;
 
-  const openCreate = useCallback(() => {
+  const itemOpenCreate = useCallback(() => {
     setEditItem(null);
-    setFormOpen(true);
+    setItemFormOpen(true);
   }, []);
 
-  const openEdit = useCallback((item: Item) => {
+  const itemOpenEdit = useCallback((item: Item) => {
     setEditItem(item);
-    setFormOpen(true);
+    setItemFormOpen(true);
   }, []);
 
-  const openDelete = useCallback((item: Item) => {
+  const itemOpenDelete = useCallback((item: Item) => {
     setDeleteItem(item);
   }, []);
 
-  const openStatusChange = useCallback(
+  const itemOpenStatusChange = useCallback(
     (item: Item, status: "ACTIVE" | "INACTIVE") => {
       setStatusChangeItem(item);
       setStatusChangeStatus(status);
@@ -133,16 +134,16 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
     [],
   );
 
-  const handleFormOpenChange = useCallback((open: boolean) => {
-    setFormOpen(open);
+  const handleItemFormOpenChange = useCallback((open: boolean) => {
+    setItemFormOpen(open);
     if (!open) setEditItem(null);
   }, []);
 
-  const handleDeleteOpenChange = useCallback((open: boolean) => {
+  const handleItemDeleteOpenChange = useCallback((open: boolean) => {
     if (!open) setDeleteItem(null);
   }, []);
 
-  const handleStatusChangeOpenChange = useCallback((open: boolean) => {
+  const handleItemStatusChangeOpenChange = useCallback((open: boolean) => {
     if (!open) setStatusChangeItem(null);
   }, []);
 
@@ -197,7 +198,7 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
         </div>
         <button
           type="button"
-          onClick={openCreate}
+          onClick={itemOpenCreate}
           className={cn(
             "inline-flex shrink-0 items-center gap-2 self-start rounded bg-[#894d0d] px-5 py-2.5 font-ochre-ui text-sm font-semibold uppercase tracking-wide text-white shadow-[0_8px_24px_-8px_rgba(137,77,13,0.45)]",
             "transition-[transform,box-shadow] hover:-translate-y-px",
@@ -227,15 +228,15 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
           onPageChange={setPage}
           categoryOptions={categoryOptions}
           onInfo={(item) => setSelectedItemId(item.id)}
-          onEdit={openEdit}
-          onStatusChange={openStatusChange}
-          onDelete={openDelete}
+          onEdit={itemOpenEdit}
+          onStatusChange={itemOpenStatusChange}
+          onDelete={itemOpenDelete}
         />
       </div>
 
       <ItemFormDialog
-        open={formOpen}
-        onOpenChange={handleFormOpenChange}
+        open={itemFormOpen}
+        onOpenChange={handleItemFormOpenChange}
         item={editItem}
         onSuccess={handleFormSuccess}
         locations={locations}
@@ -244,14 +245,14 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
 
       <ItemDeleteModal
         open={deleteItem != null}
-        onOpenChange={handleDeleteOpenChange}
+        onOpenChange={handleItemDeleteOpenChange}
         item={deleteItem}
         onSuccess={handleDeleteSuccess}
       />
 
       <ItemActiveOrInactiveModal
         open={statusChangeItem != null}
-        onOpenChange={handleStatusChangeOpenChange}
+        onOpenChange={handleItemStatusChangeOpenChange}
         item={statusChangeItem}
         onSuccess={handleStatusChangeSuccess}
         status={statusChangeStatus}

@@ -1,7 +1,7 @@
 "use client";
 
 import { Pencil, Trash2 } from "lucide-react";
-import type { Stock } from "@/features/stocks/stock.types";
+import type { Stock, StockDelete } from "@/features/stocks/stock.types";
 import { cn } from "@/shared/lib/utils";
 import { formatItemDate } from "@/shared/lib/formatter";
 import { useSession } from "next-auth/react";
@@ -18,7 +18,7 @@ type TableRowProps = {
   showItemName: boolean;
   stock: Stock;
   onEdit: (stock: Stock) => void;
-  onDelete: (stock: Stock) => void;
+  onDelete: (stock: StockDelete) => void;
 };
 
 export default function TableRow({
@@ -99,7 +99,13 @@ export default function TableRow({
           {data?.user.role && canDeleteItem(data.user.role) && (
             <button
               type="button"
-              onClick={() => onDelete(stock)}
+              onClick={() =>
+                onDelete({
+                  itemName: stock.item.name,
+                  stockLocation: stock.location?.name as string,
+                  stockId: stock.id,
+                })
+              }
               className={cn(
                 "rounded-md p-2 outline-none inline-flex items-center justify-center transition-all duration-200 ease-out",
                 "bg-transparent text-[#565e74]",

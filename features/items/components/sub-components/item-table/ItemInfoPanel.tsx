@@ -101,6 +101,7 @@ export default function ItemInfoPanel({
             </div>
           ) : itemData ? (
             <div className="grid grid-cols-2 gap-6 items-start ">
+              {/* Item Image */}
               <div className="h-full">
                 <div className="h-full rounded-lg border border-[#eef4ff] bg-[#f8f9ff]/50 p-4">
                   {itemData.image ? (
@@ -118,6 +119,8 @@ export default function ItemInfoPanel({
                   )}
                 </div>
               </div>
+
+              {/* Item Description */}
               <div className="h-full">
                 <div className="h-full rounded-lg border border-[#eef4ff] bg-[#f8f9ff]/50 p-4">
                   <div className="rounded-lg">
@@ -232,6 +235,7 @@ export default function ItemInfoPanel({
                 </div>
               </div>
 
+              {/* Stock Distribution */}
               <div className="space-y-4 col-span-2">
                 <div className="flex items-center justify-between border-b border-[#eef4ff] pb-2">
                   <h3 className="font-ochre-brand text-lg font-medium text-[#894d0d]">

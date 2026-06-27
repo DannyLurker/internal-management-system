@@ -40,7 +40,8 @@ type StockFormDialogProps = {
   stock: Stock | null;
   onSuccess: () => void;
   locations: LocationOption[];
-  items: ItemOption[];
+  // Since I also use this component at other feature, like "ItemInfoPanelTable.tsx", I need to change several things to make it works. One of them is items, from required to optional
+  items?: ItemOption[];
 };
 
 export default function StockFormDialog({
@@ -100,7 +101,7 @@ export default function StockFormDialog({
       });
     } else {
       createForm.reset({
-        itemId: items[0]?.id ?? "",
+        itemId: items && items.length > 0 ? items[0]?.id : "",
         quantity: undefined,
         totalCost: undefined,
         reason: "",
@@ -177,12 +178,12 @@ export default function StockFormDialog({
                         className={cn("mt-1.5 w-full", inputClass)}
                       >
                         {selectedId
-                          ? (items.find((i) => i.id === selectedId)?.name ??
+                          ? (items!.find((i) => i.id === selectedId)?.name ??
                             "Select an item")
                           : "Select an item"}
                       </SelectTrigger>
                       <SelectContent>
-                        {items.map((item) => (
+                        {items!.map((item) => (
                           <SelectItem key={item.id} value={item.id}>
                             {item.name}
                           </SelectItem>

@@ -1,23 +1,20 @@
 "use client";
 
-import { ChevronsLeft, ChevronsRight } from "lucide-react";
+import { ChevronsLeft, ChevronsRight, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { formatItemDate } from "@/shared/lib/formatter";
 import TableHeader from "@/features/stocks/components/sub-components/stock-table/TableHeader";
-import { StockSortBy } from "@/features/stocks/stock.types";
-
-type ItemStockItem = {
-  quantity: number;
-  type: string;
-  updatedAt: Date | string;
-  expiredAt?: Date | string | null;
-  location?: {
-    name: string;
-  } | null;
-};
+import { Stock, StockDelete, StockSortBy } from "@/features/stocks/stock.types";
+import { StockInItemById } from "@/features/items/item.types";
+import StockDeleteModal from "@/features/stocks/components/sub-components/StockDeleteModal";
+import StockFormDialog from "@/features/stocks/components/sub-components/StockFormDialog";
+import { useCallback, useState } from "react";
+import { canDeleteItem } from "@/shared/lib/validations/user-access-validation";
+import { useSession } from "next-auth/react";
+import { useLocations } from "@/features/locations/location.hooks";
 
 type ItemInfoPanelTableProps = {
-  stocks: ItemStockItem[];
+  stocks: StockInItemById[];
   totalStockRows: number;
   itemStockPage: number;
   itemStocksPerpage: number;
@@ -51,12 +48,59 @@ export default function ItemInfoPanelTable({
   isLoading = false,
   isError = false,
 }: ItemInfoPanelTableProps) {
+  const { data: userSession } = useSession();
+
   const totalPages = Math.ceil(totalStockRows / itemStocksPerpage);
   const hasNextPage = itemStockPage < totalPages;
   const hasPrevPage = itemStockPage > 1;
-  const rangeStart = stocks.length === 0 ? 0 : (itemStockPage - 1) * itemStocksPerpage + 1;
+  const rangeStart =
+    stocks.length === 0 ? 0 : (itemStockPage - 1) * itemStocksPerpage + 1;
   const rangeEnd = (itemStockPage - 1) * itemStocksPerpage + stocks.length;
   const totalShown = totalStockRows;
+
+  // Location data
+  const { data: locationData, isLoading: isLocationLoading } = useLocations({
+    dataPerPage: 100,
+    page: 1,
+    sortBy: "type",
+    sortOrderEnum: "asc",
+  });
+
+  // Stock Modal state and handler
+  const [formOpen, setFormOpen] = useState(false);
+  const [editStock, setEditStock] = useState<Stock | null>(null);
+  const [deleteStock, setDeleteStock] = useState<StockDelete | null>(null);
+
+  const openStockCreate = useCallback(() => {
+    setEditStock(null);
+    setFormOpen(true);
+  }, []);
+
+  const openStockEdit = useCallback((stock: Stock) => {
+    setEditStock(stock);
+    setFormOpen(true);
+  }, []);
+
+  const openStockDelete = useCallback((stock: StockDelete) => {
+    setDeleteStock(stock);
+  }, []);
+
+  const handleStockFormOpenChange = useCallback((open: boolean) => {
+    setFormOpen(open);
+    if (!open) setEditStock(null);
+  }, []);
+
+  const handleStockDeleteOpenChange = useCallback((open: boolean) => {
+    if (!open) setDeleteStock(null);
+  }, []);
+
+  const handleStockFormSuccess = useCallback(() => {
+    setEditStock(null);
+  }, []);
+
+  const handleStockDeleteSuccess = useCallback(() => {
+    setDeleteStock(null);
+  }, []);
 
   if (isError) {
     return (
@@ -101,35 +145,84 @@ export default function ItemInfoPanelTable({
               ) : (
                 stocks.map((stock, index) => (
                   <tr
-                    key={`${stock.location?.name ?? "unknown"}-${stock.type}-${index}`}
+                    key={`${stock?.location?.name ?? "unknown"}-${stock?.type}-${index}`}
                     className="border-b border-[#eef4ff] last:border-0 hover:bg-[#f8f9ff]/40"
                   >
                     <td className="px-4 py-3 font-ochre-ui text-sm text-[#121c28] font-medium">
-                      {stock.location?.name ?? "—"}
-                    </td>
-                    <td className="px-4 py-3 font-ochre-ui text-sm text-[#121c28]">
-                      {stock.quantity}
+                      {stock?.location?.name ?? "—"}
                     </td>
                     <td className="px-4 py-3 font-ochre-ui text-xs">
                       <span
                         className={cn(
                           "inline-flex rounded px-1.5 py-0.5 font-semibold text-[10px] uppercase tracking-wide",
-                          stock.type === "READY" &&
+                          stock?.type === "READY" &&
                             "bg-emerald-100 text-emerald-800",
-                          stock.type === "DIRTY" && "bg-amber-100 text-amber-800",
-                          stock.type === "DAMAGED" && "bg-rose-100 text-rose-800",
-                          stock.type === "EXPIRED" &&
+                          stock?.type === "DIRTY" &&
+                            "bg-amber-100 text-amber-800",
+                          stock?.type === "DAMAGED" &&
+                            "bg-rose-100 text-rose-800",
+                          stock?.type === "EXPIRED" &&
                             "bg-gray-150 text-gray-800 border border-gray-300",
                         )}
                       >
-                        {stock.type}
+                        {stock?.type}
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-ochre-ui text-xs text-[#524439]">
-                      {stock.expiredAt ? formatItemDate(stock.expiredAt) : "—"}
+                    <td className="px-4 py-3 font-ochre-ui text-sm text-[#121c28]">
+                      {stock?.quantity}
                     </td>
                     <td className="px-4 py-3 font-ochre-ui text-xs text-[#524439]">
-                      {formatTimestamp(stock.updatedAt)}
+                      {stock?.expiredAt
+                        ? formatItemDate(stock?.expiredAt)
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-3 font-ochre-ui text-xs text-[#524439]">
+                      {formatTimestamp(stock?.updatedAt as Date)}
+                    </td>
+                    <td className="px-4 py-3 align-middle text-end">
+                      <div className="inline-flex items-center gap-1">
+                        {/* <button
+                          type="button"
+                          onClick={() => openStockEdit(stock)}
+                          className={cn(
+                            "rounded-md p-2 outline-none inline-flex items-center justify-center transition-all duration-200 ease-out",
+                            "bg-transparent text-[#565e74]",
+                            "hover:-translate-y-0.5 active:translate-y-0",
+                            "hover:shadow-[0_8px_16px_-6px_rgba(15,23,42,0.08)]",
+                            "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#894d0d]",
+                            "hover:bg-[#e5eeff] hover:text-[#121c28]",
+                          )}
+                          aria-label={`Edit stock for ${stock?.item.name}`}
+                        >
+                          <Pencil className="size-4" strokeWidth={1.5} />
+                        </button> */}
+
+                        {userSession?.user.role &&
+                          canDeleteItem(userSession.user.role) && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                openStockDelete({
+                                  itemName: stock?.item.name as string,
+                                  stockId: stock?.id as string,
+                                  stockLocation: stock?.location
+                                    ?.name as string,
+                                })
+                              }
+                              className={cn(
+                                "rounded-md p-2 outline-none inline-flex items-center justify-center transition-all duration-200 ease-out",
+                                "bg-transparent text-[#565e74]",
+                                "hover:-translate-y-0.5 active:translate-y-0",
+                                "hover:shadow-[0_8px_16px_-6px_rgba(15,23,42,0.08)]",
+                                "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#ba1a1a]",
+                                "hover:bg-[#ffdad6]/60 hover:text-[#ba1a1a]",
+                              )}
+                              aria-label={`Delete stock for ${stock?.item.name}`}
+                            >
+                              <Trash2 className="size-4" strokeWidth={1.5} />
+                            </button>
+                          )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -212,6 +305,19 @@ export default function ItemInfoPanelTable({
           </div>
         ) : null}
       </div>
+
+      <StockDeleteModal
+        onOpenChange={handleStockDeleteOpenChange}
+        onSuccess={handleStockDeleteSuccess}
+        open={deleteStock != null}
+        stock={deleteStock}
+      />
+
+      <StockFormDialog
+        onOpenChange={handleStockFormOpenChange}
+        open={formOpen}
+        locations={}
+      />
     </div>
   );
 }

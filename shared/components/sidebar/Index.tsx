@@ -108,7 +108,7 @@ export default function Sidebar() {
 
   return (
     <>
-      <div className="hidden min-h-screen max-h-screen fixed shrink-0 md:flex z-9999">
+      <div className="hidden min-h-screen max-h-screen fixed shrink-0 md:flex">
         <aside
           className={cn(asideShell, isExpanded ? "w-65" : "w-18")}
           data-expanded={isExpanded ? "true" : "false"}

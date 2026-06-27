@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { Input } from "@/shared/components/ui/input";
-import type { Stock } from "@/features/stocks/stock.types";
+import type { Stock, StockDelete } from "@/features/stocks/stock.types";
 import { cn } from "@/shared/lib/utils";
 import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
@@ -40,7 +40,7 @@ type StockTableProps = {
   locationOptions: { id: string; name: string }[];
   itemOptions: { id: string; name: string }[];
   onEdit: (stock: Stock) => void;
-  onDelete: (stock: Stock) => void;
+  onDelete: (stock: StockDelete) => void;
 };
 
 export default function StockTable({

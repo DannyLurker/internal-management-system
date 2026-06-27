@@ -25,3 +25,10 @@ export type StockGetByIdApiResponse = ApiResponse<
 // Stock SortBy
 export type StockSortBy = StockGetManySchema["sortBy"];
 export type StockSortOrder = StockGetManySchema["sortOrder"];
+
+// Stock Delete for delete action
+export type StockDelete = {
+  itemName: string;
+  stockLocation: string;
+  stockId: string;
+};

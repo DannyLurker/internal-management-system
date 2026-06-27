@@ -6,6 +6,7 @@ import { cn } from "@/shared/lib/utils";
 import { useStocks } from "@/features/stocks/stock.hooks";
 import type {
   Stock,
+  StockDelete,
   StockGetManyApiResponse,
 } from "@/features/stocks/stock.types";
 import StockFormDialog from "./sub-components/StockFormDialog";
@@ -43,7 +44,7 @@ export default function StockManagement({
 
   const [formOpen, setFormOpen] = useState(false);
   const [editStock, setEditStock] = useState<Stock | null>(null);
-  const [deleteStock, setDeleteStock] = useState<Stock | null>(null);
+  const [deleteStock, setDeleteStock] = useState<StockDelete | null>(null);
 
   // Debounce search input
   useEffect(() => {
@@ -135,7 +136,7 @@ export default function StockManagement({
     setFormOpen(true);
   }, []);
 
-  const openDelete = useCallback((stock: Stock) => {
+  const openDelete = useCallback((stock: StockDelete) => {
     setDeleteStock(stock);
   }, []);
 

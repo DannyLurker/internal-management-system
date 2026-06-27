@@ -231,6 +231,8 @@ const itemService = {
       data: {
         item: {
           ...item,
+          stocks:
+            item?.stocks.length && item?.stocks.length > 0 ? item?.stocks : [],
           isStockLow: isStockLow ? "Low in stock" : "-",
         },
         totalItemStockQuantity: totalItemStocks,

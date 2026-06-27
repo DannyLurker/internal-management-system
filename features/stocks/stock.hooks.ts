@@ -16,6 +16,7 @@ import {
 } from "./stock.types";
 import STOCK_KEYS from "./stock.keys";
 import { toast } from "sonner";
+import ITEM_KEYS from "../items/item.keys";
 
 export const useStocks = (
   params: StockGetManySchema,
@@ -72,6 +73,9 @@ export const useDeleteItem = () => {
     mutationFn: (id: string) => stockApi.delete(id),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: STOCK_KEYS.lists() });
+      queryClient.invalidateQueries({
+        queryKey: ITEM_KEYS.details(),
+      });
       toast.success(data.message);
     },
   });
