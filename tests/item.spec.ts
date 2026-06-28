@@ -1,3 +1,4 @@
+import { ItemUpdateSchema } from "@/shared/lib/zods/item.zod";
 import { test, expect } from "@playwright/test";
 
 test.describe.configure({ mode: "serial" });
@@ -23,7 +24,8 @@ test.describe("CRUD operations for Item", () => {
         "/api/categories?sortOrder=asc&sortBy=name&page=1&dataPerPage=100",
       );
       const listBody = await listResponse.json();
-      const categories = listBody.data;
+      const categories = listBody.data.categories;
+
       const category = categories.find(
         (c: any) => c.name === `${TEST_PREFIX}Hotel Linen`,
       );
@@ -38,7 +40,7 @@ test.describe("CRUD operations for Item", () => {
 
       expect(locationResponse.status()).toBe(200);
       console.log(locationBody);
-      testLocationId = locationBody.data[0].id;
+      testLocationId = locationBody.data.locations[0].id;
     },
   );
 
@@ -117,7 +119,7 @@ test.describe("CRUD operations for Item", () => {
 
     expect(response.status()).toBe(200);
     expect(body.data).toBeDefined();
-    expect(body.data.id).toBe(createdItemId);
+    expect(body.data.item.id).toBe(createdItemId);
   });
 
   test("Get items by category", async ({ request }) => {
@@ -162,6 +164,15 @@ test.describe("CRUD operations for Item", () => {
   });
 
   test("Delete an item", async ({ request }) => {
+    await request.patch(`/api/items`, {
+      data: {
+        name: `${TEST_PREFIX}Luxury King Pillow - Firm`,
+        itemId: createdItemId,
+        isActive: false,
+        description: "TEST_PREFIX",
+      },
+    });
+
     const response = await request.delete(`/api/items/${createdItemId}`);
 
     const body = await response.json();

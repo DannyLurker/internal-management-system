@@ -19,7 +19,8 @@ import {
   locationSelectData,
   locationWhereUniqueInput,
 } from "./location.repository";
-import { Prisma } from "@prisma/client";
+import { Prisma, StockType } from "@prisma/client";
+import { EXPIRING_WINDOW_DAYS } from "../items/item.utils";
 
 const locationService = {
   create: async (rawData: LocationCreateSchema) => {
@@ -86,6 +87,40 @@ const locationService = {
 
     const take = validatedParams.itemDataPerPage;
 
+    const stockWhereClause: Prisma.StockWhereInput = {
+      locationId: locationId,
+    };
+    const today = new Date();
+
+    const expiringWindow = new Date();
+    expiringWindow.setDate(expiringWindow.getDate() + EXPIRING_WINDOW_DAYS);
+
+    if (validatedParams.sortBy === "stockType") {
+      // Non query status means that, you don't have to make any prisma logic like gte, lte, and etc. Just show something in one line like stockWhereClause.type = validatedParams.stateus
+      const nonQueryStatus = ["READY", "DAMAGED", "DIRTY"] as StockType[];
+
+      if (
+        nonQueryStatus.includes(validatedParams.stockStatusType as StockType)
+      ) {
+        stockWhereClause.type = validatedParams.stockStatusType as StockType;
+      }
+
+      if (validatedParams.stockStatusType === "EXPIRED") {
+        stockWhereClause.OR = [{ type: "EXPIRED" }, { type: "READY" }];
+        stockWhereClause.expiredAt = {
+          lt: today,
+        };
+      }
+
+      if (validatedParams.stockStatusType === "EXPIRING_SOON") {
+        stockWhereClause.OR = [{ type: "READY" }, { type: "EXPIRED" }];
+        stockWhereClause.expiredAt = {
+          gte: today,
+          lte: expiringWindow,
+        };
+      }
+    }
+
     const selectData = locationSelectData({
       id: true,
       name: true,
@@ -101,22 +136,7 @@ const locationService = {
           quantity: true,
           type: true,
         },
-        where: {
-          ...(validatedParams.stockStatusType
-            ? { type: validatedParams.stockStatusType }
-            : {}),
-          ...(validatedParams.itemSearchQuery &&
-          validatedParams.itemSearchQuery.length >= 3
-            ? {
-                item: {
-                  name: {
-                    contains: validatedParams.itemSearchQuery,
-                    mode: "insensitive",
-                  },
-                },
-              }
-            : {}),
-        },
+        where: stockWhereClause,
         orderBy: [
           ...(validatedParams.sortBy === "stockType"
             ? [{ type: validatedParams.sortOrder }]
@@ -140,10 +160,7 @@ const locationService = {
 
     const totalStocksCount = await prisma.stock.count({
       where: {
-        locationId: locationId,
-        ...(validatedParams.stockStatusType
-          ? { type: validatedParams.stockStatusType }
-          : {}),
+        ...stockWhereClause,
         ...(validatedParams.itemSearchQuery &&
         validatedParams.itemSearchQuery.length >= 3
           ? {

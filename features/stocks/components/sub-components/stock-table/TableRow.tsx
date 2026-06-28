@@ -64,7 +64,7 @@ export default function TableRow({
 
       {/* Quantity */}
       <td className="px-4 py-3 align-middle font-ochre-ui text-sm font-semibold text-[#121c28] tabular-nums">
-        {stock.quantity.toLocaleString("id-ID")}
+        {stock.quantity ? `${stock.quantity?.toLocaleString("id-ID")}` : "-"}
       </td>
 
       {/* Expired at */}
@@ -74,7 +74,7 @@ export default function TableRow({
 
       {/* Updated at */}
       <td className="px-4 py-3 align-middle font-ochre-ui text-sm text-[#524439]">
-        {formatItemDate(stock.updatedAt)}
+        {stock.updatedAt ? `${formatItemDate(stock.updatedAt)}` : "-"}
       </td>
 
       {/* Actions */}

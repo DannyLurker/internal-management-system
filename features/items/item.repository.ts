@@ -58,9 +58,9 @@ const itemRepository = {
     return item;
   },
 
-  getById: async <T extends Prisma.ItemSelect>(
+  getById: async (
     itemId: string,
-    itemSelect: Prisma.Subset<T, Prisma.ItemSelect>,
+    itemSelect: Prisma.ItemSelect,
     stockWhereClause: Prisma.StockWhereInput,
     skipStockData: number | undefined,
     takeStockData: number | undefined,

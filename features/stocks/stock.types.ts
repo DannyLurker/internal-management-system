@@ -16,6 +16,7 @@ export type Stock = {
   type: StockType;
   quantity?: number;
   expiredAt: Date | null;
+  updatedAt?: Date;
   locationId: string;
   itemId: string;
   location: {
