@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, Plus } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, Plus } from "lucide-react";
 import { useItem } from "@/features/items/item.hooks";
 import { formatItemPrice } from "@/shared/lib/formatter";
 import { itemGetDetailSchema } from "@/shared/lib/zods/item.zod";
@@ -45,6 +45,7 @@ export default function ItemInfoPanel({
   const [orderBy, setOrderBy] = useState<"asc" | "desc">("asc");
   const [sortOrder, setSortOrder] = useState<StockSortOrder>("desc");
   const [status, setStatus] = useState("ALL");
+  const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
     setItemStockPage(1);
@@ -98,7 +99,29 @@ export default function ItemInfoPanel({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5">
+        <button
+          type="button"
+          onClick={() => setShowDetails((prev) => !prev)}
+          aria-expanded={showDetails}
+          aria-controls="item-info-collapsible"
+          className={cn(
+            "mx-6 mt-3 inline-flex w-fit items-center gap-1.5 self-start rounded-md border border-[#e5eeff] bg-[#f8f9ff]/80 px-3 py-1.5 font-ochre-ui text-xs font-semibold uppercase tracking-wide text-[#565e74] shadow-[0_2px_8px_-2px_rgba(15,23,42,0.08)] outline-none transition-all duration-300",
+            "hover:-translate-y-px hover:border-[#894d0d]/35 hover:text-[#894d0d] hover:shadow-[0_4px_12px_-2px_rgba(15,23,42,0.12)]",
+            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#894d0d]",
+          )}
+        >
+          <span>{showDetails ? "Hide details" : "Show details"}</span>
+          <ChevronDown
+            className={cn(
+              "size-3.5 transition-transform duration-300 ease-in-out",
+              showDetails ? "rotate-180" : "rotate-0",
+            )}
+            strokeWidth={2}
+            aria-hidden
+          />
+        </button>
+
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-2">
           {isError ? (
             <p className="font-ochre-ui text-sm text-[#93000a]" role="alert">
               Unable to load item details.
@@ -113,143 +136,159 @@ export default function ItemInfoPanel({
               ))}
             </div>
           ) : itemData ? (
-            <div className="grid grid-cols-2 gap-6 items-start ">
-              {/* Item Image */}
-              <div className="h-full">
-                <div className="h-full rounded-lg border border-[#eef4ff] bg-[#f8f9ff]/50 p-4">
-                  {itemData.image ? (
-                    <div className="relative h-full min-h-125 overflow-hidden">
-                      <img
-                        src={itemData.image}
-                        alt={itemData.name}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex h-full min-h-125 items-center justify-center font-ochre-ui text-sm font-semibold uppercase text-[#565e74]">
-                      No Image Available
-                    </div>
+            <div className="space-y-6">
+              {/* Collapsible: Item Image + Description */}
+              <div
+                id="item-info-collapsible"
+                className={cn(
+                  "grid overflow-hidden transition-[grid-template-rows] duration-500 ease-in-out",
+                  showDetails ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+                )}
+              >
+                <div
+                  className={cn(
+                    "grid min-h-0 grid-cols-2 gap-6 items-start transition-opacity duration-300 ease-in-out",
+                    showDetails ? "opacity-100 delay-150" : "opacity-0",
                   )}
-                </div>
-              </div>
+                >
+                  {/* Item Image */}
+                  <div className="h-full">
+                    <div className="h-full rounded-lg border border-[#eef4ff] bg-[#f8f9ff]/50 p-4">
+                      {itemData.image ? (
+                        <div className="relative h-full min-h-125 overflow-hidden">
+                          <img
+                            src={itemData.image}
+                            alt={itemData.name}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex h-full min-h-125 items-center justify-center font-ochre-ui text-sm font-semibold uppercase text-[#565e74]">
+                          No Image Available
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-              {/* Item Description */}
-              <div className="h-full">
-                <div className="h-full rounded-lg border border-[#eef4ff] bg-[#f8f9ff]/50 p-4">
-                  <div className="rounded-lg">
-                    <dl className="space-y-3 font-ochre-ui text-xs text-[#524439]">
-                      <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
-                        <dt className="text-[#524439]/70 font-medium">
-                          Category
-                        </dt>
-                        <dd className="font-semibold text-[#121c28]">
-                          {itemData.category?.name ?? "General"}
-                        </dd>
+                  {/* Item Description */}
+                  <div className="h-full">
+                    <div className="h-full rounded-lg border border-[#eef4ff] bg-[#f8f9ff]/50 p-4">
+                      <div className="rounded-lg">
+                        <dl className="space-y-3 font-ochre-ui text-xs text-[#524439]">
+                          <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                            <dt className="text-[#524439]/70 font-medium">
+                              Category
+                            </dt>
+                            <dd className="font-semibold text-[#121c28]">
+                              {itemData.category?.name ?? "General"}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                            <dt className="text-[#524439]/70 font-medium">
+                              Selling Price
+                            </dt>
+                            <dd className="font-semibold text-[#121c28]">
+                              {itemData.sellingPrice
+                                ? formatItemPrice(itemData.sellingPrice)
+                                : "—"}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                            <dt className="text-[#524439]/70 font-medium">
+                              Stock Status
+                            </dt>
+                            <dd
+                              className={cn(
+                                "font-semibold",
+                                itemData.isStockLow === "Low in stock"
+                                  ? "text-[#ba1a1a]"
+                                  : "text-emerald-700",
+                              )}
+                            >
+                              {itemData.isStockLow === "Low in stock"
+                                ? "Low in stock"
+                                : "Normal"}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                            <dt className="text-[#524439]/70 font-medium">
+                              Min Threshold
+                            </dt>
+                            <dd className="font-semibold text-[#121c28]">
+                              {itemData.minThreshold}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                            <dt className="text-[#524439]/70 font-medium">
+                              Active Status
+                            </dt>
+                            <dd className="font-semibold">
+                              <span
+                                className={cn(
+                                  "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+                                  itemData.isActive
+                                    ? "bg-emerald-100 text-emerald-800"
+                                    : "bg-rose-100 text-rose-800",
+                                )}
+                              >
+                                {itemData.isActive ? "Active" : "Inactive"}
+                              </span>
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                            <dt className="text-[#524439]/70 font-medium">
+                              Created by
+                            </dt>
+                            <dd className="font-semibold text-[#121c28]">
+                              {itemData.userCreatedBy?.name ?? "—"}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                            <dt className="text-[#524439]/70 font-medium">
+                              Updated by
+                            </dt>
+                            <dd className="font-semibold text-[#121c28]">
+                              {itemData.userUpdatedBy?.name ?? "—"}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                            <dt className="text-[#524439]/70 font-medium">
+                              Created
+                            </dt>
+                            <dd className="font-semibold text-[#121c28]">
+                              {itemData.createdAt
+                                ? formatTimestamp(itemData.createdAt)
+                                : "-"}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                            <dt className="text-[#524439]/70 font-medium">
+                              Updated
+                            </dt>
+                            <dd className="font-semibold text-[#121c28]">
+                              {itemData.updatedAt
+                                ? formatTimestamp(itemData.updatedAt)
+                                : "-"}
+                            </dd>
+                          </div>
+                          <div className="flex flex-col gap-1 pt-1">
+                            <dt className="text-[#524439]/70 font-medium">
+                              Description
+                            </dt>
+                            <dd className="font-normal text-[#121c28] whitespace-pre-wrap leading-relaxed text-left text-sm bg-white/70 border border-[#eef4ff] rounded-md p-2.5 mt-1">
+                              {itemData.description?.trim() ||
+                                "No description provided."}
+                            </dd>
+                          </div>
+                        </dl>
                       </div>
-                      <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
-                        <dt className="text-[#524439]/70 font-medium">
-                          Selling Price
-                        </dt>
-                        <dd className="font-semibold text-[#121c28]">
-                          {itemData.sellingPrice
-                            ? formatItemPrice(itemData.sellingPrice)
-                            : "—"}
-                        </dd>
-                      </div>
-                      <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
-                        <dt className="text-[#524439]/70 font-medium">
-                          Stock Status
-                        </dt>
-                        <dd
-                          className={cn(
-                            "font-semibold",
-                            itemData.isStockLow === "Low in stock"
-                              ? "text-[#ba1a1a]"
-                              : "text-emerald-700",
-                          )}
-                        >
-                          {itemData.isStockLow === "Low in stock"
-                            ? "Low in stock"
-                            : "Normal"}
-                        </dd>
-                      </div>
-                      <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
-                        <dt className="text-[#524439]/70 font-medium">
-                          Min Threshold
-                        </dt>
-                        <dd className="font-semibold text-[#121c28]">
-                          {itemData.minThreshold}
-                        </dd>
-                      </div>
-                      <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
-                        <dt className="text-[#524439]/70 font-medium">
-                          Active Status
-                        </dt>
-                        <dd className="font-semibold">
-                          <span
-                            className={cn(
-                              "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
-                              itemData.isActive
-                                ? "bg-emerald-100 text-emerald-800"
-                                : "bg-rose-100 text-rose-800",
-                            )}
-                          >
-                            {itemData.isActive ? "Active" : "Inactive"}
-                          </span>
-                        </dd>
-                      </div>
-                      <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
-                        <dt className="text-[#524439]/70 font-medium">
-                          Created by
-                        </dt>
-                        <dd className="font-semibold text-[#121c28]">
-                          {itemData.userCreatedBy?.name ?? "—"}
-                        </dd>
-                      </div>
-                      <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
-                        <dt className="text-[#524439]/70 font-medium">
-                          Updated by
-                        </dt>
-                        <dd className="font-semibold text-[#121c28]">
-                          {itemData.userUpdatedBy?.name ?? "—"}
-                        </dd>
-                      </div>
-                      <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
-                        <dt className="text-[#524439]/70 font-medium">
-                          Created
-                        </dt>
-                        <dd className="font-semibold text-[#121c28]">
-                          {itemData.createdAt
-                            ? formatTimestamp(itemData.createdAt)
-                            : "-"}
-                        </dd>
-                      </div>
-                      <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
-                        <dt className="text-[#524439]/70 font-medium">
-                          Updated
-                        </dt>
-                        <dd className="font-semibold text-[#121c28]">
-                          {itemData.updatedAt
-                            ? formatTimestamp(itemData.updatedAt)
-                            : "-"}
-                        </dd>
-                      </div>
-                      <div className="flex flex-col gap-1 pt-1">
-                        <dt className="text-[#524439]/70 font-medium">
-                          Description
-                        </dt>
-                        <dd className="font-normal text-[#121c28] whitespace-pre-wrap leading-relaxed text-left text-sm bg-white/70 border border-[#eef4ff] rounded-md p-2.5 mt-1">
-                          {itemData.description?.trim() ||
-                            "No description provided."}
-                        </dd>
-                      </div>
-                    </dl>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Stock Distribution */}
-              <div className="space-y-4 col-span-2">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between border-b border-[#eef4ff] pb-2">
                   <h3 className="font-ochre-brand text-lg font-medium text-[#894d0d]">
                     Stock Distributions
