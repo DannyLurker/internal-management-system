@@ -79,13 +79,19 @@ const itemRepository = {
             item: {
               select: {
                 name: true,
+                id: true,
               },
             },
             quantity: true,
             type: true,
             updatedAt: true,
             expiredAt: true,
-            location: true,
+            location: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
           skip: skipStockData,
           take: takeStockData,

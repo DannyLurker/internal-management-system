@@ -10,7 +10,7 @@ import { canDeleteItem } from "@/shared/lib/validations/user-access-validation";
 
 type TableRowProps = {
   item: Item;
-  onInfo: (item: Item) => void;
+  onInfo: (item: { id: string; name: string }) => void;
   onEdit: (item: Item) => void;
   onStatusChange: (item: Item, status: "ACTIVE" | "INACTIVE") => void;
   onDelete: (item: Item) => void;
@@ -85,7 +85,7 @@ export default function TableRow({
         <div className="inline-flex items-center gap-1">
           <button
             type="button"
-            onClick={() => onInfo(item)}
+            onClick={() => onInfo({ id: item.id, name: item.name })}
             className={cn(
               "rounded-md p-2 outline-none inline-flex items-center justify-center transition-all duration-200 ease-out",
               "bg-[#eef4ff] text-[#121c28] hover:bg-[#e5eeff] hover:text-[#894d0d]",

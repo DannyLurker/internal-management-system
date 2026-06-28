@@ -37,7 +37,7 @@ type ItemTableProps = {
   page: number;
   onPageChange: (page: number) => void;
   categoryOptions: { id: string; name: string }[];
-  onInfo: (item: Item) => void;
+  onInfo: (item: { id: string; name: string }) => void;
   onEdit: (item: Item) => void;
   onStatusChange: (item: Item, status: "ACTIVE" | "INACTIVE") => void;
   onDelete: (item: Item) => void;

@@ -183,11 +183,13 @@ export default function StockFormDialog({
                           : "Select an item"}
                       </SelectTrigger>
                       <SelectContent>
-                        {items!.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.name}
-                          </SelectItem>
-                        ))}
+                        {!isEdit &&
+                          items &&
+                          items.map((item) => (
+                            <SelectItem key={item.id} value={item.id}>
+                              {item.name}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   );
@@ -294,6 +296,38 @@ export default function StockFormDialog({
                 })()}
               </div>
             </div>
+
+            {/*  Quantity  */}
+            {!isEdit && (
+              <div className="mt-6 space-y-3">
+                <Label className="font-ochre-ui text-sm font-semibold text-[#121c28]">
+                  Quantity
+                </Label>
+
+                <Input
+                  type={"number"}
+                  placeholder={"100"}
+                  className={cn("w-full", inputClass)}
+                  {...createForm.register("quantity", {
+                    setValueAs: (value) => Number(value),
+                  })}
+                />
+                {(
+                  isEdit
+                    ? updateForm.formState.errors.expiredAt
+                    : createForm.formState.errors.expiredAt
+                ) ? (
+                  <p className="mt-1 font-ochre-ui text-xs text-red-600">
+                    {
+                      (isEdit
+                        ? updateForm.formState.errors.expiredAt
+                        : createForm.formState.errors.expiredAt
+                      )?.message
+                    }
+                  </p>
+                ) : null}
+              </div>
+            )}
           </fieldset>
 
           {/* Cost and Reason – only for creation */}

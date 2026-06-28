@@ -49,6 +49,7 @@ export const useCreateItem = () => {
     mutationFn: (payload: StockCreateSchema) => stockApi.create(payload),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: STOCK_KEYS.lists() });
+      queryClient.invalidateQueries({ queryKey: ITEM_KEYS.details() });
       toast.success(data.message);
     },
   });
@@ -61,6 +62,7 @@ export const useUpdateItem = () => {
     mutationFn: (payload: StockUpdateSchema) => stockApi.update(payload),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: STOCK_KEYS.lists() });
+      queryClient.invalidateQueries({ queryKey: ITEM_KEYS.details() });
       toast.success(data.message);
     },
   });

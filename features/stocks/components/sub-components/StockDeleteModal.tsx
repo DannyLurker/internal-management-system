@@ -7,6 +7,7 @@ import { cn } from "@/shared/lib/utils";
 import type { StockDelete } from "@/features/stocks/stock.types";
 import { useDeleteItem } from "@/features/stocks/stock.hooks";
 import { createPortal } from "react-dom";
+import { useEffect, useState } from "react";
 
 type StockDeleteModalProps = {
   open: boolean;
@@ -21,6 +22,8 @@ export default function StockDeleteModal({
   stock,
   onSuccess,
 }: StockDeleteModalProps) {
+  const [mounted, setMounted] = useState(false);
+
   const titleId = useId();
   const deleteMutation = useDeleteItem();
 
@@ -35,6 +38,12 @@ export default function StockDeleteModal({
       onSuccess();
     } catch {}
   };
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   return createPortal(
     <AnimatePresence>
@@ -125,6 +134,6 @@ export default function StockDeleteModal({
         </motion.div>
       ) : null}
     </AnimatePresence>,
-    document.body,
+    window.document.body,
   );
 }

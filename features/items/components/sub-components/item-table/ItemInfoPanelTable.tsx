@@ -6,12 +6,9 @@ import { formatItemDate } from "@/shared/lib/formatter";
 import TableHeader from "@/features/stocks/components/sub-components/stock-table/TableHeader";
 import { Stock, StockDelete, StockSortBy } from "@/features/stocks/stock.types";
 import { StockInItemById } from "@/features/items/item.types";
-import StockDeleteModal from "@/features/stocks/components/sub-components/StockDeleteModal";
-import StockFormDialog from "@/features/stocks/components/sub-components/StockFormDialog";
-import { useCallback, useState } from "react";
 import { canDeleteItem } from "@/shared/lib/validations/user-access-validation";
 import { useSession } from "next-auth/react";
-import { useLocations } from "@/features/locations/location.hooks";
+import { StockType } from "@prisma/client";
 
 type ItemInfoPanelTableProps = {
   stocks: StockInItemById[];
@@ -24,6 +21,8 @@ type ItemInfoPanelTableProps = {
   onPageChange: (page: number) => void;
   isLoading?: boolean;
   isError?: boolean;
+  openStockEdit: (stock: Stock) => void;
+  openStockDelete: (stock: StockDelete) => void;
 };
 
 function formatTimestamp(value: Date | string): string {
@@ -47,6 +46,8 @@ export default function ItemInfoPanelTable({
   onPageChange,
   isLoading = false,
   isError = false,
+  openStockDelete,
+  openStockEdit,
 }: ItemInfoPanelTableProps) {
   const { data: userSession } = useSession();
 
@@ -57,50 +58,6 @@ export default function ItemInfoPanelTable({
     stocks.length === 0 ? 0 : (itemStockPage - 1) * itemStocksPerpage + 1;
   const rangeEnd = (itemStockPage - 1) * itemStocksPerpage + stocks.length;
   const totalShown = totalStockRows;
-
-  // Location data
-  const { data: locationData, isLoading: isLocationLoading } = useLocations({
-    dataPerPage: 100,
-    page: 1,
-    sortBy: "type",
-    sortOrderEnum: "asc",
-  });
-
-  // Stock Modal state and handler
-  const [formOpen, setFormOpen] = useState(false);
-  const [editStock, setEditStock] = useState<Stock | null>(null);
-  const [deleteStock, setDeleteStock] = useState<StockDelete | null>(null);
-
-  const openStockCreate = useCallback(() => {
-    setEditStock(null);
-    setFormOpen(true);
-  }, []);
-
-  const openStockEdit = useCallback((stock: Stock) => {
-    setEditStock(stock);
-    setFormOpen(true);
-  }, []);
-
-  const openStockDelete = useCallback((stock: StockDelete) => {
-    setDeleteStock(stock);
-  }, []);
-
-  const handleStockFormOpenChange = useCallback((open: boolean) => {
-    setFormOpen(open);
-    if (!open) setEditStock(null);
-  }, []);
-
-  const handleStockDeleteOpenChange = useCallback((open: boolean) => {
-    if (!open) setDeleteStock(null);
-  }, []);
-
-  const handleStockFormSuccess = useCallback(() => {
-    setEditStock(null);
-  }, []);
-
-  const handleStockDeleteSuccess = useCallback(() => {
-    setDeleteStock(null);
-  }, []);
 
   if (isError) {
     return (
@@ -139,7 +96,7 @@ export default function ItemInfoPanelTable({
                     colSpan={5}
                     className="px-4 py-12 text-center font-ochre-ui text-sm text-[#524439]"
                   >
-                    No stock entries matching your filter criteria.
+                    No stock matching your filter criteria.
                   </td>
                 </tr>
               ) : (
@@ -181,9 +138,25 @@ export default function ItemInfoPanelTable({
                     </td>
                     <td className="px-4 py-3 align-middle text-end">
                       <div className="inline-flex items-center gap-1">
-                        {/* <button
+                        <button
                           type="button"
-                          onClick={() => openStockEdit(stock)}
+                          onClick={() =>
+                            openStockEdit({
+                              id: stock?.id as string,
+                              item: {
+                                id: stock?.item.id as string,
+                                name: stock?.item.name as string,
+                              },
+                              expiredAt: stock?.expiredAt as Date,
+                              itemId: stock?.item.id as string,
+                              location: {
+                                id: stock?.location?.id as string,
+                                name: stock?.location?.name as string,
+                              },
+                              locationId: stock?.location?.id as string,
+                              type: stock?.type as StockType,
+                            })
+                          }
                           className={cn(
                             "rounded-md p-2 outline-none inline-flex items-center justify-center transition-all duration-200 ease-out",
                             "bg-transparent text-[#565e74]",
@@ -195,7 +168,7 @@ export default function ItemInfoPanelTable({
                           aria-label={`Edit stock for ${stock?.item.name}`}
                         >
                           <Pencil className="size-4" strokeWidth={1.5} />
-                        </button> */}
+                        </button>
 
                         {userSession?.user.role &&
                           canDeleteItem(userSession.user.role) && (
@@ -305,19 +278,6 @@ export default function ItemInfoPanelTable({
           </div>
         ) : null}
       </div>
-
-      <StockDeleteModal
-        onOpenChange={handleStockDeleteOpenChange}
-        onSuccess={handleStockDeleteSuccess}
-        open={deleteStock != null}
-        stock={deleteStock}
-      />
-
-      <StockFormDialog
-        onOpenChange={handleStockFormOpenChange}
-        open={formOpen}
-        locations={}
-      />
     </div>
   );
 }

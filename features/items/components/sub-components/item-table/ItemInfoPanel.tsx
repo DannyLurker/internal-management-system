@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus } from "lucide-react";
 import { useItem } from "@/features/items/item.hooks";
 import { formatItemPrice } from "@/shared/lib/formatter";
 import { itemGetDetailSchema } from "@/shared/lib/zods/item.zod";
@@ -12,20 +12,32 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogOverlay,
 } from "@/shared/components/ui/dialog";
 import { cn, formatTimestamp } from "@/shared/lib/utils";
-import { StockSortBy, StockSortOrder } from "@/features/stocks/stock.types";
+import {
+  Stock,
+  StockDelete,
+  StockSortBy,
+  StockSortOrder,
+} from "@/features/stocks/stock.types";
 
 type ItemInfoPanelProps = {
   open: boolean;
   itemId: string;
   onClose: () => void;
+  openStockEdit: (stock: Stock) => void;
+  openStockDelete: (stock: StockDelete) => void;
+  openStockCreate: () => void;
 };
 
 export default function ItemInfoPanel({
   open,
   itemId,
   onClose,
+  openStockDelete,
+  openStockEdit,
+  openStockCreate,
 }: ItemInfoPanelProps) {
   const [itemStockPage, setItemStockPage] = useState(1);
   const [itemStocksPerpage, setItemStocksPerpage] = useState(10);
@@ -72,9 +84,10 @@ export default function ItemInfoPanel({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogOverlay className="bg-black/40 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
       <DialogContent
         showCloseButton
-        className="flex h-[80vh] max-h-[80vh] w-full max-w-lg flex-col gap-0 overflow-hidden rounded-lg border-[#eef4ff] p-0 sm:max-w-4xl md:max-w-6xl"
+        className="flex h-[85vh] max-h-[85vh] w-full max-w-lg flex-col gap-0 overflow-hidden rounded-lg border-[#eef4ff] p-0 sm:max-w-4xl md:max-w-6xl data-[state=open]:animate-in data-[state=open]:zoom-in-95 data-[state=open]:slide-in-from-bottom-4 data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=closed]:slide-out-to-bottom-4 duration-300 ease-out"
       >
         <DialogHeader className="border-b border-[#eef4ff] px-6 py-5 text-left">
           <DialogTitle className="font-ochre-brand text-2xl font-medium text-[#894d0d]">
@@ -241,9 +254,25 @@ export default function ItemInfoPanel({
                   <h3 className="font-ochre-brand text-lg font-medium text-[#894d0d]">
                     Stock Distributions
                   </h3>
-                  <span className="rounded-full bg-[#894d0d] px-2.5 py-0.5 text-xs font-semibold text-white">
-                    {totalItemStocks} entries
-                  </span>
+
+                  {/* Create New Stock Button */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={openStockCreate}
+                      className={cn(
+                        "inline-flex shrink-0 items-center gap-2 self-start rounded bg-[#894d0d] px-5 py-1 font-ochre-ui text-sm font-semibold uppercase tracking-wide text-white shadow-[0_8px_24px_-8px_rgba(137,77,13,0.45)]",
+                        "transition-[transform,box-shadow] hover:-translate-y-px",
+                        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#894d0d]",
+                      )}
+                    >
+                      <Plus className="size-4" strokeWidth={2} aria-hidden />
+                      New stock
+                    </button>
+                    <span className="rounded-full bg-[#894d0d] px-2.5 py-0.5 text-xs font-semibold text-white">
+                      {totalItemStocks} entries
+                    </span>
+                  </div>
                 </div>
 
                 {/* Controls: show count + sort + filter */}
@@ -324,6 +353,8 @@ export default function ItemInfoPanel({
                   sortOrder={sortOrder}
                   onRequestSort={handleRequestSort}
                   onPageChange={setItemStockPage}
+                  openStockDelete={openStockDelete}
+                  openStockEdit={openStockEdit}
                 />
               </div>
             </div>

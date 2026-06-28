@@ -16,6 +16,10 @@ import {
 } from "@/shared/lib/zods/item.zod";
 import ItemTable, { ItemTableFilters } from "./sub-components/item-table";
 import ItemInfoPanel from "./sub-components/item-table/ItemInfoPanel";
+import StockDeleteModal from "@/features/stocks/components/sub-components/StockDeleteModal";
+import StockFormDialog from "@/features/stocks/components/sub-components/StockFormDialog";
+import { Stock, StockDelete } from "@/features/stocks/stock.types";
+import { useLocations } from "@/features/locations/location.hooks";
 
 type LocationOption = { id: string; name: string };
 
@@ -37,7 +41,10 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const [itemFormOpen, setItemFormOpen] = useState(false);
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [editItem, setEditItem] = useState<Item | null>(null);
   const [deleteItem, setDeleteItem] = useState<Item | null>(null);
   const [statusChangeItem, setStatusChangeItem] = useState<Item | null>(null);
@@ -184,6 +191,59 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
     setStatusChangeItem(null);
   }, []);
 
+  // Location data
+  const { data: locationsResponse } = useLocations({
+    dataPerPage: 100,
+    page: 1,
+    sortBy: "type",
+    sortOrderEnum: "asc",
+  });
+
+  const locationData = locationsResponse?.data.locations ?? [];
+
+  const transformLocations = locationData.map((location) => ({
+    id: location.id,
+    name: location.name,
+  }));
+
+  // Stock Modal state and handler
+  const [formOpen, setFormOpen] = useState(false);
+  const [editStock, setEditStock] = useState<Stock | null>(null);
+  const [deleteStock, setDeleteStock] = useState<StockDelete | null>(null);
+
+  const openStockCreate = useCallback(() => {
+    setEditStock(null);
+    setFormOpen(true);
+  }, []);
+
+  const openStockEdit = useCallback((stock: Stock) => {
+    setEditStock(stock);
+    setFormOpen(true);
+  }, []);
+
+  const openStockDelete = useCallback((stock: StockDelete) => {
+    setDeleteStock(stock);
+  }, []);
+
+  const handleStockFormOpenChange = useCallback((open: boolean) => {
+    setFormOpen(open);
+    if (!open) setEditStock(null);
+  }, []);
+
+  const handleStockDeleteOpenChange = useCallback((open: boolean) => {
+    if (!open) setDeleteStock(null);
+  }, []);
+
+  const handleStockFormSuccess = useCallback(() => {
+    setEditStock(null);
+  }, []);
+
+  const handleStockDeleteSuccess = useCallback(() => {
+    setDeleteStock(null);
+  }, []);
+
+  console.log(selectedItem);
+
   return (
     <div className="min-h-0 flex-1 bg-[#f8f9ff] px-4 py-8 md:px-10">
       <header className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -227,7 +287,7 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
           page={page}
           onPageChange={setPage}
           categoryOptions={categoryOptions}
-          onInfo={(item) => setSelectedItemId(item.id)}
+          onInfo={(item: { id: string; name: string }) => setSelectedItem(item)}
           onEdit={itemOpenEdit}
           onStatusChange={itemOpenStatusChange}
           onDelete={itemOpenDelete}
@@ -258,14 +318,33 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
         status={statusChangeStatus}
       />
 
-      {selectedItemId ? (
+      {selectedItem?.id ? (
         <ItemInfoPanel
-          key={selectedItemId}
-          itemId={selectedItemId}
-          open={selectedItemId != null}
-          onClose={() => setSelectedItemId(null)}
+          key={selectedItem?.id}
+          itemId={selectedItem?.id}
+          open={selectedItem?.id != null}
+          onClose={() => setSelectedItem(null)}
+          openStockDelete={openStockDelete}
+          openStockEdit={openStockEdit}
+          openStockCreate={openStockCreate}
         />
       ) : null}
+
+      <StockDeleteModal
+        onOpenChange={handleStockDeleteOpenChange}
+        onSuccess={handleStockDeleteSuccess}
+        open={deleteStock != null}
+        stock={deleteStock}
+      />
+
+      <StockFormDialog
+        onOpenChange={handleStockFormOpenChange}
+        open={formOpen}
+        locations={transformLocations}
+        onSuccess={handleStockFormSuccess}
+        stock={editStock}
+        items={selectedItem?.id ? [selectedItem] : []}
+      />
     </div>
   );
 }
