@@ -58,6 +58,12 @@ const itemRepository = {
     return item;
   },
 
+  findById: async (id: string, tx: PrismaClient | Prisma.TransactionClient) => {
+    return await tx.item.findUnique({
+      where: { id },
+    });
+  },
+
   getById: async (
     itemId: string,
     itemSelect: Prisma.ItemSelect,

@@ -21,6 +21,12 @@ export const locationRepository = {
     });
   },
 
+  findById: async (id: string, tx: PrismaClient | Prisma.TransactionClient) => {
+    return await tx.item.findUnique({
+      where: { id },
+    });
+  },
+
   getMany: async <T extends Prisma.LocationSelect>(
     where: Prisma.LocationWhereInput,
     select: T,

@@ -19,6 +19,12 @@ export const stockRepository = {
     });
   },
 
+  findById: async (id: string, tx: PrismaClient | Prisma.TransactionClient) => {
+    return await tx.item.findUnique({
+      where: { id },
+    });
+  },
+
   getMany: async <T extends Prisma.StockSelect>(
     where: Prisma.StockWhereInput,
     select: T,

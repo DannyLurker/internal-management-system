@@ -15,7 +15,7 @@ export const stockMovementCreateSchema = z.object({
   totalCost: z.number().optional(),
   reason: z.string().trim().min(10),
   sourceLocationId: z.string().trim().min(1).optional(),
-  destinationLocationid: z.string().trim().min(1).optional(),
+  destinationLocationId: z.string().trim().min(1).optional(),
   orderId: z.string().trim().min(1).optional(),
 });
 
@@ -24,7 +24,6 @@ export type StockMovementCreateSchema = z.infer<
 >;
 
 export const stockMovementUpdateSchema = z.object({
-  totalCost: z.number().int().nonnegative().optional(),
   reason: z.string().trim().min(10),
 });
 
