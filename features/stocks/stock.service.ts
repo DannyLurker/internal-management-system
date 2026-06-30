@@ -422,7 +422,7 @@ const stockService = {
 
       if (existing.movements && existing.movements.length > 0) {
         throw badRequest(
-          "Stock cannot be deleted because it has history of stock movements. Adjust the stock quantity instead.",
+          "Stock cannot be deleted because it has history of stock movements.",
         );
       }
 

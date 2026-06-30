@@ -39,15 +39,15 @@ export default defineConfig({
       testMatch: /.*\.setup\.ts/,
     },
 
-    {
-      name: "chromium CRUD location tests (Manager)",
-      use: {
-        ...devices["Desktop Chrome"],
-        storageState: "playwright/.auth/manager.json",
-      },
-      dependencies: ["setup"],
-      testMatch: "**/location.spec.ts",
-    },
+    // {
+    //   name: "chromium CRUD location tests (Manager)",
+    //   use: {
+    //     ...devices["Desktop Chrome"],
+    //     storageState: "playwright/.auth/manager.json",
+    //   },
+    //   dependencies: ["setup"],
+    //   testMatch: "**/location.spec.ts",
+    // },
 
     // {
     //   name: "chromium CRUD category tests (Manager)",
@@ -68,6 +68,16 @@ export default defineConfig({
     //   dependencies: ["setup"],
     //   testMatch: "**/item.spec.ts",
     // },
+
+    {
+      name: "chromium CRUD stock tests (Manager)",
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: "playwright/.auth/manager.json",
+      },
+      dependencies: ["setup"],
+      testMatch: "**/stock.spec.ts",
+    },
   ],
 
   /* Run your local dev server before starting the tests */

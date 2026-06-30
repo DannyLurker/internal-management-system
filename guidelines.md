@@ -11,6 +11,7 @@ This project is an internal hotel management system designed to be extended into
 - **Database & ORM:** PostgreSQL running with Prisma ORM
 - **Styling & UI:** Tailwind CSS combined with shadcn/ui components
 - **State Management & Fetching:** React Server Components (RSC), TanStack Query, and Zod for schema validation
+- **Testing:** Playwright for end-to-end testing
 
 ## 3. Core Coding Rules & Standards
 
@@ -110,4 +111,4 @@ When pulling structural patterns or API lookups, favor reading raw text summarie
 - **Next.js AI Context Map:** `https://nextjs.org/llms.txt`
 - **Prisma Core Reference:** `https://raw.githubusercontent.com/prisma/prisma/main/README.md`
 - **TypeScript Language Specifications:** `https://www.typescriptlang.org/llms.txt`
-- **Design System Guidelines:** `DESIGN.MD` 
+- **Design System Guidelines:** `DESIGN.MD`
