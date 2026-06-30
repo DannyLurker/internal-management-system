@@ -25,8 +25,8 @@ test.describe("CRUD operations for Category", () => {
     console.log("Get List Response:", body);
 
     expect(response.status()).toBe(200);
-    expect(body.data).toBeDefined();
-    expect(Array.isArray(body.data)).toBe(true);
+    expect(body.data.categories).toBeDefined();
+    expect(Array.isArray(body.data.categories)).toBe(true);
   });
 
   test("Get single category by ID", async ({ request }) => {
@@ -117,9 +117,9 @@ test.describe("CRUD operations for Category", () => {
     const list = await request.get(
       "http://localhost:3000/api/categories?page=1&dataPerPage=100",
     );
-    const { data: categories } = await list.json();
+    const { data: categoriesResponse } = await list.json();
 
-    for (const category of categories) {
+    for (const category of categoriesResponse.categories) {
       if (category.name.startsWith(TEST_PREFIX)) {
         await request.delete(
           `http://localhost:3000/api/categories/${category.id}`,

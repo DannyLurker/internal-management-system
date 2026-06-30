@@ -1,4 +1,3 @@
-import { ItemUpdateSchema } from "@/shared/lib/zods/item.zod";
 import { test, expect } from "@playwright/test";
 
 test.describe.configure({ mode: "serial" });
@@ -161,6 +160,20 @@ test.describe("CRUD operations for Item", () => {
     expect(response.status()).toBe(200);
 
     expect(body.message).toContain(`${TEST_PREFIX}Luxury King Pillow - Firm`);
+  });
+
+  test("Error: Delete an active item", async ({ request }) => {
+    const response = await request.delete(`/api/items/${createdItemId}`);
+
+    const body = await response.json();
+
+    console.log("Delete Response:", body);
+
+    expect(response.status()).toBe(400);
+
+    expect(body.message).toContain(
+      `You cannot delete an active item. Please deactivate it first.`,
+    );
   });
 
   test("Delete an item", async ({ request }) => {

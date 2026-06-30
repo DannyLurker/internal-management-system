@@ -345,7 +345,7 @@ const locationService = {
 
       if (!existing) throw notFound("Location not found");
 
-      if (existing.id)
+      if (existing.stocks.length > 0)
         throw badRequest(
           "Item was found in this location. Migrate all the item before deleting.",
         );

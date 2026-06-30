@@ -42,9 +42,9 @@ export const locationGetSpesificSchema = z.object({
   itemSearchQuery: searchQuery,
   itemPage: page,
   itemDataPerPage: dataPerPage,
-  sortOrder: sortOrderEnum,
-  sortBy: sortItemEnumAtLocation,
-  stockStatusType: stockStatusEnum,
+  sortOrder: sortOrderEnum.default("desc"),
+  sortBy: sortItemEnumAtLocation.default("name"),
+  stockStatusType: stockStatusEnum.default("ALL"),
 });
 
 export type LocationGetSpecificSchema = z.infer<

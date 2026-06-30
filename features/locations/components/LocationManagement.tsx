@@ -13,7 +13,7 @@ import { cn } from "@/shared/lib/utils";
 import LocationInfoPanel from "./sub-components/location-table/LocationInfoPanel";
 import LocationFormDialog from "./sub-components/LocationFormDialog";
 import LocationDeleteModal from "./sub-components/LocationDeleteModal";
-import LocationTable from "./sub-components/location-table";
+import LocationTable from "./sub-components/location-table/index";
 
 const DATA_PER_PAGE_OPTIONS = [10, 20, 50, 100] as const;
 const SORT_BY_OPTIONS: LocationGetSchema["sortBy"][] = [

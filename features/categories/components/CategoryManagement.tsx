@@ -21,7 +21,7 @@ import CategoryFormDialog from "./sub-components/CategoryFormDialog";
 import CategoryDeleteModal from "./sub-components/CategoryDeleteModal";
 import CategoryInfoPanel from "./sub-components/category-table/CategoryInfoPanel";
 import type { CategorySortBy } from "./sub-components/category-table/TableHeader";
-import CategoryTable from "./sub-components/category-table";
+import CategoryTable from "./sub-components/category-table/index";
 
 export default function CategoryManagement() {
   const [page, setPage] = useState(1);

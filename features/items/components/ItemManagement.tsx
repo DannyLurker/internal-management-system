@@ -14,12 +14,12 @@ import {
   itemGetManyschema,
   ItemGetManySchema,
 } from "@/shared/lib/zods/item.zod";
-import ItemTable, { ItemTableFilters } from "./sub-components/item-table";
 import ItemInfoPanel from "./sub-components/item-table/ItemInfoPanel";
 import StockDeleteModal from "@/features/stocks/components/sub-components/StockDeleteModal";
 import StockFormDialog from "@/features/stocks/components/sub-components/StockFormDialog";
 import { Stock, StockDelete } from "@/features/stocks/stock.types";
 import { useLocations } from "@/features/locations/location.hooks";
+import ItemTable, { ItemTableFilters } from "./sub-components/item-table/index";
 
 type LocationOption = { id: string; name: string };
 
