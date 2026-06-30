@@ -24,15 +24,8 @@ export type StockMovementCreateSchema = z.infer<
 >;
 
 export const stockMovementUpdateSchema = z.object({
-  itemId: z.string().trim().min(1),
-  stockId: z.string().trim().min(1),
-  type: stockMovementTypeEnum,
-  quantity: z.number().int().min(1),
-  totalCost: z.number().optional(),
+  totalCost: z.number().int().nonnegative().optional(),
   reason: z.string().trim().min(10),
-  sourceLocationId: z.string().trim().min(1).optional(),
-  destinationLocationid: z.string().trim().min(1).optional(),
-  orderId: z.string().trim().min(1).optional(),
 });
 
 export type StockMovementUpdateSchema = z.infer<
