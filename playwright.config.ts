@@ -69,14 +69,24 @@ export default defineConfig({
     //   testMatch: "**/item.spec.ts",
     // },
 
+    // {
+    //   name: "chromium CRUD stock tests (Manager)",
+    //   use: {
+    //     ...devices["Desktop Chrome"],
+    //     storageState: "playwright/.auth/manager.json",
+    //   },
+    //   dependencies: ["setup"],
+    //   testMatch: "**/stock.spec.ts",
+    // },
+
     {
-      name: "chromium CRUD stock tests (Manager)",
+      name: "chromium CRUD stock movement tests (Manager)",
       use: {
         ...devices["Desktop Chrome"],
         storageState: "playwright/.auth/manager.json",
       },
       dependencies: ["setup"],
-      testMatch: "**/stock.spec.ts",
+      testMatch: "**/stock-movement.spec.ts",
     },
   ],
 

@@ -22,8 +22,8 @@ export const locationRepository = {
   },
 
   findById: async (id: string, tx: PrismaClient | Prisma.TransactionClient) => {
-    return await tx.item.findUnique({
-      where: { id },
+    return await tx.location.findUnique({
+      where: { id: id },
     });
   },
 

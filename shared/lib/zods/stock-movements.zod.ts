@@ -9,9 +9,9 @@ import {
 
 export const stockMovementCreateSchema = z.object({
   itemId: z.string().trim().min(1),
-  stockId: z.string().trim().min(1),
+  stockId: z.string().trim().min(1).optional(),
   type: stockMovementTypeEnum,
-  quantity: z.number().int().min(1),
+  quantity: z.number().nonnegative().int().min(1),
   totalCost: z.number().optional(),
   reason: z.string().trim().min(10),
   sourceLocationId: z.string().trim().min(1).optional(),

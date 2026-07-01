@@ -21,6 +21,7 @@ The following features have been implemented and tested:
 - **Categories** - Organize items into categories (CRUD operations)
 - **Items** - Manage inventory items with attributes, pricing, and stock tracking (CRUD operations)
 - **Stock** - Track stock quantities, movements, and costs with location-based management (CRUD operations)
+- **Stock Movement** - Serves a purpose as a ledger / history of stock movements between storage (CRUD operations)
 
 ## Getting Started
 

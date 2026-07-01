@@ -13,7 +13,7 @@ import stockMovementsRepository, {
   createSelectStockMovementData,
 } from "./stock-movements.repository";
 import auditLogsRepository from "../audit-logs/audit-log.repository";
-import { Prisma } from "@prisma/client";
+import { MovementType, Prisma, StockMovement } from "@prisma/client";
 import itemRepository from "../items/item.repository";
 import { locationRepository } from "../locations/location.repository";
 import { stockRepository } from "../stocks/stock.repository";
@@ -54,48 +54,98 @@ const stockMovementsService = {
         throw notFound("Destination location not found");
       if (validatedData.orderId && !order) throw notFound("Order not found");
 
-      const movement = await stockMovementsRepository.create(
-        {
-          itemId: validatedData.itemId,
-          stockId: validatedData.stockId,
-          type: validatedData.type,
-          quantity: validatedData.quantity,
-          totalCost: validatedData.totalCost,
-          reason: validatedData.reason,
-          sourceLocationId: validatedData.sourceLocationId,
-          destinationLocationId: validatedData.destinationLocationId,
-          orderId: validatedData.orderId,
-          createdBy: session.id,
-        },
-        tx,
-      );
+      let movement;
+      const decreaseStockQuantityType: MovementType[] = [
+        "TRANSFER",
+        "SALE",
+        "LAUNDRY_OUT",
+        "DISCARD",
+      ];
 
-      await auditLogsRepository.create(
-        {
-          userId: session.id,
-          action: "CREATE",
-          entity: "STOCK_MOVEMENT",
-          entityId: movement.id,
-          metadata: {
-            itemId: movement.itemId,
-            stockId: movement.stockId,
-            type: movement.type,
-            quantity: movement.quantity,
-            totalCost: movement.totalCost,
-            sourceLocationId: movement.sourceLocationId,
-            destinationLocationId: movement.destinationLocationId,
-            orderId: movement.orderId,
+      // Allows stockId to be null for 'RECEIVE' movements to record a global intake transaction.
+      // This unassigned stock can later be distributed to specific locations and stock records.
+      if (
+        !decreaseStockQuantityType.includes(validatedData.type) &&
+        validatedData.type === "RECEIVE"
+      ) {
+        movement = await stockMovementsRepository.create(
+          {
+            itemId: validatedData.itemId,
+            stockId: validatedData.stockId,
+            type: validatedData.type,
+            quantity: validatedData.quantity,
+            totalCost: validatedData.totalCost,
+            reason: validatedData.reason,
+            sourceLocationId: validatedData.sourceLocationId,
+            destinationLocationId: validatedData.destinationLocationId,
+            orderId: validatedData.orderId,
+            createdBy: session.id,
           },
-        },
-        tx,
-      );
+          tx,
+        );
+      }
+
+      if (
+        validatedData.stockId &&
+        !decreaseStockQuantityType.includes(validatedData.type) &&
+        validatedData.type === "RECEIVE" &&
+        stock?.type === "READY"
+      ) {
+        movement = await stockMovementsRepository.create(
+          {
+            itemId: validatedData.itemId,
+            stockId: validatedData.stockId,
+            type: validatedData.type,
+            quantity: validatedData.quantity,
+            totalCost: validatedData.totalCost,
+            reason: validatedData.reason,
+            sourceLocationId: validatedData.sourceLocationId,
+            destinationLocationId: validatedData.destinationLocationId,
+            orderId: validatedData.orderId,
+            createdBy: session.id,
+          },
+          tx,
+        );
+
+        stockRepository.update(
+          validatedData.stockId,
+          {
+            quantity: {
+              increment: validatedData.quantity,
+            },
+          },
+          tx,
+        );
+      }
+
+      if (movement) {
+        await auditLogsRepository.create(
+          {
+            userId: session.id,
+            action: "CREATE",
+            entity: "STOCK_MOVEMENT",
+            entityId: movement.id,
+            metadata: {
+              itemId: movement.itemId,
+              stockId: movement.stockId,
+              type: movement.type,
+              quantity: movement.quantity,
+              totalCost: movement.totalCost,
+              sourceLocationId: movement.sourceLocationId,
+              destinationLocationId: movement.destinationLocationId,
+              orderId: movement.orderId,
+            },
+          },
+          tx,
+        );
+      }
 
       return movement;
     });
 
     return {
       message: "Stock movement created successfully",
-      id: result.id,
+      id: result?.id,
     };
   },
 

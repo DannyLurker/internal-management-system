@@ -1,0 +1,7 @@
+sandbox_mode = "danger-full-access"
+[mcp_servers.next-devtools]
+command = "npx"
+args = [
+    "-y",
+    "next-devtools-mcp@latest",
+]

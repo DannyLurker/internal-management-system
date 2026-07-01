@@ -20,7 +20,7 @@ export const stockRepository = {
   },
 
   findById: async (id: string, tx: PrismaClient | Prisma.TransactionClient) => {
-    return await tx.item.findUnique({
+    return await tx.stock.findUnique({
       where: { id },
     });
   },

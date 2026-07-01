@@ -13,8 +13,8 @@ export const stockCreateSchema = z
   .object({
     itemId: z.string().trim().min(1),
     quantity: z.number().min(1),
-    totalCost: z.number().min(1),
-    reason: z.string().trim().min(1),
+    totalCost: z.number().min(1).optional(),
+    reason: z.string().trim().min(10),
     type: stockEnum,
     locationId: z.string().trim().min(1),
     expiredAt: z.coerce.date().optional(),

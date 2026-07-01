@@ -1,0 +1,70 @@
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  UseQueryOptions,
+} from "@tanstack/react-query";
+import STOCK_MOVEMENT_KEYS from "./stock-movements.keys";
+import {
+  StockMovementCreateSchema,
+  StockMovementGetManySchema,
+  StockMovementUpdateSchema,
+} from "@/shared/lib/zods/stock-movements.zod";
+import {
+  StockMovementGetByIdApiResponse,
+  StockMovementGetManyApiResponse,
+} from "./stock-movements.types";
+import stockMovementsApi from "./stock-movements.api";
+import { toast } from "sonner";
+
+export const useStockMovementsHooks = (
+  params: StockMovementGetManySchema,
+  options?: Partial<UseQueryOptions<StockMovementGetManyApiResponse>>,
+) => {
+  return useQuery({
+    queryKey: STOCK_MOVEMENT_KEYS.list(params),
+    queryFn: () => stockMovementsApi.getMany(params),
+    staleTime: 1000 * 60 * 5,
+    ...options,
+  });
+};
+
+export const useStockMovement = (
+  stockMovementId: string,
+  options?: Partial<UseQueryOptions<StockMovementGetByIdApiResponse>>,
+) => {
+  return useQuery({
+    queryKey: STOCK_MOVEMENT_KEYS.detail(stockMovementId),
+    queryFn: () => stockMovementsApi.getById(stockMovementId),
+    staleTime: 1000 * 60 * 5,
+    ...options,
+  });
+};
+
+export const useCreateStockMovement = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: StockMovementCreateSchema) =>
+      stockMovementsApi.create(payload),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: STOCK_MOVEMENT_KEYS.lists() });
+      toast.success(data.message);
+    },
+  });
+};
+
+export const useUpdateStockMovement = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: StockMovementUpdateSchema) =>
+      stockMovementsApi.update(payload),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: STOCK_MOVEMENT_KEYS.detail(data.data.id),
+      });
+      toast.success(data.message);
+    },
+  });
+};
