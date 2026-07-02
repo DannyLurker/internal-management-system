@@ -1,5 +1,5 @@
 import prisma from "@/shared/db/prisma";
-import { forbidden, notFound } from "@/shared/lib/error-handlers";
+import { badRequest, forbidden, notFound } from "@/shared/lib/error-handlers";
 import { canManageItem } from "@/shared/lib/validations/user-access-validation";
 import sessionValidation from "@/shared/lib/validations/user-session-validation";
 import {
@@ -61,11 +61,7 @@ const stockMovementsService = {
       if (validatedData.orderId && !order) throw notFound("Order not found");
 
       let movement;
-      const decreaseStockQuantityMovementType: MovementType[] = [
-        "SALE",
-        "LAUNDRY_OUT",
-        "DISCARD",
-      ];
+
       const increaseStockQuantityMovementType: MovementType[] = [
         "RECEIVE",
         "LAUNDRY_IN",
@@ -87,9 +83,6 @@ const stockMovementsService = {
       // Allows stockId to be null for 'RECEIVE' movements to record a global intake transaction.
       // This unassigned stock can later be distributed to specific locations and stock records.
       if (
-        !decreaseStockQuantityMovementType.includes(
-          validatedData.stockMovementType,
-        ) &&
         validatedData.stockMovementType === "RECEIVE" &&
         validatedData.stockId === null
       ) {
@@ -102,9 +95,6 @@ const stockMovementsService = {
       // increment the quantity field in the stock model if the stock.id is found and the stock movement type is increaseStockQuantityMovementType
       if (
         currentStock?.id &&
-        !decreaseStockQuantityMovementType.includes(
-          validatedData.stockMovementType,
-        ) &&
         increaseStockQuantityMovementType.includes(
           validatedData.stockMovementType,
         )
@@ -134,9 +124,9 @@ const stockMovementsService = {
         validatedData.stockMovementType === "TRANSFER" &&
         validatedData.stockTransferType &&
         isSourceLocationValid &&
-        validatedData.destinationLocationId
+        validatedData.destinationLocationId !== currentStock.locationId
       ) {
-        const destinationStock = await stockRepository.findFirst(
+        let destinationStock = await stockRepository.findFirst(
           {
             itemId: validatedData.itemId,
             locationId: validatedData.destinationLocationId,
@@ -146,8 +136,11 @@ const stockMovementsService = {
           tx,
         );
 
+        if (currentStock.quantity < validatedData.quantity)
+          throw badRequest("Insufficient stock quantity.");
+
         if (!destinationStock) {
-          await stockRepository.create(
+          destinationStock = await stockRepository.create(
             {
               item: {
                 connect: { id: validatedData.itemId },
@@ -159,6 +152,7 @@ const stockMovementsService = {
               location: {
                 connect: { id: validatedData.destinationLocationId },
               },
+              expiredAt: currentStock.expiredAt,
               type: validatedData.stockTransferType,
             },
             tx,
@@ -186,13 +180,19 @@ const stockMovementsService = {
         }
 
         movement = await stockMovementsRepository.create(
-          { ...createdStockMovement, stockId: destinationStock?.id },
+          { ...createdStockMovement, stockId: destinationStock.id },
           tx,
         );
       }
 
       // Quantity which is in ADJUSTMENT stock movement type can be positive or negative
       if (currentStock && validatedData.stockMovementType === "ADJUSTMENT") {
+        const calculatedQuantity =
+          currentStock.quantity + validatedData.quantity;
+
+        if (calculatedQuantity < 0)
+          throw badRequest("Insufficient stock quantity.");
+
         movement = await stockMovementsRepository.create(
           createdStockMovement,
           tx,
@@ -209,15 +209,24 @@ const stockMovementsService = {
         );
       }
 
-      // decreaseStockQuantityMovementType case
+      //Mark as damaged
       if (
         currentStock &&
-        decreaseStockQuantityMovementType.includes(
-          validatedData.stockMovementType,
-        )
+        validatedData.stockMovementType === "MARK_AS_DAMAGED"
       ) {
-        movement = await stockMovementsRepository.create(
-          createdStockMovement,
+        const calculatedQuantity =
+          currentStock.quantity - validatedData.quantity;
+
+        if (calculatedQuantity < 0)
+          throw badRequest("Insufficient stock quantity.");
+
+        let damagedStock = await stockRepository.findFirst(
+          {
+            itemId: currentStock.itemId,
+            locationId: currentStock.locationId,
+            type: "DAMAGED",
+            expiredAt: currentStock.expiredAt,
+          },
           tx,
         );
 
@@ -230,8 +239,173 @@ const stockMovementsService = {
           },
           tx,
         );
+
+        if (damagedStock) {
+          await stockRepository.update(
+            damagedStock.id,
+            {
+              quantity: {
+                increment: validatedData.quantity,
+              },
+            },
+            tx,
+          );
+        } else {
+          damagedStock = await stockRepository.create(
+            {
+              item: {
+                connect: {
+                  id: currentStock.itemId,
+                },
+              },
+              location: {
+                connect: {
+                  id: currentStock.locationId,
+                },
+              },
+              creator: {
+                connect: {
+                  id: session.id,
+                },
+              },
+              quantity: validatedData.quantity,
+              type: "DAMAGED",
+              expiredAt: currentStock.expiredAt,
+            },
+            tx,
+          );
+        }
+
+        movement = await stockMovementsRepository.create(
+          {
+            ...createdStockMovement,
+            stockId: damagedStock.id,
+            type: "MARK_AS_DAMAGED",
+            sourceLocationId: currentStock.locationId,
+            destinationLocationId: currentStock.locationId,
+          },
+          tx,
+        );
       }
 
+      // Laundry out case (manual)
+      if (currentStock && validatedData.stockMovementType === "MARK_AS_DIRTY") {
+        const calculatedQuantity =
+          currentStock.quantity - validatedData.quantity;
+
+        if (calculatedQuantity < 0)
+          throw badRequest("Insufficient stock quantity.");
+
+        let dirtyStock = await stockRepository.findFirst(
+          {
+            itemId: currentStock.itemId,
+            locationId: currentStock.locationId,
+            type: "DIRTY",
+            expiredAt: currentStock.expiredAt,
+          },
+          tx,
+        );
+
+        await stockRepository.update(
+          currentStock.id,
+          {
+            quantity: {
+              decrement: validatedData.quantity,
+            },
+          },
+          tx,
+        );
+
+        if (dirtyStock) {
+          await stockRepository.update(
+            dirtyStock.id,
+            {
+              quantity: {
+                increment: validatedData.quantity,
+              },
+            },
+            tx,
+          );
+        } else {
+          dirtyStock = await stockRepository.create(
+            {
+              item: {
+                connect: {
+                  id: currentStock.itemId,
+                },
+              },
+              location: {
+                connect: {
+                  id: currentStock.locationId,
+                },
+              },
+              creator: {
+                connect: {
+                  id: session.id,
+                },
+              },
+              quantity: validatedData.quantity,
+              type: "DIRTY",
+              expiredAt: currentStock.expiredAt,
+            },
+            tx,
+          );
+        }
+
+        movement = await stockMovementsRepository.create(
+          {
+            ...createdStockMovement,
+            stockId: dirtyStock.id,
+            type: "MARK_AS_DIRTY",
+            sourceLocationId: currentStock.locationId,
+            destinationLocationId: currentStock.locationId,
+          },
+          tx,
+        );
+      }
+
+      // Consume caseh
+      if (
+        currentStock &&
+        (validatedData.stockMovementType === "CONSUME" ||
+          validatedData.stockMovementType === "SALE")
+      ) {
+        movement = await stockMovementsRepository.create(
+          { ...createdStockMovement, destinationLocationId: null },
+          tx,
+        );
+
+        stockRepository.update(
+          currentStock.id,
+          {
+            quantity: {
+              decrement: validatedData.quantity,
+            },
+          },
+          tx,
+        );
+      }
+
+      if (
+        (currentStock?.type === "DAMAGED" || currentStock?.type === "DIRTY") &&
+        (validatedData.stockMovementType === "LAUNDRY_OUT" ||
+          validatedData.stockMovementType == "DISCARD")
+      ) {
+        movement = await stockMovementsRepository.create(
+          { ...createdStockMovement, destinationLocationId: null },
+          tx,
+        );
+
+        stockRepository.update(
+          currentStock.id,
+          {
+            quantity: {
+              decrement: validatedData.quantity,
+            },
+          },
+          tx,
+        );
+      }
       if (movement) {
         await auditLogsRepository.create(
           {
@@ -257,11 +431,20 @@ const stockMovementsService = {
       return movement;
     });
 
+    if (!result)
+      throw badRequest(
+        "No movement record has created. Can't directly delete or laundry out item from the stock that is not in type of DAMAGED or DIRTY",
+      );
+
     return {
       message: "Stock movement created successfully",
       id: result?.id,
     };
   },
+
+  quickDiscard: async (rawData: StockMovementCreateSchema) => {},
+
+  quickLaundryOut: async (rawData: StockMovementCreateSchema) => {},
 
   getById: async (movementId: string) => {
     const session = await sessionValidation();

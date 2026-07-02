@@ -7,6 +7,7 @@ import {
   stockMovementSortByEnum,
   stockMovementTypeEnum,
 } from "./general.zod";
+import { MovementType } from "@prisma/client";
 
 export const stockMovementCreateSchema = z
   .object({
@@ -22,12 +23,41 @@ export const stockMovementCreateSchema = z
     orderId: z.string().trim().min(1).optional(),
   })
   .superRefine((val, ctx) => {
-    if (val.stockId) {
+    const TYPES_REQUIRING_DESTINATION: MovementType[] = [
+      "RECEIVE",
+      "TRANSFER",
+      "LAUNDRY_IN",
+      "MARK_AS_DAMAGED",
+      "MARK_AS_DIRTY",
+    ];
+
+    const TYPES_REQUIRING_SOURCE: MovementType[] = [
+      "TRANSFER",
+      "LAUNDRY_OUT",
+      "MARK_AS_DAMAGED",
+      "MARK_AS_DIRTY",
+      "CONSUME",
+      "SALE",
+      "DISCARD",
+      "ADJUSTMENT", // Required to know which specific stock row is being adjusted
+    ];
+
+    if (TYPES_REQUIRING_DESTINATION.includes(val.stockMovementType)) {
       if (!val.destinationLocationId) {
         ctx.addIssue({
           code: "custom",
-          message: "Destination locaiton field must be filled",
+          message: "Destination location field must be filled",
           path: ["destinationLocationId"],
+        });
+      }
+    }
+
+    if (TYPES_REQUIRING_SOURCE.includes(val.stockMovementType)) {
+      if (!val.sourceLocationId) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Source location field must be filled",
+          path: ["sourceLocationId"],
         });
       }
     }
@@ -69,7 +99,7 @@ export const stockMovementCreateSchema = z
       if (!val.destinationLocationId) {
         ctx.addIssue({
           code: "custom",
-          message: "Destination locaiton field must be filled",
+          message: "Destination location field must be filled",
           path: ["destinationLocationId"],
         });
       }

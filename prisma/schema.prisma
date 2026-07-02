@@ -44,6 +44,8 @@ enum MovementType {
   LAUNDRY_OUT
   LAUNDRY_IN
   ADJUSTMENT
+  MARK_AS_DAMAGED
+  MARK_AS_DIRTY
 }
 
 enum UserAction {

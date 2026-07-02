@@ -143,10 +143,9 @@ test.describe("CRUD operations for Stock Movements", () => {
     expect(body.data.id).toBe(createdStockMovementId);
   });
 
-  test("Transfer a stock movement to a different location", async ({ request }) => {
-  
+  //   test("Transfer a stock movement to a different location", async ({ request }) => {
 
-},
+  // },
 
   test("Error: Create stock movement with invalid item", async ({
     request,
