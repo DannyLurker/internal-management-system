@@ -13,7 +13,7 @@ import stockMovementsRepository, {
   createSelectStockMovementData,
 } from "./stock-movements.repository";
 import auditLogsRepository from "../audit-logs/audit-log.repository";
-import { MovementType, Prisma, StockMovement } from "@prisma/client";
+import { MovementType, Prisma } from "@prisma/client";
 import itemRepository from "../items/item.repository";
 import { locationRepository } from "../locations/location.repository";
 import { stockRepository } from "../stocks/stock.repository";
@@ -30,24 +30,30 @@ const stockMovementsService = {
 
     const result = await prisma.$transaction(async (tx) => {
       // Check if item exists
-      const [item, stock, sourceLoc, destLoc, order] = await Promise.all([
-        itemRepository.findById(validatedData.itemId, tx),
-        validatedData.stockId
-          ? stockRepository.findById(validatedData.stockId, tx)
-          : null,
-        validatedData.sourceLocationId
-          ? locationRepository.findById(validatedData.sourceLocationId, tx)
-          : null,
-        validatedData.destinationLocationId
-          ? locationRepository.findById(validatedData.destinationLocationId, tx)
-          : null,
-        validatedData.orderId
-          ? orderRepository.findById(validatedData.orderId, tx)
-          : null,
-      ]);
+      const [item, currentStock, sourceLoc, destLoc, order] = await Promise.all(
+        [
+          itemRepository.findById(validatedData.itemId, tx),
+          validatedData.stockId
+            ? stockRepository.findById(validatedData.stockId, tx)
+            : null,
+          validatedData.sourceLocationId
+            ? locationRepository.findById(validatedData.sourceLocationId, tx)
+            : null,
+          validatedData.destinationLocationId
+            ? locationRepository.findById(
+                validatedData.destinationLocationId,
+                tx,
+              )
+            : null,
+          validatedData.orderId
+            ? orderRepository.findById(validatedData.orderId, tx)
+            : null,
+        ],
+      );
 
       if (!item) throw notFound("Item not found");
-      if (validatedData.stockId && !stock) throw notFound("Stock not found");
+      if (validatedData.stockId && !currentStock)
+        throw notFound("Stock not found");
       if (validatedData.sourceLocationId && !sourceLoc)
         throw notFound("Source location not found");
       if (validatedData.destinationLocationId && !destLoc)
@@ -55,63 +61,171 @@ const stockMovementsService = {
       if (validatedData.orderId && !order) throw notFound("Order not found");
 
       let movement;
-      const decreaseStockQuantityType: MovementType[] = [
-        "TRANSFER",
+      const decreaseStockQuantityMovementType: MovementType[] = [
         "SALE",
         "LAUNDRY_OUT",
         "DISCARD",
       ];
+      const increaseStockQuantityMovementType: MovementType[] = [
+        "RECEIVE",
+        "LAUNDRY_IN",
+      ];
+
+      const createdStockMovement: Prisma.StockMovementUncheckedCreateInput = {
+        itemId: validatedData.itemId,
+        stockId: validatedData.stockId,
+        type: validatedData.stockMovementType,
+        quantity: validatedData.quantity,
+        totalCost: validatedData.totalCost,
+        reason: validatedData.reason,
+        sourceLocationId: validatedData.sourceLocationId,
+        destinationLocationId: validatedData.destinationLocationId,
+        orderId: validatedData.orderId,
+        createdBy: session.id,
+      };
 
       // Allows stockId to be null for 'RECEIVE' movements to record a global intake transaction.
       // This unassigned stock can later be distributed to specific locations and stock records.
       if (
-        !decreaseStockQuantityType.includes(validatedData.type) &&
-        validatedData.type === "RECEIVE"
+        !decreaseStockQuantityMovementType.includes(
+          validatedData.stockMovementType,
+        ) &&
+        validatedData.stockMovementType === "RECEIVE" &&
+        validatedData.stockId === null
       ) {
         movement = await stockMovementsRepository.create(
+          createdStockMovement,
+          tx,
+        );
+      }
+
+      // increment the quantity field in the stock model if the stock.id is found and the stock movement type is increaseStockQuantityMovementType
+      if (
+        currentStock?.id &&
+        !decreaseStockQuantityMovementType.includes(
+          validatedData.stockMovementType,
+        ) &&
+        increaseStockQuantityMovementType.includes(
+          validatedData.stockMovementType,
+        )
+      ) {
+        movement = await stockMovementsRepository.create(
+          createdStockMovement,
+          tx,
+        );
+
+        stockRepository.update(
+          currentStock.id,
           {
-            itemId: validatedData.itemId,
-            stockId: validatedData.stockId,
-            type: validatedData.type,
-            quantity: validatedData.quantity,
-            totalCost: validatedData.totalCost,
-            reason: validatedData.reason,
-            sourceLocationId: validatedData.sourceLocationId,
-            destinationLocationId: validatedData.destinationLocationId,
-            orderId: validatedData.orderId,
-            createdBy: session.id,
+            quantity: {
+              increment: validatedData.quantity,
+            },
           },
           tx,
         );
       }
 
+      // stock movement type === "TRANSFER" case
+      const isSourceLocationValid =
+        currentStock?.locationId === validatedData.sourceLocationId;
+
       if (
-        validatedData.stockId &&
-        !decreaseStockQuantityType.includes(validatedData.type) &&
-        validatedData.type === "RECEIVE" &&
-        stock?.type === "READY"
+        currentStock &&
+        validatedData.stockMovementType === "TRANSFER" &&
+        validatedData.stockTransferType &&
+        isSourceLocationValid &&
+        validatedData.destinationLocationId
       ) {
-        movement = await stockMovementsRepository.create(
+        const destinationStock = await stockRepository.findFirst(
           {
             itemId: validatedData.itemId,
-            stockId: validatedData.stockId,
-            type: validatedData.type,
-            quantity: validatedData.quantity,
-            totalCost: validatedData.totalCost,
-            reason: validatedData.reason,
-            sourceLocationId: validatedData.sourceLocationId,
-            destinationLocationId: validatedData.destinationLocationId,
-            orderId: validatedData.orderId,
-            createdBy: session.id,
+            locationId: validatedData.destinationLocationId,
+            expiredAt: currentStock?.expiredAt,
+            type: validatedData.stockTransferType,
           },
           tx,
         );
 
-        stockRepository.update(
-          validatedData.stockId,
+        if (!destinationStock) {
+          await stockRepository.create(
+            {
+              item: {
+                connect: { id: validatedData.itemId },
+              },
+              creator: {
+                connect: { id: session.id },
+              },
+              quantity: validatedData.quantity,
+              location: {
+                connect: { id: validatedData.destinationLocationId },
+              },
+              type: validatedData.stockTransferType,
+            },
+            tx,
+          );
+        } else {
+          await stockRepository.update(
+            destinationStock.id,
+            {
+              quantity: {
+                increment: validatedData.quantity,
+              },
+            },
+            tx,
+          );
+
+          await stockRepository.update(
+            currentStock.id,
+            {
+              quantity: {
+                decrement: validatedData.quantity,
+              },
+            },
+            tx,
+          );
+        }
+
+        movement = await stockMovementsRepository.create(
+          { ...createdStockMovement, stockId: destinationStock?.id },
+          tx,
+        );
+      }
+
+      // Quantity which is in ADJUSTMENT stock movement type can be positive or negative
+      if (currentStock && validatedData.stockMovementType === "ADJUSTMENT") {
+        movement = await stockMovementsRepository.create(
+          createdStockMovement,
+          tx,
+        );
+
+        await stockRepository.update(
+          currentStock.id,
           {
             quantity: {
               increment: validatedData.quantity,
+            },
+          },
+          tx,
+        );
+      }
+
+      // decreaseStockQuantityMovementType case
+      if (
+        currentStock &&
+        decreaseStockQuantityMovementType.includes(
+          validatedData.stockMovementType,
+        )
+      ) {
+        movement = await stockMovementsRepository.create(
+          createdStockMovement,
+          tx,
+        );
+
+        await stockRepository.update(
+          currentStock.id,
+          {
+            quantity: {
+              decrement: validatedData.quantity,
             },
           },
           tx,

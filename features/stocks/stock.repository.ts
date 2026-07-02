@@ -25,6 +25,15 @@ export const stockRepository = {
     });
   },
 
+  findFirst: async (
+    where: Prisma.StockWhereInput,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    return await tx.stock.findFirst({
+      where,
+    });
+  },
+
   getMany: async <T extends Prisma.StockSelect>(
     where: Prisma.StockWhereInput,
     select: T,
