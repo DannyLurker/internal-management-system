@@ -33,6 +33,7 @@ enum StockType {
   DIRTY
   DAMAGED
   EXPIRED
+  LOST
 }
 
 enum MovementType {
@@ -46,6 +47,8 @@ enum MovementType {
   ADJUSTMENT
   MARK_AS_DAMAGED
   MARK_AS_DIRTY
+  MARK_AS_EXPIRED
+  MARK_AS_LOST
 }
 
 enum UserAction {

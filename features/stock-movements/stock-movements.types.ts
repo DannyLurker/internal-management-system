@@ -1,5 +1,7 @@
 import { ApiResponse } from "@/shared/lib/api-client";
 import stockMovementsService from "./stock-movements.service";
+import { stockRepository } from "../stocks/stock.repository";
+import { MovementType, StockType } from "@prisma/client";
 
 type StockMovementServiceGetMany = Awaited<
   ReturnType<typeof stockMovementsService.getMany>
@@ -20,3 +22,28 @@ export type StockMovementGetByIdApiResponse = ApiResponse<
 export type StockMovementCUDApiResponse = ApiResponse<{
   id: string;
 }>;
+
+// helpers
+export type Session = { id: string; role: string };
+
+// Narrow shape of Stock actually used by the helpers below. Using the Prisma
+// delegate's return type keeps this in sync with schema changes automatically.
+export type StockRecord = NonNullable<
+  Awaited<ReturnType<typeof stockRepository.findById>>
+>;
+
+export const TARGET_STOCK_TYPES = [
+  "DAMAGED",
+  "DIRTY",
+  "LOST",
+  "EXPIRED",
+] as const satisfies readonly StockType[];
+
+export type TargetStockType = (typeof TARGET_STOCK_TYPES)[number];
+
+export const MOVEMENT_TYPE_BY_TARGET: Record<TargetStockType, MovementType> = {
+  DAMAGED: "MARK_AS_DAMAGED",
+  DIRTY: "MARK_AS_DIRTY",
+  LOST: "MARK_AS_LOST",
+  EXPIRED: "MARK_AS_EXPIRED",
+};
