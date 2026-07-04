@@ -2,6 +2,7 @@ import { ApiResponse } from "@/shared/lib/api-client";
 import stockMovementsService from "./stock-movements.service";
 import { stockRepository } from "../stocks/stock.repository";
 import { MovementType, StockType } from "@prisma/client";
+import { StockMovementCreateSchema } from "@/shared/lib/zods/stock-movements.zod";
 
 type StockMovementServiceGetMany = Awaited<
   ReturnType<typeof stockMovementsService.getMany>
@@ -47,3 +48,8 @@ export const MOVEMENT_TYPE_BY_TARGET: Record<TargetStockType, MovementType> = {
   LOST: "MARK_AS_LOST",
   EXPIRED: "MARK_AS_EXPIRED",
 };
+
+// Frontend use case
+export type ItemOption = { id: string; name: string };
+export type LocationOption = { id: string; name: string };
+export type MovementTypeOption = StockMovementCreateSchema["stockMovementType"];

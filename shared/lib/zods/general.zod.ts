@@ -40,7 +40,13 @@ export const stockSortByEnum = z.enum([
 export const stockSpecificSortByEnum = z.enum(["createdAt", "type"]);
 
 export const stockMovementTypeEnum = z.enum(Object.values(MovementType));
-export const stockMovementSortByEnum = z.enum(["name", "createdAt", "type"]);
+export const stockMovementSortByEnum = z.enum([
+  "name",
+  "createdAt",
+  "type",
+  "sourceLocation",
+  "destinationLocation",
+]);
 
 export const generateReadableError = (issue: z.core.$ZodIssue): string => {
   const fieldName = issue.path.join(".");

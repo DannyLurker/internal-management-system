@@ -1,4 +1,4 @@
-import { MovementType, Prisma, StockType } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import {
   MOVEMENT_TYPE_BY_TARGET,
   Session,
@@ -84,80 +84,22 @@ export async function markStockAs(
   );
 }
 
-/**
- * Shared implementation for the "quick" endpoints (quickDiscard /
- * quickLaundryOut). Both decrement a source stock and move the quantity into
- * a same-location stock row of a different `type`, creating that row if it
- * doesn't exist yet. This mirrors `markStockAs` but is kept separate because
- * the two quick endpoints have different pre-conditions (allowed source
- * types) and different movement `type` values (DISCARD / LAUNDRY_OUT rather
- * than the MARK_AS_* family).
- */
-export async function quickActions(params: {
-  currentStock: StockRecord;
-  targetType: StockType;
-  movementType: Extract<MovementType, "DISCARD" | "LAUNDRY_OUT">;
-  quantity: number;
-  totalCost: number;
-  reason: string;
-  session: Session;
-  tx: Prisma.TransactionClient;
-}) {
-  const {
-    currentStock,
-    targetType,
-    movementType,
-    quantity,
-    totalCost,
-    reason,
-    session,
-    tx,
-  } = params;
-
-  const remaining = currentStock.quantity - quantity;
-  if (remaining < 0) throw badRequest("Insufficient stock quantity");
-
-  await stockRepository.update(
-    currentStock.id,
-    { quantity: { decrement: quantity } },
-    tx,
-  );
-
-  let destinationStock = await stockRepository.findFirst(
-    {
-      itemId: currentStock.itemId,
-      type: targetType,
-      expiredAt: currentStock.expiredAt,
-      locationId: currentStock.locationId,
-    },
-    tx,
-  );
-
-  if (!destinationStock) {
-    destinationStock = await stockRepository.create(
-      {
-        item: { connect: { id: currentStock.itemId } },
-        type: targetType,
-        expiredAt: currentStock.expiredAt,
-        location: { connect: { id: currentStock.locationId } },
-        creator: { connect: { id: session.id } },
-        quantity: 0,
-      },
-      tx,
-    );
-  }
-
-  return stockMovementsRepository.create(
-    {
-      createdBy: session.id,
-      itemId: currentStock.itemId,
-      quantity,
-      reason,
-      type: movementType,
-      stockId: destinationStock.id,
-      sourceLocationId: destinationStock.locationId,
-      totalCost,
-    },
-    tx,
-  );
+export function formatMovementLabel(value: string) {
+  return value
+    .split("_")
+    .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
+    .join(" ");
 }
+
+// change "1000000" into "10.000.000"
+export const formatThousand = (value: string | number): string => {
+  if (!value) return "";
+  const numString = value.toString().replace(/\D/g, ""); // Hapus semua karakter non-angka
+  return new Intl.NumberFormat("id-ID").format(Number(numString));
+};
+
+// change "10.000.000" into 10000000 for database
+export const unformatThousand = (value: string): number => {
+  if (!value) return 0;
+  return Number(value.replace(/\./g, "")); // Hapus semua titik
+};

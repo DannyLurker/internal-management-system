@@ -1,10 +1,5 @@
 import prisma from "@/shared/db/prisma";
-import {
-  badRequest,
-  forbidden,
-  internalServerError,
-  notFound,
-} from "@/shared/lib/error-handlers";
+import { badRequest, forbidden, notFound } from "@/shared/lib/error-handlers";
 import { canManageItem } from "@/shared/lib/validations/user-access-validation";
 import sessionValidation from "@/shared/lib/validations/user-session-validation";
 import {
@@ -13,22 +8,18 @@ import {
   stockMovementGetManySchema,
   stockMovementUpdateSchema,
   StockMovementUpdateSchema,
-  stockQuickDiscardSchema,
-  StockQuickDiscardSchema,
-  stockQuickLaundryOutSchema,
-  StockQuickLaundryOutSchema,
 } from "@/shared/lib/zods/stock-movements.zod";
 import stockMovementsRepository, {
   createSelectStockMovementData,
 } from "./stock-movements.repository";
 import auditLogsRepository from "../audit-logs/audit-log.repository";
-import { MovementType, Prisma, StockType } from "@prisma/client";
+import { MovementType, Prisma } from "@prisma/client";
 import itemRepository from "../items/item.repository";
 import { locationRepository } from "../locations/location.repository";
 import { stockRepository } from "../stocks/stock.repository";
 import orderRepository from "../orders/order-repository";
 import { TargetStockType } from "./stock-movements.types";
-import { markStockAs, quickActions } from "./stock-movements.utils";
+import { markStockAs } from "./stock-movements.utils";
 
 const stockMovementsService = {
   create: async (rawData: StockMovementCreateSchema) => {
@@ -118,11 +109,6 @@ const stockMovementsService = {
       // Allows stockId to be null for 'RECEIVE' movements to record a global
       // intake transaction. This unassigned stock can later be distributed
       // to specific locations and stock records.
-      console.log(
-        "test:",
-        validatedData.stockMovementType,
-        validatedData.stockId,
-      );
       if (
         validatedData.stockMovementType === "RECEIVE" &&
         !validatedData.stockId
@@ -189,6 +175,12 @@ const stockMovementsService = {
             },
             tx,
           );
+
+          await stockRepository.update(
+            currentStock.id,
+            { quantity: { decrement: validatedData.quantity } },
+            tx,
+          );
         } else {
           await stockRepository.update(
             destinationStock.id,
@@ -204,7 +196,11 @@ const stockMovementsService = {
         }
 
         movement = await stockMovementsRepository.create(
-          { ...createdStockMovement, stockId: destinationStock.id },
+          {
+            ...createdStockMovement,
+            stockId: destinationStock.id,
+            totalCost: null,
+          },
           tx,
         );
       }
@@ -270,18 +266,8 @@ const stockMovementsService = {
         );
       }
 
-      // DISCARD via the generic create() endpoint — only
-      // allowed if the source stock is already DAMAGED.
-      const allowedTypeToDoDiscard: StockType[] = [
-        "DAMAGED",
-        "EXPIRED",
-        "EXPIRED",
-      ];
-      if (
-        currentStock &&
-        allowedTypeToDoDiscard.includes(currentStock?.type) &&
-        validatedData.stockMovementType === "DISCARD"
-      ) {
+      // DISCARD Case
+      if (currentStock && validatedData.stockMovementType === "DISCARD") {
         movement = await stockMovementsRepository.create(
           { ...createdStockMovement, destinationLocationId: null },
           tx,
@@ -294,13 +280,8 @@ const stockMovementsService = {
         );
       }
 
-      // LANDURY_OUT via the generic create() endpoint — only
-      // allowed if the source stock is already DIRTY.
-      if (
-        currentStock &&
-        currentStock.type == "DIRTY" &&
-        validatedData.stockMovementType === "LAUNDRY_OUT"
-      ) {
+      // LANDURY_OUT Case
+      if (currentStock && validatedData.stockMovementType === "LAUNDRY_OUT") {
         movement = await stockMovementsRepository.create(
           { ...createdStockMovement, destinationLocationId: null },
           tx,
@@ -339,89 +320,12 @@ const stockMovementsService = {
     });
 
     if (!result)
-      throw internalServerError(
+      throw badRequest(
         "Something went wrong, no stock movement record has created",
       );
 
     return {
       message: "Stock movement created successfully",
-      id: result?.id,
-    };
-  },
-
-  quickDiscard: async (rawData: StockQuickDiscardSchema) => {
-    const session = await sessionValidation();
-    const validatedData = stockQuickDiscardSchema.parse(rawData);
-
-    if (!canManageItem(session.role)) {
-      throw forbidden("You're not allowed to access this feature");
-    }
-
-    const result = await prisma.$transaction(async (tx) => {
-      if (!validatedData.stockId) throw badRequest("Stock id is missing");
-
-      const currentStock = await stockRepository.findById(
-        validatedData.stockId,
-        tx,
-      );
-
-      if (!currentStock) throw badRequest("Stock not found");
-
-      return quickActions({
-        currentStock,
-        targetType: validatedData.discardAs,
-        movementType: "DISCARD",
-        quantity: validatedData.quantity,
-        totalCost: validatedData.totalCost,
-        reason: validatedData.reason,
-        session,
-        tx,
-      });
-    });
-
-    return {
-      message: "Stock discarded successfully",
-      id: result?.id,
-    };
-  },
-
-  quickLaundryOut: async (rawData: StockQuickLaundryOutSchema) => {
-    const session = await sessionValidation();
-    const validatedData = stockQuickLaundryOutSchema.parse(rawData);
-
-    if (!canManageItem(session.role)) {
-      throw forbidden("You're not allowed to access this feature");
-    }
-
-    const result = await prisma.$transaction(async (tx) => {
-      if (!validatedData.stockId) throw badRequest("Stock id is missing");
-
-      const currentStock = await stockRepository.findById(
-        validatedData.stockId,
-        tx,
-      );
-
-      if (!currentStock) throw badRequest("Stock not found");
-
-      if (currentStock.type !== "READY" && currentStock.type !== "DAMAGED")
-        throw badRequest(
-          "Only a stock with 'READY' or 'DAMAGED' type can perform a quick laundry out.",
-        );
-
-      return quickActions({
-        currentStock,
-        targetType: "DIRTY",
-        movementType: "LAUNDRY_OUT",
-        quantity: validatedData.quantity,
-        totalCost: validatedData.totalCost,
-        reason: validatedData.reason,
-        session,
-        tx,
-      });
-    });
-
-    return {
-      message: "Stock got laundry out successfully",
       id: result?.id,
     };
   },
@@ -475,9 +379,15 @@ const stockMovementsService = {
       throw forbidden("You're not allowed to access this feature");
     }
 
+    console.log("Test:", validatedParams);
+
     let whereQuery: Prisma.StockMovementWhereInput = {};
 
-    if (validatedParams.searchQuery) {
+    if (
+      validatedParams.searchQuery &&
+      validatedParams.searchQuery.length >= 3 &&
+      validatedParams.sortBy === "name"
+    ) {
       whereQuery.OR = [
         {
           item: {
@@ -496,8 +406,22 @@ const stockMovementsService = {
       ];
     }
 
-    if (validatedParams.type) {
+    if (validatedParams.type && validatedParams.sortBy === "type") {
       whereQuery.type = validatedParams.type;
+    }
+
+    if (
+      validatedParams.sourceLocationId &&
+      validatedParams.sortBy === "sourceLocation"
+    ) {
+      whereQuery.sourceLocationId = validatedParams.sourceLocationId;
+    }
+
+    if (
+      validatedParams.destinationLocationId &&
+      validatedParams.sortBy === "destinationLocation"
+    ) {
+      whereQuery.destinationLocationId = validatedParams.destinationLocationId;
     }
 
     const selectData = createSelectStockMovementData({

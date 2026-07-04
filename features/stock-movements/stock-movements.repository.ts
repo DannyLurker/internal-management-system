@@ -1,3 +1,4 @@
+import { StockMovementGetManySchema } from "@/shared/lib/zods/stock-movements.zod";
 import { Prisma, PrismaClient } from "@prisma/client";
 
 export const createSelectStockMovementData = <
@@ -32,7 +33,7 @@ const stockMovementsRepository = {
     select: Prisma.StockMovementSelect,
     skip: number,
     take: number,
-    sortBy: string,
+    sortBy: StockMovementGetManySchema["sortBy"],
     sortOrder: "asc" | "desc",
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
@@ -41,9 +42,47 @@ const stockMovementsRepository = {
       select,
       skip,
       take,
-      orderBy: {
-        [sortBy]: sortOrder,
-      },
+      ...(sortBy === "name"
+        ? {
+            orderBy: {
+              item: {
+                name: sortOrder,
+              },
+            },
+          }
+        : {}),
+      ...(sortBy === "createdAt"
+        ? {
+            orderBy: {
+              createdAt: sortOrder,
+            },
+          }
+        : {}),
+      ...(sortBy === "type"
+        ? {
+            orderBy: {
+              type: sortOrder,
+            },
+          }
+        : {}),
+      ...(sortBy === "destinationLocation"
+        ? {
+            orderBy: {
+              destinationLocation: {
+                name: sortOrder,
+              },
+            },
+          }
+        : {}),
+      ...(sortBy === "sourceLocation"
+        ? {
+            orderBy: {
+              sourceLocation: {
+                name: sortOrder,
+              },
+            },
+          }
+        : {}),
     });
   },
 

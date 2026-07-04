@@ -13,7 +13,7 @@ export const stockMovementCreateSchema = z
     itemId: z.string().trim().min(1),
     stockId: z.string().trim().min(1).optional(),
     stockMovementType: stockMovementTypeEnum,
-    quantity: z.number().int().nonnegative(),
+    quantity: z.number().int(),
     totalCost: z.number().int().optional(),
     reason: z.string().trim().min(10),
     sourceLocationId: z.string().trim().min(1).optional(),
@@ -76,7 +76,8 @@ export const stockMovementCreateSchema = z
 
     if (
       val.stockMovementType === "DISCARD" ||
-      val.stockMovementType === "SALE"
+      val.stockMovementType === "SALE" ||
+      val.stockMovementType === "LAUNDRY_OUT"
     ) {
       if (!val.totalCost || val.totalCost < 1) {
         ctx.addIssue({
@@ -143,6 +144,8 @@ export type StockMovementUpdateSchema = z.infer<
 
 export const stockMovementGetManySchema = z.object({
   searchQuery: z.string().trim().min(3).optional(),
+  sourceLocationId: z.string().trim().min(1).optional(),
+  destinationLocationId: z.string().trim().min(1).optional(),
   page: page,
   dataPerPage: dataPerPage,
   sortOrder: sortOrderEnum,
