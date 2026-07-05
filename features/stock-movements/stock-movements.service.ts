@@ -114,7 +114,7 @@ const stockMovementsService = {
         !validatedData.stockId
       ) {
         movement = await stockMovementsRepository.create(
-          createdStockMovement,
+          { ...createdStockMovement, sourceLocationId: null },
           tx,
         );
       }
@@ -379,8 +379,6 @@ const stockMovementsService = {
       throw forbidden("You're not allowed to access this feature");
     }
 
-    console.log("Test:", validatedParams);
-
     let whereQuery: Prisma.StockMovementWhereInput = {};
 
     if (
@@ -457,7 +455,7 @@ const stockMovementsService = {
         validatedParams.sortOrder,
         prisma,
       ),
-      stockMovementsRepository.count(whereQuery, prisma),
+      stockMovementsRepository.countRows(whereQuery, prisma),
     ]);
 
     return {

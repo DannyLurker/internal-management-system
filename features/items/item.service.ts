@@ -21,6 +21,7 @@ import auditLogsRepository from "../audit-logs/audit-log.repository";
 import { EXPIRING_WINDOW_DAYS, mapItemListRow } from "./item.utils";
 import { Prisma, StockType } from "@prisma/client";
 import { stockRepository } from "../stocks/stock.repository";
+import stockMovementsRepository from "../stock-movements/stock-movements.repository";
 
 const itemService = {
   create: async (rawData: ItemCreateSchema) => {
@@ -219,8 +220,23 @@ const itemService = {
         ? true
         : false;
 
-    const totalItemStocks = await stockRepository.countQuantity(
+    const totalLocatedItems = await stockRepository.countQuantity(
       {
+        itemId: itemId,
+      },
+      prisma,
+    );
+
+    const totalUnlocatedItems = await stockMovementsRepository.countQuantity(
+      {
+        itemId: itemId,
+      },
+      prisma,
+    );
+
+    const totalDiscardedItems = await stockMovementsRepository.countQuantity(
+      {
+        type: "DISCARD",
         itemId: itemId,
       },
       prisma,
@@ -235,7 +251,9 @@ const itemService = {
             item?.stocks.length && item?.stocks.length > 0 ? item?.stocks : [],
           isStockLow: isStockLow ? "Low in stock" : "-",
         },
-        totalItemStockQuantity: totalItemStocks,
+        totalLocatedItemQuantity: totalLocatedItems,
+        totalUnlocatedItemQuantity: totalUnlocatedItems,
+        totalDiscardedItems: totalDiscardedItems,
         itemStockRows: stockRows,
       },
     };

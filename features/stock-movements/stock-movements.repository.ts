@@ -86,13 +86,27 @@ const stockMovementsRepository = {
     });
   },
 
-  count: async (
+  countRows: async (
     where: Prisma.StockMovementWhereInput,
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
     return await tx.stockMovement.count({
       where,
     });
+  },
+
+  countQuantity: async (
+    where: Prisma.StockMovementWhereInput,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    const result = await tx.stockMovement.aggregate({
+      where,
+      _sum: {
+        quantity: true,
+      },
+    });
+
+    return result._sum.quantity;
   },
 
   update: async (

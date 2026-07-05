@@ -76,7 +76,7 @@ export default function ItemInfoPanel({
 
   const itemData = data?.data?.item;
 
-  const totalItemStocks = data?.data.totalItemStockQuantity ?? 0;
+  const totalLocatedItemQuantity = data?.data.totalLocatedItemQuantity ?? 0;
   const totalStockRows = data?.data.itemStockRows ?? 0;
 
   const handleOpenChange = (nextOpen: boolean) => {
@@ -291,7 +291,7 @@ export default function ItemInfoPanel({
               <div className="space-y-4">
                 <div className="flex items-center justify-between border-b border-[#eef4ff] pb-2">
                   <h3 className="font-ochre-brand text-lg font-medium text-[#894d0d]">
-                    Stock Distributions
+                    Stock Distributions (Located)
                   </h3>
 
                   {/* Create New Stock Button */}
@@ -309,7 +309,7 @@ export default function ItemInfoPanel({
                       New stock
                     </button>
                     <span className="rounded-full bg-[#894d0d] px-2.5 py-0.5 text-xs font-semibold text-white">
-                      {totalItemStocks} entries
+                      {totalLocatedItemQuantity} entries
                     </span>
                   </div>
                 </div>
