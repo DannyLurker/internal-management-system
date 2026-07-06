@@ -37,7 +37,11 @@ export async function POST(req: Request) {
 
     const response: StockMovementCUDApiResponse = {
       message: result.message,
-      data: { id: result.id },
+      data: {
+        stockMovementId: result.stockMovementId,
+        stockId: result.stockId,
+        itemId: result.itemId,
+      },
       status: 200,
     };
 

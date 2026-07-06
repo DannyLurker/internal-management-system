@@ -21,7 +21,9 @@ export type StockMovementGetByIdApiResponse = ApiResponse<
 
 // Create-Update-Delete
 export type StockMovementCUDApiResponse = ApiResponse<{
-  id: string;
+  stockMovementId: string;
+  stockId: string | null;
+  itemId: string;
 }>;
 
 // helpers

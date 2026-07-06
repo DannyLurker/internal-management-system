@@ -102,10 +102,6 @@ export default function StockMovementInfoDialog({
                   value={formatItemDate(movement.createdAt)}
                 />
                 <DetailLine
-                  label="Source"
-                  value={movement.sourceLocation?.name}
-                />
-                <DetailLine
                   label="Destination"
                   value={movement.destinationLocation?.name}
                 />

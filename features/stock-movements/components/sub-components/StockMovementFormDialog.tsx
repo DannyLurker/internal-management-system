@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo } from "react";
-import { useForm, type Resolver } from "react-hook-form";
+import { Controller, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
@@ -30,6 +30,7 @@ import { stockGetManySchema } from "@/shared/lib/zods/stock.zod";
 import { useCreateStockMovement } from "../../stock-movements.hooks";
 import { stockMovementInputClass } from "../../stock-movements.style";
 import { formatThousand, unformatThousand } from "../../stock-movements.utils";
+import { StockType } from "@prisma/client";
 
 type ItemOption = { id: string; name: string };
 type LocationOption = { id: string; name: string };
@@ -56,28 +57,20 @@ const stockRequiredTypes = new Set<MovementTypeOption>([
   "LAUNDRY_OUT",
   "LAUNDRY_IN",
   "DISCARD",
-]);
-
-const sourceRequiredTypes = new Set<MovementTypeOption>([
-  "TRANSFER",
-  "LAUNDRY_OUT",
-  "MARK_AS_DAMAGED",
-  "MARK_AS_DIRTY",
-  "CONSUME",
-  "SALE",
-  "DISCARD",
-  "ADJUSTMENT",
-  "MARK_AS_LOST",
-]);
-
-const destinationRequiredTypes = new Set<MovementTypeOption>([
   "RECEIVE",
-  "TRANSFER",
   "LAUNDRY_IN",
+]);
+
+const typeShowReadyStocks = new Set<MovementTypeOption>(["CONSUME", "SALE"]);
+
+const markAsTypes = new Set<MovementTypeOption>([
   "MARK_AS_DAMAGED",
   "MARK_AS_DIRTY",
+  "MARK_AS_EXPIRED",
   "MARK_AS_LOST",
 ]);
+
+const destinationRequiredTypes = new Set<MovementTypeOption>(["TRANSFER"]);
 
 const totalCostRequiredTypes = new Set<MovementTypeOption>([
   "DISCARD",
@@ -114,7 +107,6 @@ export default function StockMovementFormDialog({
       quantity: undefined,
       totalCost: undefined,
       reason: "",
-      sourceLocationId: undefined,
       destinationLocationId: undefined,
       orderId: undefined,
     },
@@ -124,7 +116,6 @@ export default function StockMovementFormDialog({
   const selectedStockId = form.watch("stockId");
   const selectedMovementType = form.watch("stockMovementType");
   const requiresStock = stockRequiredTypes.has(selectedMovementType);
-  const requiresSource = sourceRequiredTypes.has(selectedMovementType);
   const requiresDestination =
     destinationRequiredTypes.has(selectedMovementType);
   const requiresTotalCost = totalCostRequiredTypes.has(selectedMovementType);
@@ -145,10 +136,33 @@ export default function StockMovementFormDialog({
     enabled: open && requiresStock && selectedItemId.length > 0,
   });
 
-  const stockOptions = stocksResponse?.data.stocks ?? [];
+  let stockOptions = stocksResponse?.data.stocks ?? [];
   const selectedStock = stockOptions.find(
     (stock) => stock.id === selectedStockId,
   );
+
+  if (typeShowReadyStocks.has(selectedMovementType)) {
+    stockOptions = stockOptions.filter((stock) => stock.type === "READY");
+  }
+
+  if (markAsTypes.has(selectedMovementType)) {
+    let avoidedType: StockType;
+
+    if (selectedMovementType === "MARK_AS_DAMAGED") {
+      avoidedType = "DAMAGED";
+    }
+    if (selectedMovementType === "MARK_AS_DIRTY") {
+      avoidedType = "DIRTY";
+    }
+    if (selectedMovementType === "MARK_AS_EXPIRED") {
+      avoidedType = "EXPIRED";
+    }
+    if (selectedMovementType === "MARK_AS_LOST") {
+      avoidedType = "LOST";
+    }
+
+    stockOptions = stockOptions.filter((stock) => stock.type !== avoidedType);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -160,7 +174,6 @@ export default function StockMovementFormDialog({
       quantity: undefined,
       totalCost: undefined,
       reason: "",
-      sourceLocationId: undefined,
       destinationLocationId: locations[0]?.id,
       orderId: undefined,
     });
@@ -169,14 +182,7 @@ export default function StockMovementFormDialog({
   useEffect(() => {
     if (!requiresStock) {
       form.setValue("stockId", undefined);
-      form.setValue("sourceLocationId", undefined);
       return;
-    }
-
-    if (selectedStock?.locationId) {
-      form.setValue("sourceLocationId", selectedStock.locationId, {
-        shouldValidate: true,
-      });
     }
   }, [form, requiresStock, selectedStock]);
 
@@ -196,7 +202,6 @@ export default function StockMovementFormDialog({
     const payload = stockMovementCreateSchema.parse({
       ...values,
       stockId: requiresStock ? values.stockId : undefined,
-      sourceLocationId: requiresSource ? values.sourceLocationId : undefined,
       destinationLocationId: requiresDestination
         ? values.destinationLocationId
         : undefined,
@@ -247,7 +252,6 @@ export default function StockMovementFormDialog({
                           shouldValidate: true,
                         });
                         form.setValue("stockId", undefined);
-                        form.setValue("sourceLocationId", undefined);
                       }}
                     >
                       <SelectTrigger
@@ -288,7 +292,6 @@ export default function StockMovementFormDialog({
                       },
                     );
                     form.setValue("stockId", undefined);
-                    form.setValue("sourceLocationId", undefined);
                   }}
                 >
                   <SelectTrigger
@@ -309,7 +312,7 @@ export default function StockMovementFormDialog({
 
             {requiresStock ? (
               <div>
-                <Label className="font-ochre-ui text-sm">Source stock</Label>
+                <Label className="font-ochre-ui text-sm">Stock Batch</Label>
                 <Select
                   value={selectedStockId ?? ""}
                   onValueChange={(value) =>
@@ -343,50 +346,11 @@ export default function StockMovementFormDialog({
               </div>
             ) : null}
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              {requiresSource ? (
-                <div>
-                  <Label className="font-ochre-ui text-sm">
-                    Source location
-                  </Label>
-                  <Select
-                    value={form.watch("sourceLocationId") ?? ""}
-                    onValueChange={(value) =>
-                      form.setValue("sourceLocationId", value || undefined, {
-                        shouldValidate: true,
-                      })
-                    }
-                    disabled={Boolean(selectedStock?.locationId)}
-                  >
-                    <SelectTrigger
-                      className={cn("mt-1.5 w-full", stockMovementInputClass)}
-                    >
-                      {form.watch("sourceLocationId")
-                        ? (locations.find(
-                            (location) =>
-                              location.id === form.watch("sourceLocationId"),
-                          )?.name ?? "Select source")
-                        : "Select source"}
-                    </SelectTrigger>
-                    <SelectContent>
-                      {locations.map((location) => (
-                        <SelectItem key={location.id} value={location.id}>
-                          {location.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {form.formState.errors.sourceLocationId ? (
-                    <p className="mt-1 font-ochre-ui text-xs text-red-600">
-                      {form.formState.errors.sourceLocationId.message}
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-
+            <div className="grid gap-4  ">
               {requiresDestination ? (
                 <div>
                   <Label className="font-ochre-ui text-sm">
+                    {form.getValues("stockMovementType") === "RECEIVE"}
                     Destination location
                   </Label>
                   <Select
@@ -438,20 +402,26 @@ export default function StockMovementFormDialog({
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <Label className="font-ochre-ui text-sm">Quantity</Label>
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  className={cn("mt-1.5", stockMovementInputClass)}
-                  placeholder="1.000"
-                  {...form.register("quantity")}
-                  value={formatThousand(form.watch("quantity") ?? "")}
-                  onChange={(e) => {
-                    const rawValue = e.target.value;
-                    const numericValue = unformatThousand(rawValue);
-                    form.setValue("quantity", numericValue, {
-                      shouldValidate: true,
-                    });
-                  }}
+                <Controller
+                  control={form.control}
+                  name="quantity"
+                  render={({ field }) => (
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      className={cn("mt-1.5", stockMovementInputClass)}
+                      placeholder="1.000"
+                      value={formatThousand(field.value ?? "")}
+                      onChange={(e) => {
+                        const rawValue = e.target.value;
+                        const numericValue = unformatThousand(rawValue);
+                        // Directly updates the numerical form state without DOM interference
+                        field.onChange(
+                          numericValue === 0 ? undefined : numericValue,
+                        );
+                      }}
+                    />
+                  )}
                 />
                 {form.formState.errors.quantity ? (
                   <p className="mt-1 font-ochre-ui text-xs text-red-600">
@@ -460,32 +430,40 @@ export default function StockMovementFormDialog({
                 ) : null}
               </div>
 
-              <div>
-                <Label className="font-ochre-ui text-sm">
-                  Total cost {requiresTotalCost ? "" : "(optional)"}
-                </Label>
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  className={cn("mt-1.5", stockMovementInputClass)}
-                  placeholder="10.000.000"
-                  value={formatThousand(form.watch("totalCost") ?? "")}
-                  {...form.register("totalCost", {
-                    onChange: (e) => {
-                      const rawValue = e.target.value;
-                      const numericValue = unformatThousand(rawValue);
-                      form.setValue("totalCost", numericValue, {
-                        shouldValidate: true,
-                      });
-                    },
-                  })}
-                />
-                {form.formState.errors.totalCost ? (
-                  <p className="mt-1 font-ochre-ui text-xs text-red-600">
-                    {form.formState.errors.totalCost.message}
-                  </p>
-                ) : null}
-              </div>
+              {form.getValues("stockMovementType") === "TRANSFER" ? (
+                <div></div>
+              ) : (
+                <div>
+                  <Label className="font-ochre-ui text-sm">
+                    Total cost {requiresTotalCost ? "" : "(optional)"}
+                  </Label>
+                  <Controller
+                    control={form.control}
+                    name="totalCost"
+                    render={({ field }) => (
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        className={cn("mt-1.5", stockMovementInputClass)}
+                        placeholder="10.000.000"
+                        value={formatThousand(field.value ?? "")}
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+                          const numericValue = unformatThousand(rawValue);
+                          field.onChange(
+                            numericValue === 0 ? undefined : numericValue,
+                          );
+                        }}
+                      />
+                    )}
+                  />
+                  {form.formState.errors.totalCost ? (
+                    <p className="mt-1 font-ochre-ui text-xs text-red-600">
+                      {form.formState.errors.totalCost.message}
+                    </p>
+                  ) : null}
+                </div>
+              )}
             </div>
 
             <div>

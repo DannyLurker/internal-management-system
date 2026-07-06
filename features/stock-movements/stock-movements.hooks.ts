@@ -16,6 +16,8 @@ import {
 } from "./stock-movements.types";
 import stockMovementsApi from "./stock-movements.api";
 import { toast } from "sonner";
+import STOCK_KEYS from "../stocks/stock.keys";
+import ITEM_KEYS from "../items/item.keys";
 
 export const useStockMovementsHooks = (
   params: StockMovementGetManySchema,
@@ -49,6 +51,25 @@ export const useCreateStockMovement = () => {
       stockMovementsApi.create(payload),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: STOCK_MOVEMENT_KEYS.lists() });
+
+      queryClient.invalidateQueries({
+        queryKey: STOCK_KEYS.lists(),
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ITEM_KEYS.detail(data.data.itemId),
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: STOCK_KEYS.list({
+          page: 1,
+          dataPerPage: 100,
+          sortBy: "createdAt",
+          sortOrder: "asc",
+          itemId: data.data.itemId || undefined,
+        }),
+      });
+
       toast.success(data.message);
     },
   });
@@ -62,7 +83,7 @@ export const useUpdateStockMovement = () => {
       stockMovementsApi.update(payload),
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: STOCK_MOVEMENT_KEYS.detail(data.data.id),
+        queryKey: STOCK_MOVEMENT_KEYS.detail(data.data.stockMovementId),
       });
       toast.success(data.message);
     },

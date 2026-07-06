@@ -16,31 +16,11 @@ export const stockMovementCreateSchema = z
     quantity: z.number().int(),
     totalCost: z.number().int().optional(),
     reason: z.string().trim().min(10),
-    sourceLocationId: z.string().trim().min(1).optional(),
     destinationLocationId: z.string().trim().min(1).optional(),
     orderId: z.string().trim().min(1).optional(),
   })
   .superRefine((val, ctx) => {
-    const TYPES_REQUIRING_DESTINATION: MovementType[] = [
-      "RECEIVE",
-      "TRANSFER",
-      "LAUNDRY_IN",
-      "MARK_AS_DAMAGED",
-      "MARK_AS_DIRTY",
-      "MARK_AS_LOST",
-    ];
-
-    const TYPES_REQUIRING_SOURCE: MovementType[] = [
-      "TRANSFER",
-      "LAUNDRY_OUT",
-      "MARK_AS_DAMAGED",
-      "MARK_AS_DIRTY",
-      "CONSUME",
-      "SALE",
-      "DISCARD",
-      "ADJUSTMENT", // Required to know which specific stock row is being adjusted
-      "MARK_AS_LOST",
-    ];
+    const TYPES_REQUIRING_DESTINATION: MovementType[] = ["TRANSFER"];
 
     if (TYPES_REQUIRING_DESTINATION.includes(val.stockMovementType)) {
       if (!val.destinationLocationId) {
@@ -48,16 +28,6 @@ export const stockMovementCreateSchema = z
           code: "custom",
           message: "Destination location field must be filled",
           path: ["destinationLocationId"],
-        });
-      }
-    }
-
-    if (TYPES_REQUIRING_SOURCE.includes(val.stockMovementType)) {
-      if (!val.sourceLocationId) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Source location field must be filled",
-          path: ["sourceLocationId"],
         });
       }
     }
@@ -95,14 +65,6 @@ export const stockMovementCreateSchema = z
           code: "custom",
           message: "Destination location field must be filled",
           path: ["destinationLocationId"],
-        });
-      }
-
-      if (!val.sourceLocationId) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Source location field must be filled",
-          path: ["sourceLocationId"],
         });
       }
     }

@@ -31,41 +31,28 @@ const stockMovementsService = {
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      const [item, currentStock, sourceLoc, destLoc, order] = await Promise.all(
-        [
-          itemRepository.findById(validatedData.itemId, tx),
-          validatedData.stockId
-            ? stockRepository.findById(validatedData.stockId, tx)
-            : null,
-          validatedData.sourceLocationId
-            ? locationRepository.findById(validatedData.sourceLocationId, tx)
-            : null,
-          validatedData.destinationLocationId
-            ? locationRepository.findById(
-                validatedData.destinationLocationId,
-                tx,
-              )
-            : null,
-          validatedData.orderId
-            ? orderRepository.findById(validatedData.orderId, tx)
-            : null,
-        ],
-      );
+      const [item, currentStock, destLoc, order] = await Promise.all([
+        itemRepository.findById(validatedData.itemId, tx),
+        validatedData.stockId
+          ? stockRepository.findById(validatedData.stockId, tx)
+          : null,
+        validatedData.destinationLocationId
+          ? locationRepository.findById(validatedData.destinationLocationId, tx)
+          : null,
+        validatedData.orderId
+          ? orderRepository.findById(validatedData.orderId, tx)
+          : null,
+      ]);
 
       if (!item) throw notFound("Item not found");
       if (validatedData.stockId && !currentStock)
         throw notFound("Stock not found");
-      if (validatedData.sourceLocationId && !sourceLoc)
-        throw notFound("Source location not found");
       if (validatedData.destinationLocationId && !destLoc)
         throw notFound("Destination location not found");
       if (validatedData.orderId && !order) throw notFound("Order not found");
 
-      // Movement types below require an existing stock row to operate on.
-      // Fail fast with a specific message instead of silently no-op'ing
-      // (previously this fell through every branch and produced a generic
-      // "No movement record has created" error).
-      const TYPES_REQUIRING_STOCK: MovementType[] = [
+      // Rule 1: Movement types below require an existing stock row to operate on.
+      const TYPES_REQUIRING_STOCK_ID: MovementType[] = [
         "TRANSFER",
         "ADJUSTMENT",
         "MARK_AS_DAMAGED",
@@ -78,7 +65,7 @@ const stockMovementsService = {
         "DISCARD",
       ];
       if (
-        TYPES_REQUIRING_STOCK.includes(validatedData.stockMovementType) &&
+        TYPES_REQUIRING_STOCK_ID.includes(validatedData.stockMovementType) &&
         !currentStock
       ) {
         throw badRequest(
@@ -86,12 +73,23 @@ const stockMovementsService = {
         );
       }
 
-      let movement;
-
       const increaseStockQuantityMovementType: MovementType[] = [
         "RECEIVE",
         "LAUNDRY_IN",
       ];
+
+      // Rule 2: LAUNDRY_IN can only target READY stocks
+      if (
+        validatedData.stockMovementType === "LAUNDRY_IN" &&
+        currentStock &&
+        currentStock.type !== "READY"
+      ) {
+        throw badRequest(
+          "'Laundry In' type can only be located to the stock with ready type",
+        );
+      }
+
+      let movement;
 
       const createdStockMovement: Prisma.StockMovementUncheckedCreateInput = {
         itemId: validatedData.itemId,
@@ -100,7 +98,6 @@ const stockMovementsService = {
         quantity: validatedData.quantity,
         totalCost: validatedData.totalCost,
         reason: validatedData.reason,
-        sourceLocationId: validatedData.sourceLocationId,
         destinationLocationId: validatedData.destinationLocationId,
         orderId: validatedData.orderId,
         createdBy: session.id,
@@ -127,7 +124,11 @@ const stockMovementsService = {
         )
       ) {
         movement = await stockMovementsRepository.create(
-          createdStockMovement,
+          {
+            ...createdStockMovement,
+            sourceLocationId: null,
+            destinationLocationId: currentStock.locationId,
+          },
           tx,
         );
 
@@ -139,61 +140,52 @@ const stockMovementsService = {
       }
 
       // TRANSFER
-      const isSourceLocationValid =
-        currentStock?.locationId === validatedData.sourceLocationId;
+      if (currentStock && validatedData.stockMovementType === "TRANSFER") {
+        if (validatedData.destinationLocationId === currentStock.locationId)
+          throw badRequest(
+            "Source location and destination location can't be same",
+          );
 
-      if (
-        currentStock &&
-        validatedData.stockMovementType === "TRANSFER" &&
-        isSourceLocationValid &&
-        validatedData.destinationLocationId !== currentStock.locationId
-      ) {
         if (currentStock.quantity < validatedData.quantity)
           throw badRequest("Insufficient stock quantity.");
 
-        let destinationStock = await stockRepository.findFirst(
+        const destinationStock = await stockRepository.findOrUpdateOrCreate(
+          // Find
           {
-            itemId: validatedData.itemId,
-            locationId: validatedData.destinationLocationId,
-            expiredAt: currentStock?.expiredAt,
+            expiredAt: currentStock.expiredAt,
+            locationId: destLoc?.id,
+            itemId: currentStock.itemId,
             type: currentStock.type,
           },
-          tx,
+          // Update
+          {
+            quantity: {
+              increment: validatedData.quantity,
+            },
+          },
+          // Create
+          {
+            item: { connect: { id: validatedData.itemId } },
+            creator: { connect: { id: session.id } },
+            quantity: validatedData.quantity,
+            location: {
+              connect: { id: validatedData.destinationLocationId },
+            },
+            expiredAt: currentStock.expiredAt,
+            type: currentStock.type,
+          },
+          prisma,
         );
 
-        if (!destinationStock) {
-          destinationStock = await stockRepository.create(
-            {
-              item: { connect: { id: validatedData.itemId } },
-              creator: { connect: { id: session.id } },
-              quantity: validatedData.quantity,
-              location: {
-                connect: { id: validatedData.destinationLocationId },
-              },
-              expiredAt: currentStock.expiredAt,
-              type: currentStock.type,
+        await stockRepository.update(
+          currentStock.id,
+          {
+            quantity: {
+              decrement: validatedData.quantity,
             },
-            tx,
-          );
-
-          await stockRepository.update(
-            currentStock.id,
-            { quantity: { decrement: validatedData.quantity } },
-            tx,
-          );
-        } else {
-          await stockRepository.update(
-            destinationStock.id,
-            { quantity: { increment: validatedData.quantity } },
-            tx,
-          );
-
-          await stockRepository.update(
-            currentStock.id,
-            { quantity: { decrement: validatedData.quantity } },
-            tx,
-          );
-        }
+          },
+          prisma,
+        );
 
         movement = await stockMovementsRepository.create(
           {
@@ -214,7 +206,11 @@ const stockMovementsService = {
           throw badRequest("Insufficient stock quantity.");
 
         movement = await stockMovementsRepository.create(
-          createdStockMovement,
+          {
+            ...createdStockMovement,
+            sourceLocationId: currentStock.locationId,
+            destinationLocationId: currentStock.locationId,
+          },
           tx,
         );
 
@@ -248,40 +244,32 @@ const stockMovementsService = {
         );
       }
 
-      // CONSUME / SALE
       if (
         currentStock &&
-        (validatedData.stockMovementType === "CONSUME" ||
-          validatedData.stockMovementType === "SALE")
+        currentStock.type === "LOST" &&
+        validatedData.stockMovementType === "DISCARD"
       ) {
-        movement = await stockMovementsRepository.create(
-          { ...createdStockMovement, destinationLocationId: null },
-          tx,
-        );
-
-        await stockRepository.update(
-          currentStock.id,
-          { quantity: { decrement: validatedData.quantity } },
-          tx,
-        );
+        throw badRequest("Can't delete a lost item");
       }
 
-      // DISCARD Case
-      if (currentStock && validatedData.stockMovementType === "DISCARD") {
-        movement = await stockMovementsRepository.create(
-          { ...createdStockMovement, destinationLocationId: null },
-          tx,
-        );
+      const decreaseStockQuantityMovementType: MovementType[] = [
+        "DISCARD",
+        "LAUNDRY_OUT",
+        "CONSUME",
+        "SALE",
+      ];
 
-        await stockRepository.update(
-          currentStock.id,
-          { quantity: { decrement: validatedData.quantity } },
-          tx,
-        );
-      }
+      // decreaseStockQuantityMovementType case
+      if (
+        currentStock &&
+        decreaseStockQuantityMovementType.includes(
+          validatedData.stockMovementType,
+        )
+      ) {
+        if (currentStock.quantity < validatedData.quantity) {
+          throw badRequest("Insufficient stock quantity.");
+        }
 
-      // LANDURY_OUT Case
-      if (currentStock && validatedData.stockMovementType === "LAUNDRY_OUT") {
         movement = await stockMovementsRepository.create(
           { ...createdStockMovement, destinationLocationId: null },
           tx,
@@ -326,7 +314,9 @@ const stockMovementsService = {
 
     return {
       message: "Stock movement created successfully",
-      id: result?.id,
+      stockMovementId: result.id,
+      stockId: result.stockId,
+      itemId: result.itemId,
     };
   },
 
@@ -508,6 +498,8 @@ const stockMovementsService = {
     return {
       message: "Stock movement updated successfully",
       id: result.id,
+      itemId: result.itemId,
+      stockId: result.stockId,
     };
   },
 

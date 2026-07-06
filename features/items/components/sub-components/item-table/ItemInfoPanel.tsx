@@ -77,7 +77,13 @@ export default function ItemInfoPanel({
   const itemData = data?.data?.item;
 
   const totalLocatedItemQuantity = data?.data.totalLocatedItemQuantity ?? 0;
-  const totalStockRows = data?.data.itemStockRows ?? 0;
+  const totalUnlocatedItemQuantity = data?.data.totalUnlocatedItemQuantity ?? 0;
+  const totalReadyStock = data?.data.totalReadyStock ?? 0;
+  const totalExpiredStock = data?.data.totalExpiredStock ?? 0;
+  const totalDamagedStock = data?.data.totalDamagedStock ?? 0;
+  const totalDirtyStock = data?.data.totalDirtyStock ?? 0;
+  const totalLostStock = data?.data.totalLostStock ?? 0;
+  const itemStockCount = data?.data.itemStockCount ?? 0;
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) onClose();
@@ -220,6 +226,70 @@ export default function ItemInfoPanel({
                           </div>
                           <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
                             <dt className="text-[#524439]/70 font-medium">
+                              Ready stocks
+                            </dt>
+                            <dd className="font-semibold text-[#121c28]">
+                              {totalReadyStock}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                            <dt className="text-[#524439]/70 font-medium">
+                              Expired stocks
+                            </dt>
+                            <dd className="font-semibold text-[#121c28]">
+                              {totalExpiredStock}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                            <dt className="text-[#524439]/70 font-medium">
+                              Damaged stocks
+                            </dt>
+                            <dd className="font-semibold text-[#121c28]">
+                              {totalDamagedStock}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                            <dt className="text-[#524439]/70 font-medium">
+                              Dirty stocks
+                            </dt>
+                            <dd className="font-semibold text-[#121c28]">
+                              {totalDirtyStock}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                            <dt className="text-[#524439]/70 font-medium">
+                              Lost stocks
+                            </dt>
+                            <dd className="font-semibold text-[#121c28]">
+                              {totalLostStock}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                            <dt className="text-[#524439]/70 font-medium">
+                              Discarded stocks
+                            </dt>
+                            <dd className="font-semibold text-[#121c28]">
+                              {totalUnlocatedItemQuantity}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                            <dt className="text-[#524439]/70 font-medium">
+                              Located stocks
+                            </dt>
+                            <dd className="font-semibold text-[#121c28]">
+                              {totalLocatedItemQuantity}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                            <dt className="text-[#524439]/70 font-medium">
+                              Unlocated stocks
+                            </dt>
+                            <dd className="font-semibold text-[#121c28]">
+                              {totalUnlocatedItemQuantity}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                            <dt className="text-[#524439]/70 font-medium">
                               Active Status
                             </dt>
                             <dd className="font-semibold">
@@ -308,9 +378,6 @@ export default function ItemInfoPanel({
                       <Plus className="size-4" strokeWidth={2} aria-hidden />
                       New stock
                     </button>
-                    <span className="rounded-full bg-[#894d0d] px-2.5 py-0.5 text-xs font-semibold text-white">
-                      {totalLocatedItemQuantity} entries
-                    </span>
                   </div>
                 </div>
 
@@ -385,7 +452,7 @@ export default function ItemInfoPanel({
 
                 <ItemInfoPanelTable
                   stocks={itemData.stocks ?? []}
-                  totalStockRows={totalStockRows}
+                  totalStockRows={itemStockCount}
                   itemStockPage={itemStockPage}
                   itemStocksPerpage={itemStocksPerpage}
                   sortBy={sortBy}

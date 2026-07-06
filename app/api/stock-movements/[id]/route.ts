@@ -43,7 +43,11 @@ export async function PATCH(
 
     const response: StockMovementCUDApiResponse = {
       message: result.message,
-      data: { id: result.id },
+      data: {
+        stockMovementId: result.id,
+        itemId: result.itemId,
+        stockId: result.stockId,
+      },
       status: 200,
     };
 

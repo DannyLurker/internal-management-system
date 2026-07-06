@@ -34,6 +34,34 @@ export const stockRepository = {
     });
   },
 
+  findOrUpdateOrCreate: async (
+    where: Prisma.StockWhereInput,
+    update: Prisma.StockUpdateInput,
+    create: Prisma.StockCreateInput,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    let stock = await tx.stock.findFirst({
+      where,
+    });
+
+    if (stock) {
+      stock = await tx.stock.update({
+        where: {
+          id: stock.id,
+        },
+        data: { ...update },
+      });
+    } else {
+      stock = await tx.stock.create({
+        data: {
+          ...create,
+        },
+      });
+    }
+
+    return stock;
+  },
+
   getMany: async <T extends Prisma.StockSelect>(
     where: Prisma.StockWhereInput,
     select: T,

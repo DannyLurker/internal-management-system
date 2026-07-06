@@ -9,11 +9,6 @@ import { badRequest } from "@/shared/lib/error-handlers";
 import { stockRepository } from "../stocks/stock.repository";
 import stockMovementsRepository from "./stock-movements.repository";
 
-export const STOCK_MOVEMENT_CREATE_MODE = {
-  QUICK_DISCARD: "QUICK_DISCARD",
-  QUICK_LAUNDRY_OUT: "QUICK_LAUNDRY_OUT",
-} as const;
-
 /**
  * Shared implementation for MARK_AS_DAMAGED / MARK_AS_DIRTY / MARK_AS_LOST /
  * MARK_AS_EXPIRED. All four follow the same shape:
@@ -42,35 +37,27 @@ export async function markStockAs(
     tx,
   );
 
-  let targetStock = await stockRepository.findFirst(
+  const targetStock = await stockRepository.findOrUpdateOrCreate(
+    // Find
     {
       itemId: currentStock.itemId,
       locationId: currentStock.locationId,
       type: targetType,
       expiredAt: currentStock.expiredAt,
     },
+    // Update
+    { quantity: { increment: quantity } },
+    // Create
+    {
+      item: { connect: { id: currentStock.itemId } },
+      location: { connect: { id: currentStock.locationId } },
+      creator: { connect: { id: session.id } },
+      quantity,
+      type: targetType,
+      expiredAt: currentStock.expiredAt,
+    },
     tx,
   );
-
-  if (targetStock) {
-    await stockRepository.update(
-      targetStock.id,
-      { quantity: { increment: quantity } },
-      tx,
-    );
-  } else {
-    targetStock = await stockRepository.create(
-      {
-        item: { connect: { id: currentStock.itemId } },
-        location: { connect: { id: currentStock.locationId } },
-        creator: { connect: { id: session.id } },
-        quantity,
-        type: targetType,
-        expiredAt: currentStock.expiredAt,
-      },
-      tx,
-    );
-  }
 
   return stockMovementsRepository.create(
     {

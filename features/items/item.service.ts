@@ -197,50 +197,92 @@ const itemService = {
     );
 
     // Count the row
-    const stockRows = await stockRepository.countRows(stockWhereClause, prisma);
-
-    const totalReadyStock = await stockRepository.countQuantity(
-      {
-        itemId: itemId,
-        type: "READY",
-        OR: [
-          { expiredAt: null },
-          {
-            expiredAt: {
-              gte: today,
-            },
-          },
-        ],
-      },
+    const itemStockCount = await stockRepository.countRows(
+      stockWhereClause,
       prisma,
     );
+
+    const [
+      totalLocatedItems,
+      totalUnlocatedItems,
+      totalReadyStock,
+      totalExpiredStock,
+      totalDamagedStock,
+      totalDirtyStock,
+      totalLostStock,
+      totalDiscardedItems,
+    ] = await Promise.all([
+      await stockRepository.countQuantity(
+        {
+          itemId: itemId,
+          type: {
+            not: "LOST",
+          },
+        },
+        prisma,
+      ),
+      await stockMovementsRepository.countQuantity(
+        {
+          itemId: itemId,
+        },
+        prisma,
+      ),
+      await stockRepository.countQuantity(
+        {
+          itemId: itemId,
+          type: "READY",
+          OR: [
+            { expiredAt: null },
+            {
+              expiredAt: {
+                gte: today,
+              },
+            },
+          ],
+        },
+        prisma,
+      ),
+      await stockRepository.countQuantity(
+        {
+          type: "EXPIRED",
+          itemId: itemId,
+        },
+        prisma,
+      ),
+      await stockRepository.countQuantity(
+        {
+          type: "DAMAGED",
+          itemId: itemId,
+        },
+        prisma,
+      ),
+      await stockRepository.countQuantity(
+        {
+          type: "DIRTY",
+          itemId: itemId,
+        },
+        prisma,
+      ),
+      await stockRepository.countQuantity(
+        {
+          type: "LOST",
+          itemId: itemId,
+        },
+        prisma,
+      ),
+      await stockMovementsRepository.countQuantity(
+        {
+          type: "DISCARD",
+          itemId: itemId,
+        },
+        prisma,
+      ),
+    ]);
 
     const isStockLow =
       item && totalReadyStock && totalReadyStock <= item?.minThreshold
         ? true
         : false;
-
-    const totalLocatedItems = await stockRepository.countQuantity(
-      {
-        itemId: itemId,
-      },
-      prisma,
-    );
-
-    const totalUnlocatedItems = await stockMovementsRepository.countQuantity(
-      {
-        itemId: itemId,
-      },
-      prisma,
-    );
-
-    const totalDiscardedItems = await stockMovementsRepository.countQuantity(
-      {
-        type: "DISCARD",
-        itemId: itemId,
-      },
-      prisma,
-    );
 
     return {
       message: "Item retrieved successfully",
@@ -254,7 +296,12 @@ const itemService = {
         totalLocatedItemQuantity: totalLocatedItems,
         totalUnlocatedItemQuantity: totalUnlocatedItems,
         totalDiscardedItems: totalDiscardedItems,
-        itemStockRows: stockRows,
+        totalDamagedStock,
+        totalReadyStock,
+        totalDirtyStock,
+        totalExpiredStock,
+        totalLostStock,
+        itemStockCount,
       },
     };
   },
