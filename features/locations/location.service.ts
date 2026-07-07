@@ -1,42 +1,30 @@
-import prisma from "@/shared/db/prisma";
 import { badRequest, forbidden, notFound } from "@/shared/lib/error-handlers";
+import { canManageLocation } from "@/shared/lib/validations/user-access-validation";
 import {
-  canDeleteLocation,
-  canManageLocation,
-} from "@/shared/lib/validations/user-access-validation";
-import sessionValidation from "@/shared/lib/validations/user-session-validation";
-import {
-  locationCreateSchema,
   LocationCreateSchema,
-  locationGetSchema,
-  locationGetSpesificSchema,
-  locationUpdateSchema,
+  LocationGetByIdSchema,
+  LocationGetManySchema,
   LocationUpdateSchema,
 } from "@/shared/lib/zods/location.zod";
 import auditLogsRepository from "../audit-logs/audit-log.repository";
-import {
-  locationRepository,
-  locationSelectData,
-  locationWhereUniqueInput,
-} from "./location.repository";
-import { Prisma, StockType } from "@prisma/client";
-import { EXPIRING_WINDOW_DAYS } from "../items/item.utils";
+import { locationRepository, locationSelectData } from "./location.repository";
+import { PrismaClient } from "@prisma/client";
+import { Session } from "next-auth";
+import { stockRepository } from "../stocks/stock.repository";
+import locationRules from "./location.rule";
 
 const locationService = {
-  create: async (rawData: LocationCreateSchema) => {
-    const session = await sessionValidation();
-    const validatedData = locationCreateSchema.parse(rawData);
-
-    if (!canManageLocation(session.role)) {
-      throw forbidden("You're not allowed to access this feature");
-    }
-
+  create: async (
+    session: Session["user"],
+    data: LocationCreateSchema,
+    prisma: PrismaClient,
+  ) => {
     const created = await prisma.$transaction(async (tx) => {
       const location = await locationRepository.create(
         {
-          name: validatedData.name,
-          type: validatedData.type,
-          description: validatedData.description,
+          name: data.name,
+          type: data.type,
+          description: data.description,
           userCreatedBy: {
             connect: {
               id: session.id,
@@ -70,56 +58,19 @@ const locationService = {
     };
   },
 
-  get: async (locationId: string, params: { [key: string]: string }) => {
-    const session = await sessionValidation();
-    const validatedParams = locationGetSpesificSchema.parse(params);
+  getById: async (
+    session: Session["user"],
+    locationId: string,
+    params: LocationGetByIdSchema,
+    prisma: PrismaClient,
+  ) => {
+    const stockWhereClause = stockRepository.buildStockWhereClause(
+      locationId,
+      params,
+    );
 
-    if (!canManageLocation(session.role)) {
-      throw forbidden("You're not allowed to access this feature");
-    }
-
-    const whereQuery = locationWhereUniqueInput({
-      id: locationId,
-    });
-
-    const skip =
-      (validatedParams.itemPage - 1) * validatedParams.itemDataPerPage;
-
-    const take = validatedParams.itemDataPerPage;
-
-    const stockWhereClause: Prisma.StockWhereInput = {
-      locationId: locationId,
-    };
-    const today = new Date();
-
-    const expiringWindow = new Date();
-    expiringWindow.setDate(expiringWindow.getDate() + EXPIRING_WINDOW_DAYS);
-
-    if (validatedParams.sortBy === "stockType") {
-      // Non query status means that, you don't have to make any prisma logic like gte, lte, and etc. Just show something in one line like stockWhereClause.type = validatedParams.stateus
-      const nonQueryStatus = ["READY", "DAMAGED", "DIRTY"] as StockType[];
-
-      if (
-        nonQueryStatus.includes(validatedParams.stockStatusType as StockType)
-      ) {
-        stockWhereClause.type = validatedParams.stockStatusType as StockType;
-      }
-
-      if (validatedParams.stockStatusType === "EXPIRED") {
-        stockWhereClause.OR = [{ type: "EXPIRED" }, { type: "READY" }];
-        stockWhereClause.expiredAt = {
-          lt: today,
-        };
-      }
-
-      if (validatedParams.stockStatusType === "EXPIRING_SOON") {
-        stockWhereClause.OR = [{ type: "READY" }, { type: "EXPIRED" }];
-        stockWhereClause.expiredAt = {
-          gte: today,
-          lte: expiringWindow,
-        };
-      }
-    }
+    const skip = (params.itemPage - 1) * params.itemDataPerPage;
+    const take = params.itemDataPerPage;
 
     const selectData = locationSelectData({
       id: true,
@@ -138,11 +89,11 @@ const locationService = {
         },
         where: stockWhereClause,
         orderBy: [
-          ...(validatedParams.sortBy === "stockType"
-            ? [{ type: validatedParams.sortOrder }]
+          ...(params.sortBy === "stockType"
+            ? [{ type: params.sortOrder }]
             : []),
-          ...(validatedParams.sortBy === "name"
-            ? [{ item: { name: validatedParams.sortOrder } }]
+          ...(params.sortBy === "name"
+            ? [{ item: { name: params.sortOrder } }]
             : []),
         ],
         skip,
@@ -151,29 +102,24 @@ const locationService = {
     });
 
     const location = await locationRepository.get(
-      whereQuery,
+      { id: locationId },
       selectData,
       prisma,
     );
 
     if (!location) throw notFound("Location not found");
 
-    const totalStocksCount = await prisma.stock.count({
-      where: {
-        ...stockWhereClause,
-        ...(validatedParams.itemSearchQuery &&
-        validatedParams.itemSearchQuery.length >= 3
-          ? {
-              item: {
-                name: {
-                  contains: validatedParams.itemSearchQuery,
-                  mode: "insensitive",
-                },
-              },
-            }
-          : {}),
+    const stockCountWhereClause = stockRepository.buildStockCountWhereClause(
+      stockWhereClause,
+      params.itemSearchQuery,
+    );
+
+    const totalStocksCount = await stockRepository.countQuantity(
+      {
+        ...stockCountWhereClause,
       },
-    });
+      prisma,
+    );
 
     return {
       message: "Location retrieved successfully",
@@ -181,29 +127,16 @@ const locationService = {
     };
   },
 
-  getMany: async (params: { [key: string]: string }) => {
-    const session = await sessionValidation();
-    const validatedParams = locationGetSchema.parse(params);
-
+  getMany: async (
+    session: Session["user"],
+    params: LocationGetManySchema,
+    prisma: PrismaClient,
+  ) => {
     if (!canManageLocation(session.role)) {
       throw forbidden("You're not allowed to access this feature");
     }
 
-    let whereQuery: Prisma.LocationWhereInput = {};
-
-    if (
-      validatedParams.searchQuery &&
-      validatedParams.searchQuery.length >= 3
-    ) {
-      whereQuery.name = {
-        contains: validatedParams.searchQuery,
-        mode: "insensitive",
-      };
-    }
-
-    if (validatedParams.locationType) {
-      whereQuery.type = validatedParams.locationType;
-    }
+    const whereQuery = locationRepository.buildLocationWhereClause(params);
 
     const selectData = locationSelectData({
       id: true,
@@ -224,17 +157,16 @@ const locationService = {
       },
     });
 
-    const skip = (validatedParams.page - 1) * validatedParams.dataPerPage;
-
-    const take = validatedParams.dataPerPage;
+    const skip = (params.page - 1) * params.dataPerPage;
+    const take = params.dataPerPage;
 
     const locations = await locationRepository.getMany(
       whereQuery,
       selectData,
       skip,
       take,
-      validatedParams.sortOrderEnum,
-      validatedParams.sortBy,
+      params.sortOrderEnum,
+      params.sortBy,
       prisma,
     );
 
@@ -248,14 +180,12 @@ const locationService = {
     };
   },
 
-  update: async (rawData: LocationUpdateSchema) => {
-    const session = await sessionValidation();
-    const validatedData = locationUpdateSchema.parse(rawData);
-
-    if (!canManageLocation(session.role)) {
-      throw forbidden("You're not allowed to access this feature");
-    }
-
+  update: async (
+    session: Session["user"],
+    locationId: string,
+    data: LocationUpdateSchema,
+    prisma: PrismaClient,
+  ) => {
     const updated = await prisma.$transaction(async (tx) => {
       const selectData = locationSelectData({
         name: true,
@@ -264,18 +194,18 @@ const locationService = {
       });
 
       const existing = await locationRepository.get(
-        { id: validatedData.locationId },
+        { id: locationId },
         selectData,
         tx,
       );
       if (!existing) throw notFound("Location not found");
 
       const location = await locationRepository.update(
-        validatedData.locationId,
+        locationId,
         {
-          name: validatedData.name,
-          type: validatedData.type,
-          description: validatedData.description,
+          name: data.name,
+          type: data.type,
+          description: data.description,
           userCreatedBy: {
             connect: {
               id: session.id,
@@ -313,16 +243,15 @@ const locationService = {
 
     return {
       message: `${updated.name} updated successfully`,
+      id: updated.id,
     };
   },
 
-  delete: async (locationId: string) => {
-    const session = await sessionValidation();
-
-    if (!canDeleteLocation(session.role)) {
-      throw forbidden("You're not allowed to access this feature");
-    }
-
+  delete: async (
+    session: Session["user"],
+    locationId: string,
+    prisma: PrismaClient,
+  ) => {
     const deleted = await prisma.$transaction(async (tx) => {
       const selectData = locationSelectData({
         id: true,
@@ -343,12 +272,15 @@ const locationService = {
         tx,
       );
 
-      if (!existing) throw notFound("Location not found");
+      const deletionResult = locationRules.canDeleteLocation({
+        stocks: existing?.stocks || [],
+      });
 
-      if (existing.stocks.length > 0)
-        throw badRequest(
-          "Item was found in this location. Migrate all the item before deleting.",
-        );
+      if (!deletionResult.allowed) {
+        if (deletionResult.reason) throw badRequest(deletionResult.reason);
+
+        throw badRequest();
+      }
 
       const location = await locationRepository.delete(locationId, tx);
 
@@ -359,10 +291,10 @@ const locationService = {
           entity: "LOCATION",
           entityId: location.id,
           metadata: {
-            id: existing.id,
-            name: existing.name,
-            type: existing.type,
-            description: existing.description,
+            id: existing?.id,
+            name: existing?.name,
+            type: existing?.type,
+            description: existing?.description,
           },
         },
         tx,
@@ -373,6 +305,7 @@ const locationService = {
 
     return {
       message: `${deleted.name} deleted successfully`,
+      id: deleted.id,
     };
   },
 };

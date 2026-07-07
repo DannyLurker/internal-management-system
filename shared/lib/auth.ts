@@ -82,12 +82,12 @@ declare module "next-auth" {
     role: Roles;
   }
 
-  interface Session {
+  export interface Session {
     user: {
       id: string;
       name: string;
       email: string;
-      image: string;
+      image: string | null;
       role: Roles;
     } & DefaultSession["user"];
   }

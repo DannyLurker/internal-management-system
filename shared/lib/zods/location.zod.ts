@@ -19,7 +19,6 @@ export const locationCreateSchema = z.object({
 export type LocationCreateSchema = z.infer<typeof locationCreateSchema>;
 
 export const locationUpdateSchema = z.object({
-  locationId: z.string().trim().min(3),
   name: z.string().trim().min(3).optional(),
   type: locationEnum.optional(),
   description: z.string().trim().optional(),
@@ -27,7 +26,7 @@ export const locationUpdateSchema = z.object({
 
 export type LocationUpdateSchema = z.infer<typeof locationUpdateSchema>;
 
-export const locationGetSchema = z.object({
+export const locationGetManySchema = z.object({
   searchQuery,
   page,
   dataPerPage,
@@ -36,9 +35,9 @@ export const locationGetSchema = z.object({
   locationType: locationEnum.optional(),
 });
 
-export type LocationGetSchema = z.infer<typeof locationGetSchema>;
+export type LocationGetManySchema = z.infer<typeof locationGetManySchema>;
 
-export const locationGetSpesificSchema = z.object({
+export const locationGetByIdSchema = z.object({
   itemSearchQuery: searchQuery,
   itemPage: page,
   itemDataPerPage: dataPerPage,
@@ -47,6 +46,4 @@ export const locationGetSpesificSchema = z.object({
   stockStatusType: stockStatusEnum.default("ALL"),
 });
 
-export type LocationGetSpecificSchema = z.infer<
-  typeof locationGetSpesificSchema
->;
+export type LocationGetByIdSchema = z.infer<typeof locationGetByIdSchema>;

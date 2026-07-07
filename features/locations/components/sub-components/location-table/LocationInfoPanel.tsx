@@ -7,7 +7,6 @@ import {
   formatLocationTypeBadge,
   formatTimestamp,
 } from "@/features/locations/location.utils";
-import { locationGetSpesificSchema } from "@/shared/lib/zods/location.zod";
 import LocationInfoPanelTable from "./LocationInfoPanelTable";
 import {
   Dialog,
@@ -20,6 +19,7 @@ import {
   SortItemByAtLocation,
   StockTypeStatus,
 } from "@/shared/lib/types/zod.type";
+import { locationGetByIdSchema } from "@/shared/lib/zods/location.zod";
 
 type LocationInfoPanelProps = {
   open: boolean;
@@ -61,7 +61,7 @@ export default function LocationInfoPanel({
 
   const itemParams = useMemo(
     () =>
-      locationGetSpesificSchema.parse({
+      locationGetByIdSchema.parse({
         itemPage,
         itemDataPerPage,
         sortOrder: itemSortOrder,

@@ -110,7 +110,7 @@ export const stockMovementGetManySchema = z.object({
   destinationLocationId: z.string().trim().min(1).optional(),
   page: page,
   dataPerPage: dataPerPage,
-  sortOrder: sortOrderEnum,
+  sortOrder: sortOrderEnum.default("asc"),
   sortBy: stockMovementSortByEnum.default("createdAt"),
   type: stockMovementTypeEnum.optional(),
 });

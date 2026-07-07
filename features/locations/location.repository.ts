@@ -1,4 +1,5 @@
 import { SortLocationBy, SortOrder } from "@/shared/lib/types/zod.type";
+import { LocationGetManySchema } from "@/shared/lib/zods/location.zod";
 import { Prisma, PrismaClient } from "@prisma/client";
 
 export const locationWhereInput = (where: Prisma.LocationWhereInput) => where;
@@ -12,6 +13,25 @@ export const locationSelectData = <T extends Prisma.LocationSelect>(
 ): T => select;
 
 export const locationRepository = {
+  buildLocationWhereClause: (
+    params: LocationGetManySchema,
+  ): Prisma.LocationWhereInput => {
+    const whereQuery: Prisma.LocationWhereInput = {};
+
+    if (params.searchQuery && params.searchQuery.length >= 3) {
+      whereQuery.name = {
+        contains: params.searchQuery,
+        mode: "insensitive",
+      };
+    }
+
+    if (params.locationType) {
+      whereQuery.type = params.locationType;
+    }
+
+    return whereQuery;
+  },
+
   create: async (
     data: Prisma.LocationCreateInput,
     tx: PrismaClient | Prisma.TransactionClient,

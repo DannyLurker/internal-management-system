@@ -5,7 +5,9 @@ type LocationServiceGetMany = Awaited<
   ReturnType<typeof locationService.getMany>
 >;
 
-type LocationServiceGetById = Awaited<ReturnType<typeof locationService.get>>;
+type LocationServiceGetById = Awaited<
+  ReturnType<typeof locationService.getById>
+>;
 
 export type LocationListItem =
   LocationServiceGetMany["data"]["locations"][number];
@@ -20,6 +22,8 @@ export type LocationGetManyApiResponse = ApiResponse<
   LocationServiceGetMany["data"]
 >;
 export type LocationGetByIdApiResponse = ApiResponse<LocationDetail>;
-export type LocationCreateApiResponse = ApiResponse<null>;
-export type LocationUpdateApiResponse = ApiResponse<null>;
-export type LocationDeleteApiResponse = ApiResponse<null>;
+
+// Create-Update-Delete
+export type LocationCUDApiResponse = ApiResponse<{
+  id: string;
+}>;

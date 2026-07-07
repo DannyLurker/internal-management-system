@@ -45,10 +45,6 @@ type LocationFormSharedValues = {
   description?: string;
 };
 
-type LocationEditFormValues = LocationFormSharedValues & {
-  locationId: string;
-};
-
 type LocationFormDialogProps = {
   mode: "create" | "edit";
   open: boolean;
@@ -217,12 +213,9 @@ export default function LocationFormDialog({
     },
   });
 
-  const updateForm = useForm<LocationEditFormValues>({
-    resolver: zodResolver(
-      locationUpdateSchema,
-    ) as Resolver<LocationEditFormValues>,
+  const updateForm = useForm({
+    resolver: zodResolver(locationUpdateSchema),
     defaultValues: {
-      locationId: "",
       name: "",
       type: LocationType.MAIN_WAREHOUSE,
       description: "",
@@ -243,7 +236,6 @@ export default function LocationFormDialog({
 
     if (defaultValues) {
       updateForm.reset({
-        locationId: defaultValues.locationId,
         name: defaultValues.name,
         type: defaultValues.type,
         description: defaultValues.description ?? "",
@@ -308,8 +300,10 @@ export default function LocationFormDialog({
             onSubmit={updateForm.handleSubmit(async (values) => {
               try {
                 await updateMutation.mutateAsync({
-                  ...values,
-                  description: values.description?.trim() || undefined,
+                  locationId: defaultValues?.locationId ?? "",
+                  payload: {
+                    ...values,
+                  },
                 });
                 onSuccess();
                 onClose();
@@ -318,7 +312,6 @@ export default function LocationFormDialog({
               }
             })}
           >
-            <input type="hidden" {...updateForm.register("locationId")} />
             <LocationFormFields
               form={
                 updateForm as unknown as UseFormReturn<LocationFormSharedValues>

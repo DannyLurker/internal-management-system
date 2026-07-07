@@ -3,18 +3,31 @@ import {
   StockMovementCUDApiResponse,
   StockMovementGetManyApiResponse,
 } from "@/features/stock-movements/stock-movements.types";
+import prisma from "@/shared/db/prisma";
+import { forbidden } from "@/shared/lib/error-handlers";
 import {
   handleError,
   printConsoleError,
 } from "@/shared/lib/error-handlers/handleError";
+import { canManageStockMovement } from "@/shared/lib/validations/user-access-validation";
+import sessionValidation from "@/shared/lib/validations/user-session-validation";
+import {
+  stockMovementCreateSchema,
+  stockMovementGetManySchema,
+} from "@/shared/lib/zods/stock-movements.zod";
 
 export async function GET(req: Request) {
   try {
+    const session = await sessionValidation();
+
+    if (!canManageStockMovement(session.role))
+      throw forbidden("You're not allowed to access this feature");
+
     const { searchParams } = new URL(req.url);
-
     const rawParams = Object.fromEntries(searchParams.entries());
+    const params = stockMovementGetManySchema.parse(rawParams);
 
-    const result = await stockMovementsService.getMany(rawParams);
+    const result = await stockMovementsService.getMany(session, params, prisma);
 
     const response: StockMovementGetManyApiResponse = {
       message: result.message,
@@ -31,9 +44,15 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const rawData = await req.json();
+    const session = await sessionValidation();
 
-    const result = await stockMovementsService.create(rawData);
+    if (!canManageStockMovement(session.role))
+      throw forbidden("You're not allowed to access this feature");
+
+    const body = await req.json();
+    const data = stockMovementCreateSchema.parse(body);
+
+    const result = await stockMovementsService.create(session, data, prisma);
 
     const response: StockMovementCUDApiResponse = {
       message: result.message,

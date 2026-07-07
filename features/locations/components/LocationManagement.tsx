@@ -7,16 +7,18 @@ import { LocationType } from "@prisma/client";
 import { useLocations } from "@/features/locations/location.hooks";
 import type { LocationListItem } from "@/features/locations/location.types";
 import { LOCATION_TYPE_OPTIONS } from "@/features/locations/location.utils";
-import { locationGetSchema } from "@/shared/lib/zods/location.zod";
-import type { LocationGetSchema } from "@/shared/lib/zods/location.zod";
 import { cn } from "@/shared/lib/utils";
 import LocationInfoPanel from "./sub-components/location-table/LocationInfoPanel";
 import LocationFormDialog from "./sub-components/LocationFormDialog";
 import LocationDeleteModal from "./sub-components/LocationDeleteModal";
 import LocationTable from "./sub-components/location-table/index";
+import {
+  locationGetManySchema,
+  LocationGetManySchema,
+} from "@/shared/lib/zods/location.zod";
 
 const DATA_PER_PAGE_OPTIONS = [10, 20, 50, 100] as const;
-const SORT_BY_OPTIONS: LocationGetSchema["sortBy"][] = [
+const SORT_BY_OPTIONS: LocationGetManySchema["sortBy"][] = [
   "name",
   "type",
   "createdAt",
@@ -37,21 +39,21 @@ function parseDataPerPage(value: string | null): number {
     : 10;
 }
 
-function parseSortBy(value: string | null): LocationGetSchema["sortBy"] {
-  return SORT_BY_OPTIONS.includes(value as LocationGetSchema["sortBy"])
-    ? (value as LocationGetSchema["sortBy"])
+function parseSortBy(value: string | null): LocationGetManySchema["sortBy"] {
+  return SORT_BY_OPTIONS.includes(value as LocationGetManySchema["sortBy"])
+    ? (value as LocationGetManySchema["sortBy"])
     : "name";
 }
 
 function parseSortOrder(
   value: string | null,
-): LocationGetSchema["sortOrderEnum"] {
+): LocationGetManySchema["sortOrderEnum"] {
   return value === "desc" ? "desc" : "asc";
 }
 
 function parseLocationType(
   value: string | null,
-): LocationGetSchema["locationType"] | undefined {
+): LocationGetManySchema["locationType"] | undefined {
   if (!value || value === "ALL") return undefined;
   return Object.values(LocationType).includes(value as LocationType)
     ? (value as LocationType)
@@ -133,7 +135,7 @@ export default function LocationManagement() {
     );
   }, [debouncedSearch, updateSearchParams, urlSearchQuery]);
 
-  const filters: LocationGetSchema = useMemo(() => {
+  const filters: LocationGetManySchema = useMemo(() => {
     const raw = {
       page,
       dataPerPage,
@@ -144,7 +146,7 @@ export default function LocationManagement() {
         : {}),
       ...(locationType ? { locationType } : {}),
     };
-    return locationGetSchema.parse(raw);
+    return locationGetManySchema.parse(raw);
   }, [page, dataPerPage, sortBy, sortOrderEnum, debouncedSearch, locationType]);
 
   const { data: locationsResponse, isLoading, isError } = useLocations(filters);

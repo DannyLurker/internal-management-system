@@ -11,8 +11,8 @@ import {
 import LOCATION_KEYS from "./location.keys";
 import {
   LocationCreateSchema,
-  LocationGetSchema,
-  LocationGetSpecificSchema,
+  LocationGetByIdSchema,
+  LocationGetManySchema,
   LocationUpdateSchema,
 } from "@/shared/lib/zods/location.zod";
 import locationApi from "./location.api";
@@ -20,7 +20,7 @@ import { toast } from "sonner";
 
 export const useLocation = (
   locationId: string,
-  params: LocationGetSpecificSchema,
+  params: LocationGetByIdSchema,
   options?: Partial<UseQueryOptions<LocationGetByIdApiResponse>>,
 ) => {
   return useQuery({
@@ -33,7 +33,7 @@ export const useLocation = (
 };
 
 export const useLocations = (
-  params: LocationGetSchema,
+  params: LocationGetManySchema,
   options?: Partial<UseQueryOptions<LocationGetManyApiResponse>>,
 ) => {
   return useQuery({
@@ -50,7 +50,7 @@ export const useCreateLocation = () => {
   return useMutation({
     mutationFn: (payload: LocationCreateSchema) => locationApi.create(payload),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: LOCATION_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: LOCATION_KEYS.lists() });
       toast.success(data.message);
     },
   });
@@ -60,21 +60,29 @@ export const useUpdateLocation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: LocationUpdateSchema) => locationApi.update(payload),
+    mutationFn: ({
+      locationId,
+      payload,
+    }: {
+      locationId: string;
+      payload: LocationUpdateSchema;
+    }) => locationApi.update({ locationId, payload }),
+
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: LOCATION_KEYS.all });
+      queryClient.invalidateQueries({
+        queryKey: LOCATION_KEYS.detail(data.data.id),
+      });
       toast.success(data.message);
     },
   });
 };
-
 export const useDeleteLocation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (id: string) => locationApi.delete(id),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: LOCATION_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: LOCATION_KEYS.lists() });
       toast.success(data.message);
     },
   });

@@ -158,7 +158,7 @@ export default function ItemInfoPanel({
                   )}
                 >
                   {/* Item Image */}
-                  <div className="h-full">
+                  <div className="h-full max-h-120">
                     <div className="h-full rounded-lg border border-[#eef4ff] bg-[#f8f9ff]/50 p-4">
                       {itemData.image ? (
                         <div className="relative h-full min-h-125 overflow-hidden">
@@ -177,7 +177,7 @@ export default function ItemInfoPanel({
                   </div>
 
                   {/* Item Description */}
-                  <div className="h-full">
+                  <div className="h-full max-h-120 overflow-y-auto">
                     <div className="h-full rounded-lg border border-[#eef4ff] bg-[#f8f9ff]/50 p-4">
                       <div className="rounded-lg">
                         <dl className="space-y-3 font-ochre-ui text-xs text-[#524439]">

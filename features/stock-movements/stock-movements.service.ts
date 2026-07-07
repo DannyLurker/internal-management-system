@@ -1,55 +1,45 @@
-import prisma from "@/shared/db/prisma";
 import { badRequest, forbidden, notFound } from "@/shared/lib/error-handlers";
 import { canManageItem } from "@/shared/lib/validations/user-access-validation";
-import sessionValidation from "@/shared/lib/validations/user-session-validation";
 import {
-  stockMovementCreateSchema,
   StockMovementCreateSchema,
+  StockMovementGetManySchema,
   stockMovementGetManySchema,
-  stockMovementUpdateSchema,
   StockMovementUpdateSchema,
 } from "@/shared/lib/zods/stock-movements.zod";
 import stockMovementsRepository, {
   createSelectStockMovementData,
 } from "./stock-movements.repository";
 import auditLogsRepository from "../audit-logs/audit-log.repository";
-import { MovementType, Prisma } from "@prisma/client";
+import { MovementType, Prisma, PrismaClient } from "@prisma/client";
 import itemRepository from "../items/item.repository";
 import { locationRepository } from "../locations/location.repository";
 import { stockRepository } from "../stocks/stock.repository";
 import orderRepository from "../orders/order-repository";
 import { TargetStockType } from "./stock-movements.types";
 import { markStockAs } from "./stock-movements.utils";
+import { Session } from "next-auth";
 
 const stockMovementsService = {
-  create: async (rawData: StockMovementCreateSchema) => {
-    const session = await sessionValidation();
-    const validatedData = stockMovementCreateSchema.parse(rawData);
-
-    if (!canManageItem(session.role)) {
-      throw forbidden("You're not allowed to access this feature");
-    }
-
+  create: async (
+    session: Session["user"],
+    payload: StockMovementCreateSchema,
+    prisma: PrismaClient,
+  ) => {
     const result = await prisma.$transaction(async (tx) => {
       const [item, currentStock, destLoc, order] = await Promise.all([
-        itemRepository.findById(validatedData.itemId, tx),
-        validatedData.stockId
-          ? stockRepository.findById(validatedData.stockId, tx)
+        itemRepository.findById(payload.itemId, tx),
+        payload.stockId ? stockRepository.findById(payload.stockId, tx) : null,
+        payload.destinationLocationId
+          ? locationRepository.findById(payload.destinationLocationId, tx)
           : null,
-        validatedData.destinationLocationId
-          ? locationRepository.findById(validatedData.destinationLocationId, tx)
-          : null,
-        validatedData.orderId
-          ? orderRepository.findById(validatedData.orderId, tx)
-          : null,
+        payload.orderId ? orderRepository.findById(payload.orderId, tx) : null,
       ]);
 
       if (!item) throw notFound("Item not found");
-      if (validatedData.stockId && !currentStock)
-        throw notFound("Stock not found");
-      if (validatedData.destinationLocationId && !destLoc)
+      if (payload.stockId && !currentStock) throw notFound("Stock not found");
+      if (payload.destinationLocationId && !destLoc)
         throw notFound("Destination location not found");
-      if (validatedData.orderId && !order) throw notFound("Order not found");
+      if (payload.orderId && !order) throw notFound("Order not found");
 
       // Rule 1: Movement types below require an existing stock row to operate on.
       const TYPES_REQUIRING_STOCK_ID: MovementType[] = [
@@ -65,11 +55,11 @@ const stockMovementsService = {
         "DISCARD",
       ];
       if (
-        TYPES_REQUIRING_STOCK_ID.includes(validatedData.stockMovementType) &&
+        TYPES_REQUIRING_STOCK_ID.includes(payload.stockMovementType) &&
         !currentStock
       ) {
         throw badRequest(
-          `stockId is required for movement type '${validatedData.stockMovementType}'`,
+          `stockId is required for movement type '${payload.stockMovementType}'`,
         );
       }
 
@@ -80,7 +70,7 @@ const stockMovementsService = {
 
       // Rule 2: LAUNDRY_IN can only target READY stocks
       if (
-        validatedData.stockMovementType === "LAUNDRY_IN" &&
+        payload.stockMovementType === "LAUNDRY_IN" &&
         currentStock &&
         currentStock.type !== "READY"
       ) {
@@ -92,24 +82,21 @@ const stockMovementsService = {
       let movement;
 
       const createdStockMovement: Prisma.StockMovementUncheckedCreateInput = {
-        itemId: validatedData.itemId,
-        stockId: validatedData.stockId,
-        type: validatedData.stockMovementType,
-        quantity: validatedData.quantity,
-        totalCost: validatedData.totalCost,
-        reason: validatedData.reason,
-        destinationLocationId: validatedData.destinationLocationId,
-        orderId: validatedData.orderId,
+        itemId: payload.itemId,
+        stockId: payload.stockId,
+        type: payload.stockMovementType,
+        quantity: payload.quantity,
+        totalCost: payload.totalCost,
+        reason: payload.reason,
+        destinationLocationId: payload.destinationLocationId,
+        orderId: payload.orderId,
         createdBy: session.id,
       };
 
       // Allows stockId to be null for 'RECEIVE' movements to record a global
       // intake transaction. This unassigned stock can later be distributed
       // to specific locations and stock records.
-      if (
-        validatedData.stockMovementType === "RECEIVE" &&
-        !validatedData.stockId
-      ) {
+      if (payload.stockMovementType === "RECEIVE" && !payload.stockId) {
         movement = await stockMovementsRepository.create(
           { ...createdStockMovement, sourceLocationId: null },
           tx,
@@ -119,9 +106,7 @@ const stockMovementsService = {
       // RECEIVE / LAUNDRY_IN against an existing stock row: increment in place.
       if (
         currentStock?.id &&
-        increaseStockQuantityMovementType.includes(
-          validatedData.stockMovementType,
-        )
+        increaseStockQuantityMovementType.includes(payload.stockMovementType)
       ) {
         movement = await stockMovementsRepository.create(
           {
@@ -134,19 +119,19 @@ const stockMovementsService = {
 
         await stockRepository.update(
           currentStock.id,
-          { quantity: { increment: validatedData.quantity } },
+          { quantity: { increment: payload.quantity } },
           tx,
         );
       }
 
       // TRANSFER
-      if (currentStock && validatedData.stockMovementType === "TRANSFER") {
-        if (validatedData.destinationLocationId === currentStock.locationId)
+      if (currentStock && payload.stockMovementType === "TRANSFER") {
+        if (payload.destinationLocationId === currentStock.locationId)
           throw badRequest(
             "Source location and destination location can't be same",
           );
 
-        if (currentStock.quantity < validatedData.quantity)
+        if (currentStock.quantity < payload.quantity)
           throw badRequest("Insufficient stock quantity.");
 
         const destinationStock = await stockRepository.findOrUpdateOrCreate(
@@ -160,16 +145,16 @@ const stockMovementsService = {
           // Update
           {
             quantity: {
-              increment: validatedData.quantity,
+              increment: payload.quantity,
             },
           },
           // Create
           {
-            item: { connect: { id: validatedData.itemId } },
+            item: { connect: { id: payload.itemId } },
             creator: { connect: { id: session.id } },
-            quantity: validatedData.quantity,
+            quantity: payload.quantity,
             location: {
-              connect: { id: validatedData.destinationLocationId },
+              connect: { id: payload.destinationLocationId },
             },
             expiredAt: currentStock.expiredAt,
             type: currentStock.type,
@@ -181,7 +166,7 @@ const stockMovementsService = {
           currentStock.id,
           {
             quantity: {
-              decrement: validatedData.quantity,
+              decrement: payload.quantity,
             },
           },
           prisma,
@@ -198,9 +183,8 @@ const stockMovementsService = {
       }
 
       // ADJUSTMENT (quantity can be positive or negative)
-      if (currentStock && validatedData.stockMovementType === "ADJUSTMENT") {
-        const calculatedQuantity =
-          currentStock.quantity + validatedData.quantity;
+      if (currentStock && payload.stockMovementType === "ADJUSTMENT") {
+        const calculatedQuantity = currentStock.quantity + payload.quantity;
 
         if (calculatedQuantity < 0)
           throw badRequest("Insufficient stock quantity.");
@@ -216,7 +200,7 @@ const stockMovementsService = {
 
         await stockRepository.update(
           currentStock.id,
-          { quantity: { increment: validatedData.quantity } },
+          { quantity: { increment: payload.quantity } },
           tx,
         );
       }
@@ -224,12 +208,12 @@ const stockMovementsService = {
       // MARK_AS_DAMAGED / MARK_AS_DIRTY / MARK_AS_LOST / MARK_AS_EXPIRED
       if (
         currentStock &&
-        (validatedData.stockMovementType === "MARK_AS_DAMAGED" ||
-          validatedData.stockMovementType === "MARK_AS_DIRTY" ||
-          validatedData.stockMovementType === "MARK_AS_LOST" ||
-          validatedData.stockMovementType === "MARK_AS_EXPIRED")
+        (payload.stockMovementType === "MARK_AS_DAMAGED" ||
+          payload.stockMovementType === "MARK_AS_DIRTY" ||
+          payload.stockMovementType === "MARK_AS_LOST" ||
+          payload.stockMovementType === "MARK_AS_EXPIRED")
       ) {
-        const targetType = validatedData.stockMovementType.replace(
+        const targetType = payload.stockMovementType.replace(
           "MARK_AS_",
           "",
         ) as TargetStockType;
@@ -237,7 +221,7 @@ const stockMovementsService = {
         movement = await markStockAs(
           currentStock,
           targetType,
-          validatedData.quantity,
+          payload.quantity,
           session,
           createdStockMovement,
           tx,
@@ -247,7 +231,7 @@ const stockMovementsService = {
       if (
         currentStock &&
         currentStock.type === "LOST" &&
-        validatedData.stockMovementType === "DISCARD"
+        payload.stockMovementType === "DISCARD"
       ) {
         throw badRequest("Can't delete a lost item");
       }
@@ -262,11 +246,9 @@ const stockMovementsService = {
       // decreaseStockQuantityMovementType case
       if (
         currentStock &&
-        decreaseStockQuantityMovementType.includes(
-          validatedData.stockMovementType,
-        )
+        decreaseStockQuantityMovementType.includes(payload.stockMovementType)
       ) {
-        if (currentStock.quantity < validatedData.quantity) {
+        if (currentStock.quantity < payload.quantity) {
           throw badRequest("Insufficient stock quantity.");
         }
 
@@ -277,7 +259,7 @@ const stockMovementsService = {
 
         await stockRepository.update(
           currentStock.id,
-          { quantity: { decrement: validatedData.quantity } },
+          { quantity: { decrement: payload.quantity } },
           tx,
         );
       }
@@ -320,9 +302,11 @@ const stockMovementsService = {
     };
   },
 
-  getById: async (movementId: string) => {
-    const session = await sessionValidation();
-
+  getById: async (
+    session: Session["user"],
+    movementId: string,
+    prisma: PrismaClient,
+  ) => {
     if (!canManageItem(session.role)) {
       throw forbidden("You're not allowed to access this feature");
     }
@@ -361,8 +345,11 @@ const stockMovementsService = {
     };
   },
 
-  getMany: async (params: { [key: string]: string }) => {
-    const session = await sessionValidation();
+  getMany: async (
+    session: Session["user"],
+    params: StockMovementGetManySchema,
+    prisma: PrismaClient,
+  ) => {
     const validatedParams = stockMovementGetManySchema.parse(params);
 
     if (!canManageItem(session.role)) {
@@ -454,10 +441,12 @@ const stockMovementsService = {
     };
   },
 
-  update: async (movementId: string, rawData: StockMovementUpdateSchema) => {
-    const session = await sessionValidation();
-    const validatedData = stockMovementUpdateSchema.parse(rawData);
-
+  update: async (
+    session: Session["user"],
+    movementId: string,
+    data: StockMovementUpdateSchema,
+    prisma: PrismaClient,
+  ) => {
     if (!canManageItem(session.role)) {
       throw forbidden("You're not allowed to access this feature");
     }
@@ -473,7 +462,7 @@ const stockMovementsService = {
 
       const movement = await stockMovementsRepository.update(
         movementId,
-        { reason: validatedData.reason },
+        { reason: data.reason },
         tx,
       );
 
