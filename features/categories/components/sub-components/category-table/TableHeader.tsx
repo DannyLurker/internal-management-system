@@ -1,13 +1,13 @@
 "use client";
 
 import { cn } from "@/shared/lib/utils";
-import type { CategoryGetSchema } from "@/shared/lib/zods/category.zod";
+import { CategoryGetManySchema } from "@/shared/lib/zods/category.zod";
 
-export type CategorySortBy = CategoryGetSchema["sortBy"];
+export type CategorySortBy = CategoryGetManySchema["sortBy"];
 
 type TableHeaderProps = {
   sortBy: CategorySortBy;
-  sortOrder: CategoryGetSchema["sortOrder"];
+  sortOrder: CategoryGetManySchema["sortOrder"];
   onRequestSort: (column: CategorySortBy) => void;
 };
 

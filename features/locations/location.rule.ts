@@ -1,10 +1,7 @@
+import { RuleResult } from "@/shared/lib/types/rule.type";
+
 export interface LocationDeletionCheckInput {
   stocks: { id: string }[];
-}
-
-export interface RuleResult {
-  allowed: boolean;
-  reason?: string;
 }
 
 const locationRules = {

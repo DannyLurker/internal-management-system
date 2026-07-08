@@ -6,7 +6,6 @@ import { cn } from "@/shared/lib/utils";
 import { useItems } from "@/features/items/item.hooks";
 import type { Item } from "@/features/items/item.types";
 import { useCategories } from "@/features/categories/category.hooks";
-import { categoryGetSchema } from "@/shared/lib/zods/category.zod";
 import ItemFormDialog from "./sub-components/ItemFormDialog";
 import ItemDeleteModal from "./sub-components/ItemDeleteModal";
 import ItemActiveOrInactiveModal from "./sub-components/ItemActiveOrInactiveModal";
@@ -20,6 +19,7 @@ import StockFormDialog from "@/features/stocks/components/sub-components/StockFo
 import { Stock, StockDelete } from "@/features/stocks/stock.types";
 import { useLocations } from "@/features/locations/location.hooks";
 import ItemTable, { ItemTableFilters } from "./sub-components/item-table/index";
+import { categoryGetManySchema } from "@/shared/lib/zods/category.zod";
 
 type LocationOption = { id: string; name: string };
 
@@ -72,7 +72,7 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
 
   const categoryListParams = useMemo(
     () =>
-      categoryGetSchema.parse({
+      categoryGetManySchema.parse({
         page: 1,
         dataPerPage: 100,
         sortBy: "name",

@@ -1,24 +1,20 @@
 import { api } from "@/shared/lib/api-client";
-import {
-  CategoryCreateApiResponse,
-  CategoryDeleteApiResponse,
-  CategoryGetApiResponse,
-  CategoryListApiResponse,
-  CategoryUpdateApiResponse,
-} from "./category.types";
+
 import {
   CategoryCreateSchema,
-  categoryGetSchema,
-  CategoryGetSchema,
+  CategoryGetByIdSchema,
+  CategoryGetManySchema,
   CategoryUpdateSchema,
 } from "@/shared/lib/zods/category.zod";
+import {
+  CategoryCUDApiResponse,
+  CategoryGetByIdApiResponse,
+  CategoryGetManyApiResponse,
+} from "./category.types";
 
 const categoryApi = {
-  get: async (
-    categoryId: string,
-    params: CategoryGetSchema = categoryGetSchema.parse({}),
-  ) => {
-    const response = await api.get<CategoryGetApiResponse>(
+  getById: async (categoryId: string, params: CategoryGetByIdSchema) => {
+    const response = await api.get<CategoryGetByIdApiResponse>(
       `/categories/${categoryId}`,
       { params },
     );
@@ -26,8 +22,8 @@ const categoryApi = {
     return response.data;
   },
 
-  getMany: async (params: CategoryGetSchema) => {
-    const response = await api.get<CategoryListApiResponse>("/categories", {
+  getMany: async (params: CategoryGetManySchema) => {
+    const response = await api.get<CategoryGetManyApiResponse>("/categories", {
       params,
     });
 
@@ -35,17 +31,29 @@ const categoryApi = {
   },
 
   create: async (payload: CategoryCreateSchema) => {
-    return await api.post<CategoryCreateApiResponse>("/categories", payload);
+    const result = await api.post<CategoryCUDApiResponse>(
+      "/categories",
+      payload,
+    );
+
+    return result.data;
   },
 
   update: async (payload: CategoryUpdateSchema) => {
-    return await api.patch<CategoryUpdateApiResponse>(`/categories`, payload);
+    const result = await api.patch<CategoryCUDApiResponse>(
+      `/categories`,
+      payload,
+    );
+
+    return result.data;
   },
 
   delete: async (categoryId: string) => {
-    return await api.delete<CategoryDeleteApiResponse>(
+    const result = await api.delete<CategoryCUDApiResponse>(
       `/categories/${categoryId}`,
     );
+
+    return result.data;
   },
 };
 

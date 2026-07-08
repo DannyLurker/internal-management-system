@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import TableHeader, { type CategorySortBy } from "./TableHeader";
 import TableRow from "./TableRow";
-import type { CategoryGetSchema } from "@/shared/lib/zods/category.zod";
+import { CategoryGetManySchema } from "@/shared/lib/zods/category.zod";
 
 type CategoryTableProps = {
   onInfo: (categoryId: string) => void;
@@ -19,7 +19,7 @@ type CategoryTableProps = {
   isLoading: boolean;
   isError: boolean;
   sortBy: CategorySortBy;
-  sortOrder: CategoryGetSchema["sortOrder"];
+  sortOrder: CategoryGetManySchema["sortOrder"];
   onRequestSort: (column: CategorySortBy) => void;
   page: number;
   dataPerPage: number;

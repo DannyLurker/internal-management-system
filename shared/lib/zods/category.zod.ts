@@ -14,7 +14,7 @@ export const categoryUpdateSchema = z.object({
 
 export type CategoryUpdateSchema = z.infer<typeof categoryUpdateSchema>;
 
-export const categoryGetSchema = z.object({
+export const categoryGetManySchema = z.object({
   search: z.string().trim().min(3).optional(),
   sortOrder: sortOrderEnum,
   sortBy: z.enum(["name", "createdAt"]).default("name"),
@@ -22,4 +22,14 @@ export const categoryGetSchema = z.object({
   dataPerPage: dataPerPage,
 });
 
-export type CategoryGetSchema = z.infer<typeof categoryGetSchema>;
+export type CategoryGetManySchema = z.infer<typeof categoryGetManySchema>;
+
+export const categoryGetByIdSchema = z.object({
+  search: z.string().trim().min(3).optional(),
+  sortOrder: sortOrderEnum.default("asc"),
+  sortBy: z.enum(["name", "createdAt"]).default("name"),
+  page: page,
+  dataPerPage: dataPerPage,
+});
+
+export type CategoryGetByIdSchema = z.infer<typeof categoryGetByIdSchema>;

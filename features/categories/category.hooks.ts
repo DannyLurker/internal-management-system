@@ -7,24 +7,25 @@ import {
 import CATEGORY_KEYS from "./category.keys";
 import {
   CategoryCreateSchema,
-  CategoryGetSchema,
+  CategoryGetByIdSchema,
+  CategoryGetManySchema,
   CategoryUpdateSchema,
 } from "@/shared/lib/zods/category.zod";
 import categoryApi from "./category.api";
 import { toast } from "sonner";
 import {
-  CategoryGetApiResponse,
-  CategoryListApiResponse,
+  CategoryGetByIdApiResponse,
+  CategoryGetManyApiResponse,
 } from "./category.types";
 
 export const useCategory = (
   categoryId: string,
-  filters?: CategoryGetSchema,
-  options?: Partial<UseQueryOptions<CategoryGetApiResponse>>,
+  filters: CategoryGetByIdSchema,
+  options?: Partial<UseQueryOptions<CategoryGetByIdApiResponse>>,
 ) => {
   return useQuery({
     queryKey: CATEGORY_KEYS.detail(categoryId, filters),
-    queryFn: () => categoryApi.get(categoryId, filters),
+    queryFn: () => categoryApi.getById(categoryId, filters),
     enabled: Boolean(categoryId),
     staleTime: 1000 * 60 * 5,
     ...options,
@@ -32,8 +33,8 @@ export const useCategory = (
 };
 
 export const useCategories = (
-  filters: CategoryGetSchema,
-  options?: Partial<UseQueryOptions<CategoryListApiResponse>>,
+  filters: CategoryGetManySchema,
+  options?: Partial<UseQueryOptions<CategoryGetManyApiResponse>>,
 ) => {
   return useQuery({
     queryKey: CATEGORY_KEYS.list(filters),
@@ -49,8 +50,8 @@ export const useCreateCategory = () => {
   return useMutation({
     mutationFn: (payload: CategoryCreateSchema) => categoryApi.create(payload),
     onSuccess: (response) => {
-      toast.success(response.data.message);
-      queryClient.invalidateQueries({ queryKey: CATEGORY_KEYS.all });
+      toast.success(response.message);
+      queryClient.invalidateQueries({ queryKey: CATEGORY_KEYS.lists() });
     },
   });
 };
@@ -60,8 +61,10 @@ export const useUpdateCategory = () => {
   return useMutation({
     mutationFn: (payload: CategoryUpdateSchema) => categoryApi.update(payload),
     onSuccess: (response) => {
-      toast.success(response.data.message);
-      queryClient.invalidateQueries({ queryKey: CATEGORY_KEYS.all });
+      toast.success(response.message);
+      queryClient.invalidateQueries({
+        queryKey: CATEGORY_KEYS.detail(response.data.id),
+      });
     },
   });
 };
@@ -71,8 +74,8 @@ export const useDeleteCategory = () => {
   return useMutation({
     mutationFn: (categoryId: string) => categoryApi.delete(categoryId),
     onSuccess: (response) => {
-      toast.success(response.data.message);
-      queryClient.invalidateQueries({ queryKey: CATEGORY_KEYS.all });
+      toast.success(response.message);
+      queryClient.invalidateQueries({ queryKey: CATEGORY_KEYS.lists() });
     },
   });
 };

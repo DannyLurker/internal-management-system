@@ -1,5 +1,5 @@
 import prisma from "@/shared/db/prisma";
-import { CategoryGetSchema } from "@/shared/lib/zods/category.zod";
+import { CategoryGetManySchema } from "@/shared/lib/zods/category.zod";
 import { Prisma, PrismaClient } from "@prisma/client";
 
 const categoryRepository = {
@@ -41,7 +41,7 @@ const categoryRepository = {
   },
 
   getMany: async (
-    params: CategoryGetSchema,
+    params: CategoryGetManySchema,
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
     const categories = await tx.category.findMany({
@@ -95,7 +95,7 @@ const categoryRepository = {
 
   get: async (
     categoryId: string,
-    params: CategoryGetSchema,
+    params: CategoryGetManySchema,
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
     const categories = await tx.category.findUnique({

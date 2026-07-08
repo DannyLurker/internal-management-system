@@ -1,23 +1,41 @@
 import categoryService from "@/features/categories/category.service";
 import {
-  CategoryCreateApiResponse,
-  CategoryListApiResponse,
-  CategoryUpdateApiResponse,
+  CategoryCUDApiResponse,
+  CategoryGetManyApiResponse,
 } from "@/features/categories/category.types";
+import prisma from "@/shared/db/prisma";
+import { forbidden } from "@/shared/lib/error-handlers";
+
 import {
   handleError,
   printConsoleError,
 } from "@/shared/lib/error-handlers/handleError";
+import { canManageCategory } from "@/shared/lib/validations/user-access-validation";
+import sessionValidation from "@/shared/lib/validations/user-session-validation";
+import {
+  categoryCreateSchema,
+  categoryGetManySchema,
+  categoryUpdateSchema,
+} from "@/shared/lib/zods/category.zod";
 
 export async function POST(request: Request) {
   try {
-    const data = await request.json();
+    const session = await sessionValidation();
 
-    const result = await categoryService.create(data);
+    if (!canManageCategory(session.role)) {
+      throw forbidden("You're not allowed to access this feature");
+    }
 
-    const response: CategoryCreateApiResponse = {
+    const body = await request.json();
+    const payload = categoryCreateSchema.parse(body);
+
+    const result = await categoryService.create(session, payload, prisma);
+
+    const response: CategoryCUDApiResponse = {
       message: result.message,
-      data: result.id,
+      data: {
+        id: result.id,
+      },
       status: 201,
     };
 
@@ -30,12 +48,22 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const data = await request.json();
-    const result = await categoryService.update(data);
+    const session = await sessionValidation();
 
-    const response: CategoryUpdateApiResponse = {
+    if (!canManageCategory(session.role)) {
+      throw forbidden("You're not allowed to access this feature");
+    }
+
+    const body = await request.json();
+    const payload = categoryUpdateSchema.parse(body);
+
+    const result = await categoryService.update(session, payload, prisma);
+
+    const response: CategoryCUDApiResponse = {
       message: result.message,
-      data: null,
+      data: {
+        id: result.id,
+      },
       status: 200,
     };
     return Response.json(response, { status: 200 });
@@ -47,12 +75,19 @@ export async function PATCH(request: Request) {
 
 export async function GET(req: Request) {
   try {
+    const session = await sessionValidation();
+
+    if (!canManageCategory(session.role)) {
+      throw forbidden("You're not allowed to access this feature");
+    }
+
     const { searchParams } = new URL(req.url);
-    const data = Object.fromEntries(searchParams.entries());
+    const rawSchemaParams = Object.fromEntries(searchParams.entries());
+    const schemaParams = categoryGetManySchema.parse(rawSchemaParams);
 
-    const result = await categoryService.getMany(data);
+    const result = await categoryService.getMany(session, schemaParams, prisma);
 
-    const response: CategoryListApiResponse = {
+    const response: CategoryGetManyApiResponse = {
       message: result.message,
       data: result.categories,
       status: 200,

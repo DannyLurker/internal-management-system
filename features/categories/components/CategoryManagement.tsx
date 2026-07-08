@@ -4,11 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Search } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
-import { categoryGetSchema } from "@/shared/lib/zods/category.zod";
-import type { CategoryGetSchema } from "@/shared/lib/zods/category.zod";
-import type {
-  CategoryCreateSchema,
-  CategoryUpdateSchema,
+import {
+  categoryGetManySchema,
+  type CategoryCreateSchema,
+  type CategoryGetManySchema,
+  type CategoryUpdateSchema,
 } from "@/shared/lib/zods/category.zod";
 import {
   useCategories,
@@ -26,9 +26,9 @@ import CategoryTable from "./sub-components/category-table/index";
 export default function CategoryManagement() {
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] =
-    useState<CategoryGetSchema["sortBy"]>("createdAt");
+    useState<CategoryGetManySchema["sortBy"]>("createdAt");
   const [sortOrder, setSortOrder] =
-    useState<CategoryGetSchema["sortOrder"]>("desc");
+    useState<CategoryGetManySchema["sortOrder"]>("desc");
   const [itemDataPerPage, setItemDataPerPage] = useState(10);
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -54,7 +54,7 @@ export default function CategoryManagement() {
     setPage(1);
   }, [debouncedSearch, sortBy, sortOrder]);
 
-  const filters: CategoryGetSchema = useMemo(() => {
+  const filters: CategoryGetManySchema = useMemo(() => {
     const raw = {
       page,
       dataPerPage: itemDataPerPage,
@@ -64,7 +64,7 @@ export default function CategoryManagement() {
         ? { search: debouncedSearch.trim() }
         : {}),
     };
-    return categoryGetSchema.parse(raw);
+    return categoryGetManySchema.parse(raw);
   }, [page, sortBy, sortOrder, itemDataPerPage, debouncedSearch]);
 
   const { data, isLoading, isError } = useCategories(filters);
@@ -202,8 +202,8 @@ export default function CategoryManagement() {
               value={sortPreset}
               onChange={(e) => {
                 const [sb, so] = e.target.value.split(":") as [
-                  CategoryGetSchema["sortBy"],
-                  CategoryGetSchema["sortOrder"],
+                  CategoryGetManySchema["sortBy"],
+                  CategoryGetManySchema["sortOrder"],
                 ];
                 setSortBy(sb);
                 setSortOrder(so);

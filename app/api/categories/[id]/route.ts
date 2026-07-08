@@ -1,25 +1,40 @@
 import categoryService from "@/features/categories/category.service";
 import {
-  CategoryDeleteApiResponse,
-  CategoryGetApiResponse,
+  CategoryCUDApiResponse,
+  CategoryGetByIdApiResponse,
 } from "@/features/categories/category.types";
-import { 
+import prisma from "@/shared/db/prisma";
+import { badRequest, forbidden } from "@/shared/lib/error-handlers";
+import {
   handleError,
   printConsoleError,
 } from "@/shared/lib/error-handlers/handleError";
+import { canManageCategory } from "@/shared/lib/validations/user-access-validation";
+import sessionValidation from "@/shared/lib/validations/user-session-validation";
+import { categoryGetByIdSchema } from "@/shared/lib/zods/category.zod";
 
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const session = await sessionValidation();
+
+    if (!canManageCategory(session.role)) {
+      throw forbidden("You're not allowed to access this feature");
+    }
+
     const { id } = await params;
 
-    const result = await categoryService.delete(id);
+    if (!id) throw badRequest("Category id is missing");
 
-    const response: CategoryDeleteApiResponse = {
+    const result = await categoryService.delete(session, id, prisma);
+
+    const response: CategoryCUDApiResponse = {
       message: result.message,
-      data: null,
+      data: {
+        id: result.id,
+      },
       status: 200,
     };
 
@@ -35,15 +50,23 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const session = await sessionValidation();
+
+    if (!canManageCategory(session.role)) {
+      throw forbidden("You're not allowed to access this feature");
+    }
+
     const { id } = await params;
 
+    if (!id) throw badRequest("Category id is missing");
+
     const { searchParams } = new URL(request.url);
+    const rawSchemaParams = Object.fromEntries(searchParams.entries());
+    const schemaParams = categoryGetByIdSchema.parse(rawSchemaParams);
 
-    const data = Object.fromEntries(searchParams.entries());
+    const result = await categoryService.get(session, id, schemaParams, prisma);
 
-    const result = await categoryService.get(id, data);
-
-    const response: CategoryGetApiResponse = {
+    const response: CategoryGetByIdApiResponse = {
       message: result.message,
       data: result.category,
       status: 200,

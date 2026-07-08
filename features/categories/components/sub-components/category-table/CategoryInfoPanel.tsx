@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useCategory } from "@/features/categories/category.hooks";
 import { formatTimestamp } from "@/features/locations/location.utils";
-import { categoryGetSchema } from "@/shared/lib/zods/category.zod";
 import CategoryInfoPanelTable from "./CategoryInfoPanelTable";
 import {
   Dialog,
@@ -13,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/components/ui/dialog";
+import { categoryGetByIdSchema } from "@/shared/lib/zods/category.zod";
 
 type CategoryInfoPanelProps = {
   open: boolean;
@@ -52,7 +52,7 @@ export default function CategoryInfoPanel({
 
   const itemParams = useMemo(
     () =>
-      categoryGetSchema.parse({
+      categoryGetByIdSchema.parse({
         page: itemPage,
         dataPerPage: itemDataPerPage,
         sortOrder: itemSortOrder,
@@ -61,13 +61,7 @@ export default function CategoryInfoPanel({
           ? { search: debouncedItemSearch.trim() }
           : {}),
       }),
-    [
-      itemPage,
-      itemDataPerPage,
-      itemSortOrder,
-      itemSortBy,
-      debouncedItemSearch,
-    ],
+    [itemPage, itemDataPerPage, itemSortOrder, itemSortBy, debouncedItemSearch],
   );
 
   const { data, isLoading, isError } = useCategory(categoryId, itemParams);
