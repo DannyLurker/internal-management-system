@@ -272,6 +272,10 @@ const locationService = {
         tx,
       );
 
+      if (!existing) {
+        throw notFound("Location not found");
+      }
+
       const deletionResult = locationRules.canDeleteLocation({
         stocks: existing?.stocks || [],
       });
