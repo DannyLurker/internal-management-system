@@ -33,6 +33,38 @@
 - Created E2E tests at `e2e-tests/location.spec.ts`
   - End-to-end user flows for creating, updating, and deleting locations, including verification of deletion blocks for locations with active items
 
+## Category Feature
+
+### Category Feature Development
+
+- Created repository layer at `features/categories/category.repository.ts`
+  - CRUD operations: `create`, `update`, `delete`, `getMany`, `countCategoryRows`, `getById`, and `get`
+  - Clause builder `buildWhereClause` filtering by case-insensitive name (3+ chars)
+- Created service layer at `features/categories/category.service.ts`
+  - Create: Under transaction, creates category and writes a `CREATE` audit log under the `CATEGORY` entity
+  - GetById: Retrieves category with paginated items (products), item count, and creator/updater details
+  - GetMany: Returns paginated category records with dynamic item count
+  - Update: Under transaction, updates name and logs a `UPDATE` audit log with both old and new names
+  - Delete: Under transaction, validates `canDeleteCategory` rule, deletes category, and logs a `DELETE` audit log
+- Created rule layer at `features/categories/category.rule.ts`
+  - Restricts category deletion if it contains items, returning a descriptive warning message
+- Created client-side API layer at `features/categories/category.api.ts`
+  - Network wrapper for CRUD operations (`getById`, `getMany`, `create`, `update`, and `delete` endpoints)
+- Created React hooks at `features/categories/category.hooks.ts`
+  - TanStack Query queries/mutations (`useCategory`, `useCategories`, `useCreateCategory`, `useUpdateCategory`, and `useDeleteCategory`) with invalidation support using cache keys in `category.keys.ts`
+- Created frontend components inside `features/categories/components/`
+  - Main dashboard wrapper `CategoryManagement.tsx` for searching, paginating, and organizing category metrics
+  - UI modular helpers: `CategoryFormDialog.tsx`, `CategoryDeleteModal.tsx` and custom tables `category-table` (`CategoryInfoPanel.tsx`, `CategoryInfoPanelTable.tsx`)
+
+### Category Feature Testing
+
+- Added comprehensive unit tests in `unit-tests/categories/` covering:
+  - Deletion rules in `category.rule.test.ts`
+  - Service functions in `category.service.*.test.ts` (create, delete, getById, getMany, update)
+  - Leverages `jest-mock-extended` for strict type-safe mocking of the database transaction client (`PrismaClient`) and nested models without actual database connections
+
+
+
 ## Stock Feature
 
 ### Stock Feature Testing
@@ -72,3 +104,4 @@
 - Update endpoints pass resource ID in request body (inconsistent with REST pattern, At category, item, and stock feature)
 - Create/update/delete endpoints return null as data, requiring additional requests to get IDs (At category, item, and stock feature)
 - Integration testing is still not really important for now
+- Probably several search feature is not working if the sortBy isn't by name

@@ -5,6 +5,7 @@ import { internalServerError } from "@/shared/lib/error-handlers";
 
 import { PrismaClient } from "@prisma/client";
 import { Session } from "next-auth";
+import { mockDeep, mockReset } from "jest-mock-extended";
 
 jest.mock("@/features/categories/category.repository");
 jest.mock("@/features/audit-logs/audit-log.repository");
@@ -16,19 +17,15 @@ const mockedAuditLogsRepository = auditLogsRepository as jest.Mocked<
   typeof auditLogsRepository
 >;
 
-function makeFakePrisma(): PrismaClient {
-  return {
-    $transaction: jest.fn((callback) => callback({} as any)),
-  } as unknown as PrismaClient;
-}
-
 const fakeSession = { id: "user-1", role: "HOTEL_MANAGER" } as Session["user"];
-
 const date = new Date();
 
-describe("locationService.create", () => {
+const prismaMock = mockDeep<PrismaClient>();
+
+describe("categoryService.create", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockReset(prismaMock);
   });
 
   it("creates the category and writes a CREATE audit log with the right metadata", async () => {
@@ -40,22 +37,23 @@ describe("locationService.create", () => {
       createdBy: fakeSession.id,
       updatedBy: fakeSession.id,
     } as any);
-    const prisma = makeFakePrisma();
+
+    prismaMock.$transaction.mockImplementation((callback) => callback(prismaMock));
 
     const result = await categoryService.create(
       fakeSession,
       {
         name: "CategoryNew1",
       },
-      prisma,
+      prismaMock,
     );
 
-    // Verify the repository was called with the correct connect relation, not a raw userId field.
     expect(mockedCategoryRepository.create).toHaveBeenCalledWith(
-      expect.objectContaining({
+      {
+        createdBy: "user-1",
         name: "CategoryNew1",
-      }),
-      expect.anything(),
+      },
+      prismaMock,
     );
 
     expect(mockedAuditLogsRepository.create).toHaveBeenCalledWith(
@@ -69,7 +67,7 @@ describe("locationService.create", () => {
           name: "CategoryNew1",
         }),
       }),
-      expect.anything(),
+      prismaMock,
     );
 
     expect(result).toEqual({
@@ -80,10 +78,10 @@ describe("locationService.create", () => {
 
   it("does not write an audit log if the repository create call fails", async () => {
     mockedCategoryRepository.create.mockRejectedValue(internalServerError());
-    const prisma = makeFakePrisma();
+    prismaMock.$transaction.mockImplementation((callback) => callback(prismaMock));
 
     await expect(
-      categoryService.create(fakeSession, { name: "CategoryNew1" }, prisma),
+      categoryService.create(fakeSession, { name: "CategoryNew1" }, prismaMock),
     ).rejects.toThrow("Something went wrong. Try it again later");
 
     expect(mockedAuditLogsRepository.create).not.toHaveBeenCalled();

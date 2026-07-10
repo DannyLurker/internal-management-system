@@ -5,6 +5,7 @@ import { describeStockStatusFilter } from "./stock.rule";
 export interface StockStatusFilterParams {
   sortBy: string;
   stockStatusType?: string;
+  itemSearchQuery?: string;
 }
 
 export const stockWhereInput = (where: Prisma.StockWhereInput) => where;
@@ -99,6 +100,8 @@ export const stockRepository = {
     });
   },
 
+  // currently buildStockWhereClause is used for location page stock status filter. Check /features/location
+  // TODO: need to refactor it when we implement to other domain
   buildStockWhereClause: (
     locationId: string,
     params: StockStatusFilterParams,
@@ -106,6 +109,15 @@ export const stockRepository = {
     const stockWhereClause: Prisma.StockWhereInput = {};
 
     if (locationId) stockWhereClause.locationId = locationId;
+
+    if (params.itemSearchQuery && params.itemSearchQuery.length >= 3) {
+      stockWhereClause.item = {
+        name: {
+          contains: params.itemSearchQuery,
+          mode: "insensitive",
+        },
+      };
+    }
 
     if (params.sortBy !== "stockType") return stockWhereClause;
 

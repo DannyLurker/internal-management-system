@@ -88,9 +88,10 @@ const locationService = {
           type: true,
         },
         where: stockWhereClause,
+        // if the sortBy is stockType, we need to sort by quantity instead of item.name
         orderBy: [
           ...(params.sortBy === "stockType"
-            ? [{ type: params.sortOrder }]
+            ? [{ quantity: params.sortOrder }]
             : []),
           ...(params.sortBy === "name"
             ? [{ item: { name: params.sortOrder } }]
