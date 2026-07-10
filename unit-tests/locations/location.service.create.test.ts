@@ -30,7 +30,7 @@ describe("locationService.create", () => {
   it("creates the location and writes a CREATE audit log with the right metadata", async () => {
     mockedLocationRepository.create.mockResolvedValue({
       id: "loc-new-1",
-      name: "Room 202",
+      name: "floor locker 2",
       type: "FLOOR_LOCKER",
       description: "Second floor locker",
     } as any);
@@ -39,7 +39,7 @@ describe("locationService.create", () => {
     const result = await locationService.create(
       fakeSession,
       {
-        name: "Room 202",
+        name: "floor locker 2",
         type: "FLOOR_LOCKER",
         description: "Second floor locker",
       } as any,
@@ -49,7 +49,7 @@ describe("locationService.create", () => {
     // Verify the repository was called with the correct connect relation, not a raw userId field.
     expect(mockedLocationRepository.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: "Room 202",
+        name: "floor locker 2",
         type: "FLOOR_LOCKER",
         description: "Second floor locker",
         userCreatedBy: { connect: { id: "user-1" } },
@@ -64,7 +64,7 @@ describe("locationService.create", () => {
         entity: "LOCATION",
         entityId: "loc-new-1",
         metadata: expect.objectContaining({
-          name: "Room 202",
+          name: "floor locker 2",
           type: "FLOOR_LOCKER",
         }),
       }),
@@ -72,7 +72,7 @@ describe("locationService.create", () => {
     );
 
     expect(result).toEqual({
-      message: "Room 202 created successfully",
+      message: "floor locker 2 created successfully",
       id: "loc-new-1",
     });
   });
@@ -84,7 +84,11 @@ describe("locationService.create", () => {
     await expect(
       locationService.create(
         fakeSession,
-        { name: "Room 202", type: "FLOOR_LOCKER", description: null } as any,
+        {
+          name: "floor locker 2",
+          type: "FLOOR_LOCKER",
+          description: null,
+        } as any,
         prisma,
       ),
     ).rejects.toThrow("db exploded");

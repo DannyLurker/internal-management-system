@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useCategory } from "@/features/categories/category.hooks";
-import { formatTimestamp } from "@/features/locations/location.utils";
 import CategoryInfoPanelTable from "./CategoryInfoPanelTable";
 import {
   Dialog,
@@ -13,6 +12,7 @@ import {
   DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { categoryGetByIdSchema } from "@/shared/lib/zods/category.zod";
+import { formatTimestamp } from "@/shared/lib/utils";
 
 type CategoryInfoPanelProps = {
   open: boolean;
@@ -67,7 +67,7 @@ export default function CategoryInfoPanel({
   const { data, isLoading, isError } = useCategory(categoryId, itemParams);
 
   const categoryData = data?.data;
-  const totalProducts = categoryData?.totalProducts ?? 0;
+  const totalItems = categoryData?.totalItems ?? 0;
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) onClose();
@@ -152,7 +152,7 @@ export default function CategoryInfoPanel({
                     Items in this category
                   </h3>
                   <span className="rounded-full bg-[#894d0d] px-2.5 py-0.5 text-xs font-semibold text-white">
-                    {totalProducts} items
+                    {totalItems} items
                   </span>
                 </div>
 
@@ -222,8 +222,8 @@ export default function CategoryInfoPanel({
                 </div>
 
                 <CategoryInfoPanelTable
-                  products={categoryData.products}
-                  totalProductsCount={totalProducts}
+                  items={categoryData.items}
+                  totalProductsCount={totalItems}
                   itemPage={itemPage}
                   itemDataPerPage={itemDataPerPage}
                   itemSearchQuery={itemSearchInput}

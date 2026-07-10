@@ -1,8 +1,25 @@
-import prisma from "@/shared/db/prisma";
-import { CategoryGetManySchema } from "@/shared/lib/zods/category.zod";
+import {
+  CategoryGetByIdSchema,
+  CategoryGetManySchema,
+} from "@/shared/lib/zods/category.zod";
 import { Prisma, PrismaClient } from "@prisma/client";
 
 const categoryRepository = {
+  buildWhereClause: (searchQuery?: string): Prisma.CategoryWhereInput => {
+    if (!searchQuery) return {};
+
+    if (searchQuery && searchQuery.length >= 3) {
+      return {
+        name: {
+          contains: searchQuery,
+          mode: "insensitive",
+        },
+      };
+    }
+
+    return {};
+  },
+
   create: async (
     data: Prisma.CategoryUncheckedCreateInput,
     tx: PrismaClient | Prisma.TransactionClient,
@@ -41,56 +58,85 @@ const categoryRepository = {
   },
 
   getMany: async (
-    params: CategoryGetManySchema,
+    whereClause: Prisma.CategoryWhereInput,
+    include: Prisma.CategoryInclude,
+    sortBy: CategoryGetManySchema["sortBy"],
+    sortOrder: CategoryGetManySchema["sortOrder"],
+    skip: number,
+    take: number,
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
-    const categories = await tx.category.findMany({
-      where: {
-        name:
-          params.search && params.search.length >= 3
-            ? {
-                contains: params.search,
-                mode: "insensitive",
-              }
-            : undefined,
-      },
-      select: {
-        items: {
-          select: {
-            id: true,
-          },
-        },
-        name: true,
-        updatedAt: true,
-        id: true,
-      },
-      orderBy: {
-        createdAt:
-          params.sortBy === "createdAt"
-            ? params.sortOrder === "asc"
-              ? "asc"
-              : "desc"
-            : undefined,
-        name:
-          params.sortBy === "name"
-            ? params.sortOrder === "asc"
-              ? "asc"
-              : "desc"
-            : undefined,
-      },
-      skip: (params.page - 1) * params.dataPerPage,
-      take: params.dataPerPage,
+    return tx.category.findMany({
+      where: whereClause,
+      include,
+      skip,
+      take,
+      ...(sortBy === "createdAt"
+        ? {
+            orderBy: {
+              createdAt: sortOrder === "asc" ? "asc" : "desc",
+            },
+          }
+        : {}),
+      ...(sortBy === "name"
+        ? {
+            orderBy: {
+              name: sortOrder === "asc" ? "asc" : "desc",
+            },
+          }
+        : {}),
     });
+  },
 
-    const totalCategoryData = await prisma.category.count({});
+  countCategoryRows: async (
+    where: Prisma.CategoryWhereInput,
+    tx: Prisma.TransactionClient | PrismaClient,
+  ) => {
+    return tx.category.count({
+      where,
+    });
+  },
 
-    return {
-      categories: categories.map((category) => ({
-        ...category,
-        totalProducts: category.items.length,
-      })),
-      totalCategoryData,
-    };
+  getById: async (
+    categoryId: string,
+    includeGeneral: Prisma.CategoryInclude,
+    itemWhereClause: Prisma.ItemWhereInput,
+    selectItemData: Prisma.ItemSelect,
+    sortBy: CategoryGetByIdSchema["sortBy"],
+    sortOrder: CategoryGetByIdSchema["sortOrder"],
+    skip: number,
+    take: number,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    return tx.category.findUnique({
+      where: {
+        id: categoryId,
+      },
+      include: {
+        // it can include everything that has a relation to category model
+        ...includeGeneral,
+        items: {
+          where: itemWhereClause,
+          select: selectItemData,
+          ...(sortBy === "createdAt"
+            ? {
+                orderBy: {
+                  createdAt: sortOrder === "asc" ? "asc" : "desc",
+                },
+              }
+            : {}),
+          ...(sortBy === "name"
+            ? {
+                orderBy: {
+                  name: sortOrder === "asc" ? "asc" : "desc",
+                },
+              }
+            : {}),
+          skip,
+          take,
+        },
+      },
+    });
   },
 
   get: async (

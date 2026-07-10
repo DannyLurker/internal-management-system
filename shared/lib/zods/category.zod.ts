@@ -8,7 +8,6 @@ export const categoryCreateSchema = z.object({
 export type CategoryCreateSchema = z.infer<typeof categoryCreateSchema>;
 
 export const categoryUpdateSchema = z.object({
-  id: z.string().trim().min(1),
   name: z.string().trim().min(3),
 });
 

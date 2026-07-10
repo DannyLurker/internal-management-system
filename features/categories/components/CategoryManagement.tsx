@@ -123,8 +123,16 @@ export default function CategoryManagement() {
   };
 
   const handleUpdate = async (values: CategoryUpdateSchema) => {
+    if (!editTarget?.id) {
+      toast.error("Category id is missing. Try again.");
+      return;
+    }
+
     try {
-      await updateMutation.mutateAsync(values);
+      await updateMutation.mutateAsync({
+        categoryId: editTarget.id,
+        payload: values,
+      });
       closeForm();
     } catch {
       /* errors surfaced by API client */
@@ -277,7 +285,7 @@ export default function CategoryManagement() {
       <CategoryDeleteModal
         open={deleteOpen}
         categoryName={deleteTarget?.name ?? ""}
-        itemCount={deleteTarget?.totalProducts ?? 0}
+        itemCount={deleteTarget?.totalItems ?? 0}
         isDeleting={deleteMutation.isPending}
         onClose={closeDelete}
         onConfirm={handleConfirmDelete}

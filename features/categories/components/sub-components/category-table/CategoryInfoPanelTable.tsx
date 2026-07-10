@@ -1,10 +1,9 @@
 "use client";
 
 import { Search, ChevronsLeft, ChevronsRight } from "lucide-react";
-import { cn } from "@/shared/lib/utils";
-import { formatTimestamp } from "@/features/locations/location.utils";
+import { cn, formatTimestamp } from "@/shared/lib/utils";
 
-type CategoryProductItem = {
+type CategoryItemRelation = {
   name: string;
   userCreatedBy: {
     name: string;
@@ -16,7 +15,7 @@ type CategoryProductItem = {
 };
 
 type CategoryInfoPanelTableProps = {
-  products: CategoryProductItem[];
+  items: CategoryItemRelation[];
   totalProductsCount: number;
   itemPage: number;
   itemDataPerPage: number;
@@ -26,7 +25,7 @@ type CategoryInfoPanelTableProps = {
 };
 
 export default function CategoryInfoPanelTable({
-  products,
+  items,
   totalProductsCount,
   itemPage,
   itemDataPerPage,
@@ -74,7 +73,7 @@ export default function CategoryInfoPanelTable({
             </tr>
           </thead>
           <tbody>
-            {products.length === 0 ? (
+            {items.length === 0 ? (
               <tr>
                 <td
                   colSpan={3}
@@ -84,7 +83,7 @@ export default function CategoryInfoPanelTable({
                 </td>
               </tr>
             ) : (
-              products.map((product, index) => (
+              items.map((product, index) => (
                 <tr
                   key={`${product.name}-${index}`}
                   className="border-b border-[#eef4ff] last:border-0"
@@ -105,7 +104,7 @@ export default function CategoryInfoPanelTable({
         </table>
       </div>
 
-      {products.length > 0 ? (
+      {items.length > 0 ? (
         <div className="flex items-center justify-end gap-2">
           <button
             type="button"

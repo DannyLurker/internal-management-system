@@ -25,16 +25,6 @@ type ItemInfoPanelTableProps = {
   openStockDelete: (stock: StockDelete) => void;
 };
 
-function formatTimestamp(value: Date | string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
-
 export default function ItemInfoPanelTable({
   stocks,
   totalStockRows,
@@ -134,7 +124,7 @@ export default function ItemInfoPanelTable({
                         : "—"}
                     </td>
                     <td className="px-4 py-3 font-ochre-ui text-xs text-[#524439]">
-                      {formatTimestamp(stock?.updatedAt as Date)}
+                      {formatItemDate(stock?.updatedAt as Date)}
                     </td>
                     <td className="px-4 py-3 align-middle text-end">
                       <div className="inline-flex items-center gap-1">

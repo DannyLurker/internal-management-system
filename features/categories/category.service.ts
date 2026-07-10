@@ -1,27 +1,88 @@
 import {
   CategoryCreateSchema,
+  CategoryGetByIdSchema,
   CategoryGetManySchema,
   CategoryUpdateSchema,
 } from "@/shared/lib/zods/category.zod";
 import categoryRepository from "./category.repository";
-import { badRequest } from "@/shared/lib/error-handlers";
+import { badRequest, notFound } from "@/shared/lib/error-handlers";
 import auditLogsRepository from "../audit-logs/audit-log.repository";
 import { Session } from "next-auth";
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import categoryRules from "./category.rule";
+import itemRepository from "../items/item.repository";
 
 const categoryService = {
-  get: async (
+  getById: async (
     session: Session["user"],
     categoryId: string,
-    params: CategoryGetManySchema,
+    params: CategoryGetByIdSchema,
     prisma: PrismaClient,
   ) => {
-    const category = await categoryRepository.get(categoryId, params, prisma);
+    const itemWhereClause = itemRepository.buildWhereClause(params.search);
+
+    const categoryIncludeRelation: Prisma.CategoryInclude = {
+      userCreatedBy: {
+        select: {
+          name: true,
+        },
+      },
+      userUpdatedBy: {
+        select: {
+          name: true,
+        },
+      },
+    };
+
+    // Category model has a relation with Item model
+    const selectItemData: Prisma.ItemSelect = {
+      name: true,
+      userCreatedBy: {
+        select: {
+          name: true,
+        },
+      },
+      userUpdatedBy: {
+        select: {
+          name: true,
+        },
+      },
+      updatedAt: true,
+    };
+
+    const skip = (params.page - 1) * params.dataPerPage;
+
+    const category = await categoryRepository.getById(
+      categoryId,
+      categoryIncludeRelation,
+      itemWhereClause,
+      selectItemData,
+      params.sortBy,
+      params.sortOrder,
+      skip,
+      params.dataPerPage,
+      prisma,
+    );
+
+    let countItems;
+
+    if (category?.items && category?.items.length > 0) {
+      countItems = await itemRepository.countItems(
+        {
+          id: category?.items[0].id,
+        },
+        prisma,
+      );
+    }
+
+    if (!category) throw notFound("Category not found");
 
     return {
       message: "Category retrieved successfully",
-      category,
+      category: {
+        ...category,
+        totalItems: countItems ?? 0,
+      },
     };
   },
 
@@ -30,11 +91,44 @@ const categoryService = {
     params: CategoryGetManySchema,
     prisma: PrismaClient,
   ) => {
-    const categories = await categoryRepository.getMany(params, prisma);
+    const whereClasuse = categoryRepository.buildWhereClause(params.search);
+
+    const include: Prisma.CategoryInclude = {
+      _count: {
+        select: {
+          items: true,
+        },
+      },
+    };
+
+    const skip = (params.page - 1) * 10;
+
+    const categories = await categoryRepository.getMany(
+      whereClasuse,
+      include,
+      params.sortBy,
+      params.sortOrder,
+      skip,
+      params.dataPerPage,
+      prisma,
+    );
+
+    const totalCategoryData = await categoryRepository.countCategoryRows(
+      {},
+      prisma,
+    );
+
+    const formattedCategories = {
+      categories: categories.map((category) => ({
+        ...category,
+        totalItems: category._count.items,
+      })),
+      totalCategoryData,
+    };
 
     return {
-      message: "Categories retrieved successfully",
-      categories,
+      message: "Category data retrieved Successfully.",
+      categories: formattedCategories,
     };
   },
 
@@ -71,17 +165,18 @@ const categoryService = {
 
   update: async (
     session: Session["user"],
+    categoryId: string,
     payload: CategoryUpdateSchema,
     prisma: PrismaClient,
   ) => {
     const result = await prisma.$transaction(async (tx) => {
       // Get existing category for audit log
       const existingCategory = await tx.category.findUnique({
-        where: { id: payload.id },
+        where: { id: categoryId },
       });
 
       const category = await categoryRepository.update(
-        { id: payload.id, name: payload.name },
+        { id: categoryId, name: payload.name },
         tx,
       );
 

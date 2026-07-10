@@ -10,6 +10,21 @@ export const createIncludeItemData = <T extends Prisma.ItemSelect>(
 ): T => select;
 
 const itemRepository = {
+  buildWhereClause: (searchQuery?: string): Prisma.ItemWhereInput => {
+    if (!searchQuery) return {};
+
+    if (searchQuery && searchQuery.length >= 3) {
+      return {
+        name: {
+          contains: searchQuery,
+          mode: "insensitive",
+        },
+      };
+    }
+
+    return {};
+  },
+
   create: async (
     userId: string,
     data: ItemCreateSchema,

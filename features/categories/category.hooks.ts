@@ -59,7 +59,13 @@ export const useCreateCategory = () => {
 export const useUpdateCategory = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: CategoryUpdateSchema) => categoryApi.update(payload),
+    mutationFn: ({
+      categoryId,
+      payload,
+    }: {
+      categoryId: string;
+      payload: CategoryUpdateSchema;
+    }) => categoryApi.update(categoryId, payload),
     onSuccess: (response) => {
       toast.success(response.message);
       queryClient.invalidateQueries({

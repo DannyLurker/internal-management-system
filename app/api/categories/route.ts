@@ -15,7 +15,6 @@ import sessionValidation from "@/shared/lib/validations/user-session-validation"
 import {
   categoryCreateSchema,
   categoryGetManySchema,
-  categoryUpdateSchema,
 } from "@/shared/lib/zods/category.zod";
 
 export async function POST(request: Request) {
@@ -42,33 +41,6 @@ export async function POST(request: Request) {
     return Response.json(response, { status: 201 });
   } catch (error) {
     printConsoleError(error, "POST", request.url);
-    return handleError(error);
-  }
-}
-
-export async function PATCH(request: Request) {
-  try {
-    const session = await sessionValidation();
-
-    if (!canManageCategory(session.role)) {
-      throw forbidden("You're not allowed to access this feature");
-    }
-
-    const body = await request.json();
-    const payload = categoryUpdateSchema.parse(body);
-
-    const result = await categoryService.update(session, payload, prisma);
-
-    const response: CategoryCUDApiResponse = {
-      message: result.message,
-      data: {
-        id: result.id,
-      },
-      status: 200,
-    };
-    return Response.json(response, { status: 200 });
-  } catch (error) {
-    printConsoleError(error, "PATCH", request.url);
     return handleError(error);
   }
 }

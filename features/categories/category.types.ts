@@ -6,7 +6,9 @@ type CategoryListServiceResult = Awaited<
   ReturnType<typeof categoryService.getMany>
 >;
 
-type CategoryGetServiceResult = Awaited<ReturnType<typeof categoryService.get>>;
+type CategoryGetServiceResult = Awaited<
+  ReturnType<typeof categoryService.getById>
+>;
 
 // Api Response
 export type CategoryGetByIdApiResponse = ApiResponse<

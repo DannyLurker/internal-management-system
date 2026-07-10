@@ -39,9 +39,9 @@ const categoryApi = {
     return result.data;
   },
 
-  update: async (payload: CategoryUpdateSchema) => {
+  update: async (categoryId: string, payload: CategoryUpdateSchema) => {
     const result = await api.patch<CategoryCUDApiResponse>(
-      `/categories`,
+      `/categories/${categoryId}`,
       payload,
     );
 

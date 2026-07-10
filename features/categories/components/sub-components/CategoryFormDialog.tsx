@@ -179,12 +179,12 @@ function UpdateForm({
   const titleId = useId();
   const form = useForm<UpdateFormValues>({
     resolver: zodResolver(categoryUpdateSchema),
-    defaultValues: { id: "", name: "" },
+    defaultValues: { name: "" },
   });
 
   useEffect(() => {
     if (open && category) {
-      form.reset({ id: category.id, name: category.name });
+      form.reset({ name: category.name });
     }
   }, [open, category, form]);
 
@@ -245,7 +245,6 @@ function UpdateForm({
                 await onUpdate(values);
               })}
             >
-              <input type="hidden" {...form.register("id")} />
               <div className="space-y-6">
                 <div>
                   <label

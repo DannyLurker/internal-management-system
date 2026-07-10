@@ -3,10 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useLocation } from "@/features/locations/location.hooks";
-import {
-  formatLocationTypeBadge,
-  formatTimestamp,
-} from "@/features/locations/location.utils";
+import { formatLocationTypeBadge } from "@/features/locations/location.utils";
 import LocationInfoPanelTable from "./LocationInfoPanelTable";
 import {
   Dialog,
@@ -20,6 +17,7 @@ import {
   StockTypeStatus,
 } from "@/shared/lib/types/zod.type";
 import { locationGetByIdSchema } from "@/shared/lib/zods/location.zod";
+import { formatTimestamp } from "@/shared/lib/utils";
 
 type LocationInfoPanelProps = {
   open: boolean;

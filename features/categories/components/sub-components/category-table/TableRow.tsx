@@ -47,7 +47,7 @@ export default function TableRow({
       </td>
       <td className="px-4 py-3 align-middle">
         <span className="inline-flex min-w-10 items-center justify-center rounded-md bg-[#121c28] px-2 py-0.5 font-ochre-ui text-xs font-semibold text-white">
-          {category.totalProducts}
+          {category.totalItems}
         </span>
       </td>
       <td className="hidden px-4 py-3 align-middle font-ochre-ui text-sm text-[#524439] lg:table-cell">

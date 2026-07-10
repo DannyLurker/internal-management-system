@@ -12,7 +12,7 @@ const categoryRules = {
       return {
         allowed: false,
         reason:
-          "Item was found in this category. Migrate all the items before deleting",
+          "Item was found in this category. Migrate all the items before deleting.",
       };
     }
 

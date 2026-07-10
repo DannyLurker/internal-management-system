@@ -6,6 +6,8 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatTimestamp(value: Date | string): string {
+  if (!value) return "-";
+
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
