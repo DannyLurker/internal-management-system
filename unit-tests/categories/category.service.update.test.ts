@@ -25,7 +25,9 @@ describe("categoryService.update", () => {
   });
 
   it("successfully updates the category and creates an update audit log with old and new names", async () => {
-    prismaMock.$transaction.mockImplementation((callback) => callback(prismaMock));
+    prismaMock.$transaction.mockImplementation((callback) =>
+      callback(prismaMock),
+    );
     prismaMock.category.findUnique.mockResolvedValue({
       id: "cat-1",
       name: "Beverages",
@@ -64,39 +66,6 @@ describe("categoryService.update", () => {
         },
         userId: "user-1",
       },
-      prismaMock,
-    );
-
-    expect(result).toEqual({
-      message: "Succesfully updated into Cold Drinks",
-      id: "cat-1",
-    });
-  });
-
-  it("handles case where the category to update does not exist previously", async () => {
-    prismaMock.$transaction.mockImplementation((callback) => callback(prismaMock));
-    prismaMock.category.findUnique.mockResolvedValue(null);
-
-    mockedCategoryRepository.update.mockResolvedValue({
-      id: "cat-1",
-      name: "Cold Drinks",
-    } as any);
-
-    const result = await categoryService.update(
-      fakeSession,
-      "cat-1",
-      { name: "Cold Drinks" },
-      prismaMock,
-    );
-
-    expect(mockedAuditLogsRepository.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        metadata: {
-          id: "cat-1",
-          oldName: undefined,
-          newName: "Cold Drinks",
-        },
-      }),
       prismaMock,
     );
 

@@ -36,9 +36,11 @@ describe("categoryService.create", () => {
       updatedAt: date,
       createdBy: fakeSession.id,
       updatedBy: fakeSession.id,
-    } as any);
+    });
 
-    prismaMock.$transaction.mockImplementation((callback) => callback(prismaMock));
+    prismaMock.$transaction.mockImplementation((callback) =>
+      callback(prismaMock),
+    );
 
     const result = await categoryService.create(
       fakeSession,
@@ -78,7 +80,9 @@ describe("categoryService.create", () => {
 
   it("does not write an audit log if the repository create call fails", async () => {
     mockedCategoryRepository.create.mockRejectedValue(internalServerError());
-    prismaMock.$transaction.mockImplementation((callback) => callback(prismaMock));
+    prismaMock.$transaction.mockImplementation((callback) =>
+      callback(prismaMock),
+    );
 
     await expect(
       categoryService.create(fakeSession, { name: "CategoryNew1" }, prismaMock),

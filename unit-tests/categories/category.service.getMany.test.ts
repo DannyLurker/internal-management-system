@@ -109,6 +109,8 @@ describe("categoryService.getMany", () => {
       prismaMock,
     );
 
-    expect(mockedCategoryRepository.buildWhereClause).toHaveBeenCalledWith("bev");
+    expect(mockedCategoryRepository.buildWhereClause).toHaveBeenCalledWith(
+      "bev",
+    );
   });
 });

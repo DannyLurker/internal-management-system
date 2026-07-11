@@ -99,7 +99,7 @@ const categoryRepository = {
 
   getById: async (
     categoryId: string,
-    includeGeneral: Prisma.CategoryInclude,
+    categorySelectData: Prisma.CategorySelect,
     itemWhereClause: Prisma.ItemWhereInput,
     selectItemData: Prisma.ItemSelect,
     sortBy: CategoryGetByIdSchema["sortBy"],
@@ -112,9 +112,8 @@ const categoryRepository = {
       where: {
         id: categoryId,
       },
-      include: {
-        // it can include everything that has a relation to category model
-        ...includeGeneral,
+      select: {
+        ...categorySelectData,
         items: {
           where: itemWhereClause,
           select: selectItemData,

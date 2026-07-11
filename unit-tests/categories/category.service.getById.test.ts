@@ -91,7 +91,27 @@ describe("categoryService.getById", () => {
     mockedCategoryRepository.getById.mockResolvedValue({
       id: "cat-1",
       name: "Beverages",
-      items: [{ id: "item-1", name: "Coke" }],
+      _count: {
+        items: 1,
+        userCreatedBy: 1,
+        userUpdatedBy: 1,
+      },
+      items: [
+        {
+          id: "item-1",
+          name: "Coke",
+          categoryId: "cat-1",
+          attributes: [],
+          description: "Soft drink",
+          image: null,
+          sellingPrice: 15000,
+          minThreshold: 10,
+          createdBy: "user-1",
+          createdAt: new Date(),
+          updatedBy: "user-1",
+          updatedAt: new Date(),
+        },
+      ],
     } as any);
     mockedItemRepository.countItems.mockResolvedValue(5);
 
@@ -111,7 +131,23 @@ describe("categoryService.getById", () => {
       category: {
         id: "cat-1",
         name: "Beverages",
-        items: [{ id: "item-1", name: "Coke" }],
+        _count: { items: 1, userCreatedBy: 1, userUpdatedBy: 1 },
+        items: [
+          {
+            id: "item-1",
+            name: "Coke",
+            categoryId: "cat-1",
+            attributes: [],
+            description: "Soft drink",
+            image: null,
+            sellingPrice: 15000,
+            minThreshold: 10,
+            createdBy: "user-1",
+            createdAt: expect.any(Date), // 💡 Menggunakan ini agar tes tidak sensitif milidetik
+            updatedBy: "user-1",
+            updatedAt: expect.any(Date), // 💡 Menggunakan ini agar tes tidak sensitif milidetik
+          },
+        ],
         totalItems: 5,
       },
     });
