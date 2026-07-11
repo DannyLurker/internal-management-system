@@ -18,8 +18,8 @@ import StockDeleteModal from "@/features/stocks/components/sub-components/StockD
 import StockFormDialog from "@/features/stocks/components/sub-components/StockFormDialog";
 import { Stock, StockDelete } from "@/features/stocks/stock.types";
 import { useLocations } from "@/features/locations/location.hooks";
-import ItemTable, { ItemTableFilters } from "./sub-components/item-table/index";
 import { categoryGetManySchema } from "@/shared/lib/zods/category.zod";
+import ItemTable, { ItemTableFilters } from "./sub-components/item-table";
 
 type LocationOption = { id: string; name: string };
 
@@ -91,7 +91,7 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
       isTakeAll: false,
       sortBy,
       orderBy,
-      isByCategory: tableFilters.categoryId !== "ALL" ? "true" : "false",
+      findBy: tableFilters.categoryId !== "ALL" ? "category" : undefined,
       categoryId:
         tableFilters.categoryId !== "ALL" ? tableFilters.categoryId : undefined,
       search:

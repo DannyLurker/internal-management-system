@@ -39,7 +39,6 @@ export default function ItemActiveOrInactiveModal({
       categoryId: item.categoryId ? item.categoryId : undefined,
       attributes: attributesToRecord(parseAttributesToKeyValue),
       description: item.description,
-      itemId: item.id,
       image: item.image ? item.image : undefined,
       minThreshold: item.minThreshold,
       sellingPrice: item.sellingPrice ? item.sellingPrice : undefined,
@@ -47,10 +46,10 @@ export default function ItemActiveOrInactiveModal({
     };
 
     try {
-      await updateMutation.mutateAsync(payload);
+      await updateMutation.mutateAsync({ itemId: item.id, payload });
       onOpenChange(false);
       onSuccess();
-    } catch { }
+    } catch {}
   };
 
   return (
@@ -83,12 +82,14 @@ export default function ItemActiveOrInactiveModal({
             transition={{ type: "spring", damping: 24, stiffness: 320 }}
           >
             <div className="flex flex-col items-center px-6 pb-2 pt-8 text-center">
-              <span className={cn(
-                "flex size-12 items-center justify-center rounded-xl",
-                status === "ACTIVE"
-                  ? "bg-emerald-100 text-emerald-600"
-                  : "bg-amber-100 text-amber-600"
-              )}>
+              <span
+                className={cn(
+                  "flex size-12 items-center justify-center rounded-xl",
+                  status === "ACTIVE"
+                    ? "bg-emerald-100 text-emerald-600"
+                    : "bg-amber-100 text-amber-600",
+                )}
+              >
                 <AlertTriangle
                   className="size-6"
                   strokeWidth={1.5}

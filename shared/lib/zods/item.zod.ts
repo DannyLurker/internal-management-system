@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   dataPerPage,
+  filterItemByEnum,
   page,
   sortItemByEnum,
   sortOrderEnum,
@@ -51,11 +52,8 @@ export type ItemCreateSchema = z.infer<typeof itemCreateSchema>;
 export const itemGetManyschema = z.object({
   page,
   dataPerPage,
-  isByCategory: z
-    .preprocess((val) => val === "true", z.boolean())
-    .default(false),
+  findBy: filterItemByEnum.optional(),
   categoryId: z.string().optional(),
-  // isTakeAll: z.preprocess((val) => val === "true", z.boolean()).default(false),
   search: z.string().trim().optional(),
   sortBy: sortItemByEnum,
   orderBy: sortOrderEnum.default("asc"),
@@ -74,7 +72,7 @@ export const itemGetManyschema = z.object({
 
 export type ItemGetManySchema = z.infer<typeof itemGetManyschema>;
 
-export const itemGetDetailSchema = z.object({
+export const itemGetByIdSchema = z.object({
   itemStockPage: page,
   itemStocksPerpage: dataPerPage,
   sortBy: stockSortByEnum.default("createdAt"),
@@ -82,10 +80,9 @@ export const itemGetDetailSchema = z.object({
   status: stockStatusEnum.default("ALL"),
 });
 
-export type ItemGetDetailSchema = z.infer<typeof itemGetDetailSchema>;
+export type ItemGetByIdSchema = z.infer<typeof itemGetByIdSchema>;
 
 export const itemUpdateSchema = z.object({
-  itemId: z.string().trim().min(1),
   categoryId: z.string().trim().min(3).optional(),
   name: z.string().trim().min(1),
   description: z.string().trim().min(1),

@@ -1,5 +1,10 @@
-import { ItemCreateSchema, ItemUpdateSchema } from "@/shared/lib/zods/item.zod";
+import {
+  ItemCreateSchema,
+  ItemGetByIdSchema,
+  ItemUpdateSchema,
+} from "@/shared/lib/zods/item.zod";
 import { Prisma, PrismaClient } from "@prisma/client";
+import { filterItemBy } from "./item.types";
 
 export const createSelectItemData = <T extends Prisma.ItemSelect>(
   select: T,
@@ -10,19 +15,29 @@ export const createIncludeItemData = <T extends Prisma.ItemSelect>(
 ): T => select;
 
 const itemRepository = {
-  buildWhereClause: (searchQuery?: string): Prisma.ItemWhereInput => {
-    if (!searchQuery) return {};
+  // it's still for search query
+  buildWhereClause: (
+    filterBy: filterItemBy,
+    filterValue: string | null,
+    searchQuery?: string,
+  ): Prisma.ItemWhereInput => {
+    const whereClause: Prisma.ItemWhereInput = {};
 
-    if (searchQuery && searchQuery.length >= 3) {
-      return {
-        name: {
-          contains: searchQuery,
-          mode: "insensitive",
-        },
+    // If both the filter criteria and the filter value exist
+    if (filterBy && filterValue) {
+      if (filterBy === "category") {
+        whereClause.categoryId = filterValue;
+      }
+    }
+
+    if (searchQuery && searchQuery.trim().length >= 3) {
+      whereClause.name = {
+        contains: searchQuery.trim(),
+        mode: "insensitive",
       };
     }
 
-    return {};
+    return whereClause;
   },
 
   create: async (
@@ -127,8 +142,39 @@ const itemRepository = {
       },
     });
   },
+  refactoredGetById: async (
+    itemId: string,
+    itemSelect: Prisma.ItemSelect,
+    stockWhereClause: Prisma.StockWhereInput,
+    stockSelectData: Prisma.StockSelect,
+    skipStockData: number | undefined,
+    takeStockData: number | undefined,
+    sortBy: ItemGetByIdSchema["sortBy"],
+    orderBy: "asc" | "desc",
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    return await tx.item.findUnique({
+      where: { id: itemId },
+      select: {
+        ...itemSelect,
+        stocks: {
+          where: stockWhereClause,
+          select: stockSelectData,
+          skip: skipStockData,
+          take: takeStockData,
+          ...(sortBy !== "stockType"
+            ? {
+                orderBy: {
+                  [sortBy]: orderBy,
+                },
+              }
+            : {}),
+        },
+      },
+    });
+  },
 
-  getManyInclude: async <T extends Prisma.ItemSelect>(
+  getManyInclude: async <T extends Prisma.ItemInclude>(
     where: Prisma.ItemWhereInput,
     include: Prisma.Subset<T, Prisma.ItemInclude>,
     skip: number | undefined,
@@ -159,11 +205,12 @@ const itemRepository = {
 
   update: async (
     userId: string,
+    itemId: string,
     data: ItemUpdateSchema,
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
     return await tx.item.update({
-      where: { id: data.itemId },
+      where: { id: itemId },
       data: {
         categoryId: data.categoryId,
         name: data.name,

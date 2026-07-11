@@ -72,6 +72,10 @@ export const useUpdateLocation = () => {
       queryClient.invalidateQueries({
         queryKey: LOCATION_KEYS.detail(data.data.id),
       });
+
+      queryClient.invalidateQueries({
+        queryKey: LOCATION_KEYS.lists(),
+      });
       toast.success(data.message);
     },
   });

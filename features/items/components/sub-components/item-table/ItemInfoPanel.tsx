@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, ChevronDown, Plus } from "lucide-react";
 import { useItem } from "@/features/items/item.hooks";
 import { formatItemPrice } from "@/shared/lib/formatter";
-import { itemGetDetailSchema } from "@/shared/lib/zods/item.zod";
 import ItemInfoPanelTable from "./ItemInfoPanelTable";
 import {
   Dialog,
@@ -21,6 +20,7 @@ import {
   StockSortBy,
   StockSortOrder,
 } from "@/features/stocks/stock.types";
+import { itemGetByIdSchema } from "@/shared/lib/zods/item.zod";
 
 type ItemInfoPanelProps = {
   open: boolean;
@@ -52,7 +52,7 @@ export default function ItemInfoPanel({
   }, [itemId, itemStocksPerpage, sortBy, orderBy, status]);
 
   const itemParams = useMemo(() => {
-    return itemGetDetailSchema.parse({
+    return itemGetByIdSchema.parse({
       itemStockPage,
       itemStocksPerpage,
       sortBy,

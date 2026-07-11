@@ -223,7 +223,7 @@ const stockService = {
       ];
     }
 
-    if (validatedParams.type && validatedParams.sortBy === "type") {
+    if (validatedParams.type && validatedParams.sortBy === "stockType") {
       whereQuery.type = validatedParams.type;
     }
     if (validatedParams.locationId) {

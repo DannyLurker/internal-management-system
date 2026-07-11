@@ -19,7 +19,11 @@ const categoryService = {
     params: CategoryGetByIdSchema,
     prisma: PrismaClient,
   ) => {
-    const itemWhereClause = itemRepository.buildWhereClause(params.search);
+    const itemWhereClause = itemRepository.buildWhereClause(
+      null,
+      null,
+      params.search,
+    );
 
     const categoryIncludeRelation: Prisma.CategoryInclude = {
       userCreatedBy: {

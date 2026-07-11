@@ -1,16 +1,18 @@
 import { api } from "@/shared/lib/api-client";
-import { ItemCreateSchema, ItemGetDetailSchema, ItemUpdateSchema } from "@/shared/lib/zods/item.zod";
 import {
-  ItemCreateApiResponse,
-  ItemDeleteApiResponse,
+  ItemCreateSchema,
+  ItemGetByIdSchema,
+  ItemUpdateSchema,
+} from "@/shared/lib/zods/item.zod";
+import {
+  ItemCUDApiResponse,
   ItemGetByIdApiResponse,
   ItemGetManyApiResponse,
-  ItemUpdateApiResponse,
 } from "./item.types";
 
 const itemApi = {
   create: async (rawData: ItemCreateSchema) => {
-    const result = await api.post<ItemCreateApiResponse>("/items", rawData);
+    const result = await api.post<ItemCUDApiResponse>("/items", rawData);
 
     return result.data;
   },
@@ -21,7 +23,7 @@ const itemApi = {
     return result.data;
   },
 
-  getById: async (id: string, params?: ItemGetDetailSchema) => {
+  getById: async (id: string, params?: ItemGetByIdSchema) => {
     const result = await api.get<ItemGetByIdApiResponse>(`/items/${id}`, {
       params,
     });
@@ -29,14 +31,17 @@ const itemApi = {
     return result.data;
   },
 
-  update: async (data: ItemUpdateSchema) => {
-    const result = await api.patch<ItemUpdateApiResponse>(`/items`, data);
+  update: async (itemId: string, data: ItemUpdateSchema) => {
+    const result = await api.patch<ItemCUDApiResponse>(
+      `/items/${itemId}`,
+      data,
+    );
 
     return result.data;
   },
 
   delete: async (id: string) => {
-    const result = await api.delete<ItemDeleteApiResponse>(`/items/${id}`);
+    const result = await api.delete<ItemCUDApiResponse>(`/items/${id}`);
 
     return result.data;
   },

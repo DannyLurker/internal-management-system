@@ -52,14 +52,14 @@ export default function TableHeader({
         <th className="px-4 align-middle font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
           <button
             type="button"
-            onClick={() => onRequestSort("type")}
+            onClick={() => onRequestSort("stockType")}
             className={cn(
               "inline-flex items-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-[#894d0d]/40",
-              sortBy === "type" && "text-[#894d0d]",
+              sortBy === "stockType" && "text-[#894d0d]",
             )}
           >
             TYPE
-            <SortIndicator active={sortBy === "type"} order={sortOrder} />
+            <SortIndicator active={sortBy === "stockType"} order={sortOrder} />
           </button>
         </th>
         <th className="px-4 align-middle font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">

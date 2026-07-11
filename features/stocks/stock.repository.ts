@@ -103,7 +103,7 @@ export const stockRepository = {
   // currently buildStockWhereClause is used for location page stock status filter. Check /features/location
   // TODO: need to refactor it when we implement to other domain
   buildStockWhereClause: (
-    locationId: string,
+    locationId: string | undefined,
     params: StockStatusFilterParams,
   ): Prisma.StockWhereInput => {
     const stockWhereClause: Prisma.StockWhereInput = {};
@@ -175,6 +175,20 @@ export const stockRepository = {
     });
 
     return result._sum.quantity;
+  },
+  getGroupedStockQuantities: async (
+    by: Prisma.StockGroupByArgs["by"],
+    itemId: string,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    return tx.stock.groupBy({
+      // Use Array.isArray check or spread to handle both single strings and arrays safely
+      by: Array.isArray(by) ? by : [by],
+      where: { itemId },
+      _sum: {
+        quantity: true,
+      },
+    });
   },
 
   countRows: async (

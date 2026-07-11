@@ -11,14 +11,14 @@ import itemApi from "./item.api";
 import { toast } from "sonner";
 import {
   ItemCreateSchema,
-  ItemGetDetailSchema,
+  ItemGetByIdSchema,
   ItemGetManySchema,
   ItemUpdateSchema,
 } from "@/shared/lib/zods/item.zod";
 
 export const useItem = (
   itemId: string,
-  params: ItemGetDetailSchema,
+  params: ItemGetByIdSchema,
   options?: Partial<UseQueryOptions<ItemGetByIdApiResponse>>,
 ) => {
   return useQuery({
@@ -47,9 +47,9 @@ export const useCreateItem = () => {
 
   return useMutation({
     mutationFn: (payload: ItemCreateSchema) => itemApi.create(payload),
-    onSuccess: (data) => {
+    onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ITEM_KEYS.lists() });
-      toast.success(data.message);
+      toast.success(response.message);
     },
   });
 };
@@ -58,21 +58,35 @@ export const useUpdateItem = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: ItemUpdateSchema) => itemApi.update(payload),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ITEM_KEYS.lists() });
-      toast.success(data.message);
+    mutationFn: ({
+      itemId,
+      payload,
+    }: {
+      itemId: string;
+      payload: ItemUpdateSchema;
+    }) => itemApi.update(itemId, payload),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({
+        queryKey: ITEM_KEYS.detail(response.data.id),
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ITEM_KEYS.lists(),
+      });
+
+      toast.success(response.message);
     },
   });
 };
+
 export const useDeleteItem = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (id: string) => itemApi.delete(id),
-    onSuccess: (data) => {
+    onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ITEM_KEYS.lists() });
-      toast.success(data.message);
+      toast.success(response.message);
     },
   });
 };

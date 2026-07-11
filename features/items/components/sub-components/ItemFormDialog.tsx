@@ -32,6 +32,7 @@ import {
 import { cn } from "@/shared/lib/utils";
 import { attributesToRecord, parseAttributes } from "../../item.utils";
 import { inputClass } from "../../item.style";
+import { toast } from "sonner";
 
 type LocationOption = { id: string; name: string };
 type CategoryOption = { id: string; name: string };
@@ -91,7 +92,6 @@ export default function ItemFormDialog({
   const updateForm = useForm<ItemUpdateSchema>({
     resolver: zodResolver(itemUpdateSchema) as Resolver<ItemUpdateSchema>,
     defaultValues: {
-      itemId: "",
       name: "",
       description: "",
       categoryId: "",
@@ -111,7 +111,6 @@ export default function ItemFormDialog({
       const price =
         item.sellingPrice != null ? Number(item.sellingPrice) : undefined;
       updateForm.reset({
-        itemId: item.id,
         name: item.name,
         description: item.description,
         categoryId: item.categoryId ?? "",
@@ -187,13 +186,20 @@ export default function ItemFormDialog({
   );
 
   const onUpdateSubmit = updateForm.handleSubmit(async (values) => {
+    if (!item?.id) {
+      toast.error(
+        "Something went wrong. Item id is missing. Try it again later.",
+      );
+      return;
+    }
+
     const payload = itemUpdateSchema.parse({
       ...values,
       attributes: attributesToRecord(attributeRows),
     });
 
     try {
-      await updateMutation.mutateAsync(payload);
+      await updateMutation.mutateAsync({ itemId: item?.id, payload });
       onOpenChange(false);
       onSuccess();
     } catch {

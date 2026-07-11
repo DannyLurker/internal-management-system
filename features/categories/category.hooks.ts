@@ -67,10 +67,14 @@ export const useUpdateCategory = () => {
       payload: CategoryUpdateSchema;
     }) => categoryApi.update(categoryId, payload),
     onSuccess: (response) => {
-      toast.success(response.message);
       queryClient.invalidateQueries({
         queryKey: CATEGORY_KEYS.detail(response.data.id),
       });
+
+      queryClient.invalidateQueries({
+        queryKey: CATEGORY_KEYS.lists(),
+      });
+      toast.success(response.message);
     },
   });
 };

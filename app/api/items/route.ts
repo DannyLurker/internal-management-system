@@ -1,23 +1,39 @@
 import itemService from "@/features/items/item.service";
 import {
-  ItemCreateApiResponse,
+  ItemCUDApiResponse,
   ItemGetManyApiResponse,
-  ItemUpdateApiResponse,
 } from "@/features/items/item.types";
+import prisma from "@/shared/db/prisma";
+import { forbidden } from "@/shared/lib/error-handlers";
 import {
   handleError,
   printConsoleError,
 } from "@/shared/lib/error-handlers/handleError";
+import { canManageItem } from "@/shared/lib/validations/user-access-validation";
+import sessionValidation from "@/shared/lib/validations/user-session-validation";
+import {
+  itemCreateSchema,
+  itemGetManyschema,
+} from "@/shared/lib/zods/item.zod";
 
 export async function POST(request: Request) {
   try {
-    const data = await request.json();
+    const session = await sessionValidation();
 
-    const result = await itemService.create(data);
+    if (!canManageItem(session.role)) {
+      throw forbidden("You're not allowed to access this feature");
+    }
 
-    const response: ItemCreateApiResponse = {
+    const body = await request.json();
+    const data = itemCreateSchema.parse(body);
+
+    const result = await itemService.create(session, data, prisma);
+
+    const response: ItemCUDApiResponse = {
       message: result.message,
-      data: null,
+      data: {
+        id: result.id,
+      },
       status: 201,
     };
 
@@ -32,10 +48,17 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const data = Object.fromEntries(searchParams.entries());
+    const session = await sessionValidation();
 
-    const result = await itemService.getMany(data);
+    if (!canManageItem(session.role)) {
+      throw forbidden("You're not allowed to access this feature");
+    }
+
+    const { searchParams } = new URL(request.url);
+    const rawParams = Object.fromEntries(searchParams.entries());
+    const params = itemGetManyschema.parse(rawParams);
+
+    const result = await itemService.getMany(session, params, prisma);
 
     const response: ItemGetManyApiResponse = {
       message: result.message,
@@ -48,27 +71,6 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     printConsoleError(error, "GET", request.url);
-    return handleError(error);
-  }
-}
-
-export async function PATCH(request: Request) {
-  try {
-    const data = await request.json();
-
-    const result = await itemService.update(data);
-
-    const response: ItemUpdateApiResponse = {
-      message: result.message,
-      data: null,
-      status: 200,
-    };
-
-    return Response.json(response, {
-      status: response.status,
-    });
-  } catch (error) {
-    printConsoleError(error, "PATCH", request.url);
     return handleError(error);
   }
 }

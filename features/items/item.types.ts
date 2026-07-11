@@ -1,6 +1,8 @@
 import { ApiResponse } from "@/shared/lib/api-client";
 import itemService from "./item.service";
 import { itemStockStatusArray } from "./item.utils";
+import z from "zod";
+import { filterItemByEnum } from "@/shared/lib/zods/general.zod";
 
 export type ItemServiceGetById = Awaited<
   ReturnType<typeof itemService.getById>
@@ -21,9 +23,11 @@ export type StockInItemById =
 // Api Response Types
 export type ItemGetByIdApiResponse = ApiResponse<ItemServiceGetById["data"]>;
 export type ItemGetManyApiResponse = ApiResponse<ItemServiceGetMany["data"]>;
-export type ItemCreateApiResponse = ApiResponse<null>;
-export type ItemUpdateApiResponse = ApiResponse<null>;
-export type ItemDeleteApiResponse = ApiResponse<null>;
+
+// Create-Update-Delete
+export type ItemCUDApiResponse = ApiResponse<{
+  id: string;
+}>;
 
 export type ItemStockStatus = (typeof itemStockStatusArray)[number];
 
@@ -31,3 +35,6 @@ export type ItemStockStatus = (typeof itemStockStatusArray)[number];
 export type AttributeRow = { key: string; value: string };
 
 export type DeleteOrActivateStatus = "DELETE" | "INACTIVE" | "ACTIVE";
+
+// Item filtering parameters. For building where clause
+export type filterItemBy = z.infer<typeof filterItemByEnum> | null;

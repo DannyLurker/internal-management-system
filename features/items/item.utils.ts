@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import type { AttributeRow, ItemStockStatus } from "./item.types";
 
 export const EXPIRING_WINDOW_DAYS = 14;
@@ -29,29 +28,6 @@ export const ITEM_STATUS_STYLES: Record<ItemStockStatus, string> = {
   EXPIRING_SOON: "border-[#857467]/50 text-[#524439]",
   EXPIRED: "border-black text-[#524439]",
 };
-
-type ItemWithStocks = {
-  minThreshold: number;
-  stocks: { quantity: number; expiredAt?: Date | null }[];
-  category?: { id: string; name: string } | null;
-  stockMovements?: {
-    totalCost: Prisma.Decimal | null;
-    reason: string | null;
-  }[];
-};
-
-export function mapItemListRow<T extends ItemWithStocks>(item: T) {
-  const { stocks, stockMovements, ...rest } = item;
-
-  return {
-    ...rest,
-    stocks,
-    totalCost: stockMovements?.[0]?.totalCost
-      ? Number(stockMovements[0].totalCost)
-      : null,
-    reason: stockMovements?.[0]?.reason ?? null,
-  };
-}
 
 export function parseAttributes(raw: unknown): AttributeRow[] {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {

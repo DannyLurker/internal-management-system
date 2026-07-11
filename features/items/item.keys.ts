@@ -1,5 +1,5 @@
 import {
-  ItemGetDetailSchema,
+  ItemGetByIdSchema,
   ItemGetManySchema,
 } from "@/shared/lib/zods/item.zod";
 
@@ -9,7 +9,7 @@ const ITEM_KEYS = {
   list: (filters: ItemGetManySchema) =>
     [...ITEM_KEYS.lists(), { filters }] as const,
   details: () => [...ITEM_KEYS.all, "detail"] as const,
-  detail: (id: string, params?: ItemGetDetailSchema) => {
+  detail: (id: string, params?: ItemGetByIdSchema) => {
     const base = [...ITEM_KEYS.details(), id] as const;
     return params ? ([...base, params] as const) : base;
   },

@@ -1,16 +1,8 @@
-import prisma from "@/shared/db/prisma";
-import { badRequest, unauthorized } from "@/shared/lib/error-handlers";
+import { badRequest } from "@/shared/lib/error-handlers";
 import {
-  canDeleteItem,
-  canManageItem,
-} from "@/shared/lib/validations/user-access-validation";
-import sessionValidation from "@/shared/lib/validations/user-session-validation";
-import {
-  itemCreateSchema,
   ItemCreateSchema,
-  itemGetDetailSchema,
-  itemGetManyschema,
-  itemUpdateSchema,
+  ItemGetByIdSchema,
+  ItemGetManySchema,
   ItemUpdateSchema,
 } from "@/shared/lib/zods/item.zod";
 import itemRepository, {
@@ -18,22 +10,20 @@ import itemRepository, {
   createSelectItemData,
 } from "./item.repository";
 import auditLogsRepository from "../audit-logs/audit-log.repository";
-import { EXPIRING_WINDOW_DAYS, mapItemListRow } from "./item.utils";
-import { Prisma, StockType } from "@prisma/client";
+import { EXPIRING_WINDOW_DAYS } from "./item.utils";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { stockRepository } from "../stocks/stock.repository";
 import stockMovementsRepository from "../stock-movements/stock-movements.repository";
+import { Session } from "next-auth";
 
 const itemService = {
-  create: async (rawData: ItemCreateSchema) => {
-    const session = await sessionValidation();
-    const validatedData = itemCreateSchema.parse(rawData);
-
-    if (!canManageItem(session.role)) {
-      throw unauthorized("You're not allowed to access this feature");
-    }
-
+  create: async (
+    session: Session["user"],
+    data: ItemCreateSchema,
+    prisma: PrismaClient | Prisma.TransactionClient,
+  ) => {
     const result = await prisma.$transaction(async (tx) => {
-      const item = await itemRepository.create(session.id, validatedData, tx);
+      const item = await itemRepository.create(session.id, data, tx);
 
       await auditLogsRepository.create(
         {
@@ -44,9 +34,9 @@ const itemService = {
           metadata: {
             name: item.name,
             categoryId: item.categoryId,
-            locationId: validatedData.locationId,
+            locationId: data.locationId,
             sellingPrice: item.sellingPrice,
-            initialStock: validatedData.stock?.quantity ?? 0,
+            initialStock: data.stock?.quantity ?? 0,
           },
         },
         tx,
@@ -57,41 +47,27 @@ const itemService = {
 
     return {
       message: `${result.name} created successfully`,
+      id: result.id,
     };
   },
 
-  getMany: async (rawParams: Record<string, string>) => {
-    const session = await sessionValidation();
-    const validatedParams = itemGetManyschema.parse(rawParams);
-
-    if (!canManageItem(session.role)) {
-      throw unauthorized("You're not allowed to access this feature");
-    }
-
-    const whereClause: Prisma.ItemWhereInput = {
-      isActive: validatedParams.status,
-    };
-
-    if (validatedParams.search && validatedParams.search.length >= 3) {
-      whereClause.name = {
-        contains: validatedParams.search,
-        mode: "insensitive",
-      };
-    }
-    if (validatedParams.isByCategory && validatedParams.categoryId) {
-      whereClause.categoryId = validatedParams.categoryId;
-    }
+  getMany: async (
+    session: Session["user"],
+    params: ItemGetManySchema,
+    prisma: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    const whereClause = itemRepository.buildWhereClause(
+      params.findBy ? params.findBy : null,
+      params.categoryId ? params.categoryId : null,
+      params.search,
+    );
 
     // Pagination
-    const skip = (validatedParams.page - 1) * validatedParams.dataPerPage;
+    const skip = (params.page - 1) * params.dataPerPage;
 
-    const take = validatedParams.dataPerPage;
+    const take = params.dataPerPage;
 
     const includeQuery = createIncludeItemData({
-      stocks: {
-        where: {},
-        select: { quantity: true, expiredAt: true },
-      },
       category: { select: { id: true, name: true } },
     });
 
@@ -101,72 +77,44 @@ const itemService = {
         includeQuery,
         skip,
         take,
-        validatedParams.sortBy,
-        validatedParams.orderBy,
+        params.sortBy,
+        params.orderBy,
         prisma,
       ),
       await itemRepository.countItems(whereClause, prisma),
     ]);
 
-    // Add status field
-    const formattedItems = items.map((item) => mapItemListRow(item));
-
     return {
       message: `Item data retrieved successfully`,
       data: {
-        items: formattedItems,
+        items,
         totalItems,
       },
     };
   },
 
-  getById: async (itemId: string, rawParams: Record<string, string>) => {
-    const session = await sessionValidation();
-
-    if (!canManageItem(session.role)) {
-      throw unauthorized("You're not allowed to access this feature");
-    }
-
-    if (!itemId) throw badRequest("Item id is missing");
-
-    const validatedParams = itemGetDetailSchema.parse(rawParams);
-
-    const stockWhereClause: Prisma.StockWhereInput = {
-      itemId: itemId,
-    };
+  getById: async (
+    session: Session["user"],
+    itemId: string,
+    params: ItemGetByIdSchema,
+    prisma: PrismaClient | Prisma.TransactionClient,
+  ) => {
     const today = new Date();
-
     const expiringWindow = new Date();
     expiringWindow.setDate(expiringWindow.getDate() + EXPIRING_WINDOW_DAYS);
 
-    if (validatedParams.sortBy === "type") {
-      // Non query status means that, you don't have to make any prisma logic like gte, lte, and etc. Just show something in one line like stockWhereClause.type = validatedParams.stateus
-      const nonQueryStatus = ["READY", "DAMAGED", "DIRTY"] as StockType[];
+    const stockWhereClause = stockRepository.buildStockWhereClause(undefined, {
+      sortBy: params.sortBy,
+      itemSearchQuery: undefined,
+      stockStatusType: params.status,
+    });
 
-      if (nonQueryStatus.includes(validatedParams.status as StockType)) {
-        stockWhereClause.type = validatedParams.status as StockType;
-      }
-
-      if (validatedParams.status === "EXPIRED") {
-        stockWhereClause.OR = [{ type: "EXPIRED" }, { type: "READY" }];
-        stockWhereClause.expiredAt = {
-          lt: today,
-        };
-      }
-
-      if (validatedParams.status === "EXPIRING_SOON") {
-        stockWhereClause.OR = [{ type: "READY" }, { type: "EXPIRED" }];
-        stockWhereClause.expiredAt = {
-          gte: today,
-          lte: expiringWindow,
-        };
-      }
-    }
+    stockWhereClause.itemId = itemId;
 
     const skipItemStocks =
-      (validatedParams.itemStockPage - 1) * validatedParams.itemStocksPerpage;
+      (params.itemStockPage - 1) * params.itemStocksPerpage;
 
-    const takeItemStocksPerPage = validatedParams.itemStocksPerpage;
+    const takeItemStocksPerPage = params.itemStocksPerpage;
 
     const itemSelectField = createSelectItemData({
       id: true,
@@ -191,8 +139,8 @@ const itemService = {
       stockWhereClause,
       skipItemStocks,
       takeItemStocksPerPage,
-      validatedParams.sortBy,
-      validatedParams.orderBy,
+      params.sortBy,
+      params.orderBy,
       prisma,
     );
 
@@ -202,82 +150,55 @@ const itemService = {
       prisma,
     );
 
-    const [
-      totalLocatedItems,
-      totalUnlocatedItems,
-      totalReadyStock,
-      totalExpiredStock,
-      totalDamagedStock,
-      totalDirtyStock,
-      totalLostStock,
-      totalDiscardedItems,
-    ] = await Promise.all([
-      await stockRepository.countQuantity(
-        {
-          itemId: itemId,
-          type: {
-            not: "LOST",
+    const stockGroups = await stockRepository.getGroupedStockQuantities(
+      "type",
+      itemId,
+      prisma,
+    );
+
+    const stockCounts = stockGroups.reduce(
+      (acc, group) => {
+        acc[group.type] = group._sum.quantity || 0;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
+    const [totalReadyStock, totalUnlocatedItems, totalDiscardedItems] =
+      await Promise.all([
+        // Special condition for READY stock that checks expiration dates
+        stockRepository.countQuantity(
+          {
+            itemId: itemId,
+            type: "READY",
+            OR: [{ expiredAt: null }, { expiredAt: { gte: today } }],
           },
-        },
-        prisma,
-      ),
-      await stockMovementsRepository.countQuantity(
-        {
-          itemId: itemId,
-        },
-        prisma,
-      ),
-      await stockRepository.countQuantity(
-        {
-          itemId: itemId,
-          type: "READY",
-          OR: [
-            { expiredAt: null },
-            {
-              expiredAt: {
-                gte: today,
-              },
-            },
-          ],
-        },
-        prisma,
-      ),
-      await stockRepository.countQuantity(
-        {
-          type: "EXPIRED",
-          itemId: itemId,
-        },
-        prisma,
-      ),
-      await stockRepository.countQuantity(
-        {
-          type: "DAMAGED",
-          itemId: itemId,
-        },
-        prisma,
-      ),
-      await stockRepository.countQuantity(
-        {
-          type: "DIRTY",
-          itemId: itemId,
-        },
-        prisma,
-      ),
-      await stockRepository.countQuantity(
-        {
-          type: "LOST",
-          itemId: itemId,
-        },
-        prisma,
-      ),
-      await stockMovementsRepository.countQuantity(
-        {
-          type: "DISCARD",
-          itemId: itemId,
-        },
-        prisma,
-      ),
-    ]);
+          prisma,
+        ),
+
+        // Querying a different repository/table (stockMovements)
+        stockMovementsRepository.countQuantity(
+          { itemId: itemId, stockId: null },
+          prisma,
+        ),
+
+        // Querying a specific movement type
+        stockMovementsRepository.countQuantity(
+          { type: "DISCARD", itemId: itemId },
+          prisma,
+        ),
+      ]);
+
+    const totalExpiredStock = stockCounts["EXPIRED"] || 0;
+    const totalDamagedStock = stockCounts["DAMAGED"] || 0;
+    const totalDirtyStock = stockCounts["DIRTY"] || 0;
+    const totalLostStock = stockCounts["LOST"] || 0;
+
+    // totalLocatedItems is everything that is NOT lost
+    // You can sum your cached object directly without an extra DB call!
+    const totalLocatedItems = Object.entries(stockCounts)
+      .filter(([type]) => type !== "LOST")
+      .reduce((sum, [_, quantity]) => sum + quantity, 0);
 
     const isStockLow =
       item && totalReadyStock && totalReadyStock <= item?.minThreshold
@@ -306,16 +227,14 @@ const itemService = {
     };
   },
 
-  update: async (rawData: ItemUpdateSchema) => {
-    const session = await sessionValidation();
-    const validatedData = itemUpdateSchema.parse(rawData);
-
-    if (!canManageItem(session.role)) {
-      throw unauthorized("You're not allowed to access this feature");
-    }
-
+  update: async (
+    session: Session["user"],
+    itemId: string,
+    data: ItemUpdateSchema,
+    prisma: PrismaClient | Prisma.TransactionClient,
+  ) => {
     const result = await prisma.$transaction(async (tx) => {
-      const item = await itemRepository.update(session.id, validatedData, tx);
+      const item = await itemRepository.update(session.id, itemId, data, tx);
 
       await auditLogsRepository.create(
         {
@@ -337,15 +256,15 @@ const itemService = {
 
     return {
       message: `${result.name} updated successfully`,
+      id: result.id,
     };
   },
 
-  delete: async (itemId: string) => {
-    const session = await sessionValidation();
-    if (!canDeleteItem(session.role)) {
-      throw unauthorized("You're not allowed to access this feature");
-    }
-
+  delete: async (
+    session: Session["user"],
+    itemId: string,
+    prisma: PrismaClient | Prisma.TransactionClient,
+  ) => {
     const result = await prisma.$transaction(async (tx) => {
       const selectItemData = createSelectItemData({
         isActive: true,
@@ -382,11 +301,13 @@ const itemService = {
         },
         tx,
       );
+
       return deletedItem;
     });
 
     return {
       message: `${result.name} deleted successfully`,
+      id: result.id,
     };
   },
 };
