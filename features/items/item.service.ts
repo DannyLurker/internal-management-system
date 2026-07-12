@@ -103,9 +103,9 @@ const itemService = {
     const expiringWindow = new Date();
     expiringWindow.setDate(expiringWindow.getDate() + EXPIRING_WINDOW_DAYS);
 
-    const stockWhereClause = stockRepository.buildStockWhereClause(undefined, {
+    const stockWhereClause = stockRepository.buildStockWhereClause(null, {
       sortBy: params.sortBy,
-      itemSearchQuery: undefined,
+      itemSearchQuery: null,
       stockStatusType: params.status,
     });
 
@@ -133,10 +133,31 @@ const itemService = {
       updatedBy: true,
     });
 
+    const stockSelectField: Prisma.StockSelect = {
+      id: true,
+      item: {
+        select: {
+          name: true,
+          id: true,
+        },
+      },
+      quantity: true,
+      type: true,
+      updatedAt: true,
+      expiredAt: true,
+      location: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    };
+
     const item = await itemRepository.getById(
       itemId,
       itemSelectField,
       stockWhereClause,
+      stockSelectField,
       skipItemStocks,
       takeItemStocksPerPage,
       params.sortBy,
@@ -266,20 +287,7 @@ const itemService = {
     prisma: PrismaClient | Prisma.TransactionClient,
   ) => {
     const result = await prisma.$transaction(async (tx) => {
-      const selectItemData = createSelectItemData({
-        isActive: true,
-      });
-
-      const item = await itemRepository.getById(
-        itemId,
-        selectItemData,
-        {},
-        undefined,
-        undefined,
-        "quantity",
-        "asc",
-        tx,
-      );
+      const item = await itemRepository.findById(itemId, prisma);
 
       if (item?.isActive) {
         throw badRequest(

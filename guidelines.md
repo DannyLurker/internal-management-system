@@ -11,7 +11,7 @@ This project is an internal hotel management system designed to be extended into
 - **Database & ORM:** PostgreSQL running with Prisma ORM
 - **Styling & UI:** Tailwind CSS combined with shadcn/ui components
 - **State Management & Fetching:** React Server Components (RSC), TanStack Query, and Zod for schema validation
-- **Testing:** Playwright for end-to-end testing
+- **Testing:** Playwright for end-to-end testing and jest for unit tests. For unit test use jest-extended-mock for mocking.
 
 ## 3. Core Coding Rules & Standards
 

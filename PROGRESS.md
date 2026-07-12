@@ -63,6 +63,34 @@
   - Service functions in `category.service.*.test.ts` (create, delete, getById, getMany, update)
   - Leverages `jest-mock-extended` for strict type-safe mocking of the database transaction client (`PrismaClient`) and nested models without actual database connections
 
+## Item Feature
+
+### Item Feature Development
+
+- Created repository layer at `features/items/item.repository.ts`
+  - CRUD operations: `create`, `findById`, `getById`, `getManyInclude`, `countItems`, `update`, `delete`
+  - Type-safe selection utilities: `createSelectItemData` and `createIncludeItemData` (identity helpers for Prisma select/include shapes)
+  - Clause builder `buildWhereClause` filtering by `categoryId` and case-insensitive name search (3+ chars)
+  - `create` atomically provisions the item, an optional initial stock record, and a `RECEIVE` stock movement in a single transaction
+- Created service layer at `features/items/item.service.ts`
+  - Create: Under transaction, creates item (with optional stock + movement) and writes a `CREATE` audit log under the `ITEM` entity; metadata includes category, location, selling price, and initial stock quantity
+  - GetMany: Builds where clause from filter/search params, returns paginated items with category details using `getManyInclude`
+  - GetById: Retrieves full item detail with paginated and sorted stocks; computes stock aggregates (`totalReadyStock`, `totalExpiredStock`, `totalDamagedStock`, `totalLostStock`, `totalDirtyStock`), unlocated and discarded quantities, and derives `isStockLow` from `minThreshold`
+  - Update: Under transaction, updates item fields (name, category, description, image, selling price, attributes, active status, min threshold) and writes an `UPDATE` audit log with old and new values
+  - Delete: Under transaction, guards against deleting an active item (`isActive: true`), deletes the item, and writes a `DELETE` audit log
+- Created client-side API layer at `features/items/item.api.ts`
+  - Network wrapper for `getMany`, `getById`, `create`, `update`, and `delete` REST endpoints
+- Created React hooks at `features/items/item.hooks.ts`
+  - TanStack Query queries/mutations (`useItem`, `useItems`, `useCreateItem`, `useUpdateItem`, `useDeleteItem`) with cache invalidation using keys in `item.keys.ts`
+- Created frontend management component at `features/items/components/ItemManagement.tsx`
+  - Supports listing, filtering by category, searching, creating, updating, deleting items, and managing per-item stocks
+
+### Item Feature Testing
+
+- Added comprehensive unit tests in `unit-tests/items/` covering:
+  - Service functions in `item.service.*.test.ts` (`create`, `delete`, `getById`, `getMany`, `update`)
+  - Leverages `jest-mock-extended` for strict type-safe mocking of database transaction client (`PrismaClient`) and nested models without actual database connections
+  - `getById` test uses a custom `jest.mock` factory with `jest.requireActual` to preserve `createSelectItemData`/`createIncludeItemData` named exports as real identity functions while still auto-mocking all repository methods
 
 
 ## Stock Feature
@@ -101,7 +129,7 @@
 ## Notes
 
 - Stock movement feature does not have delete functionality (per feature-notes.md)
-- Update endpoints pass resource ID in request body (inconsistent with REST pattern, At category, item, and stock feature)
-- Create/update/delete endpoints return null as data, requiring additional requests to get IDs (At category, item, and stock feature)
+- Update endpoints pass resource ID in request body (inconsistent with REST pattern at stock feature)
+- Create/update/delete endpoints return null as data, requiring additional requests to get IDs (At stock feature)
 - Integration testing is still not really important for now
 - Probably several search feature is not working if the sortBy isn't by name

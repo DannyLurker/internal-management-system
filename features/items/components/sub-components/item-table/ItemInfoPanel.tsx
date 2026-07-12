@@ -177,7 +177,7 @@ export default function ItemInfoPanel({
                   </div>
 
                   {/* Item Description */}
-                  <div className="h-full max-h-120 overflow-y-auto">
+                  <div className="max-h-120 overflow-y-auto">
                     <div className="h-full rounded-lg border border-[#eef4ff] bg-[#f8f9ff]/50 p-4">
                       <div className="rounded-lg">
                         <dl className="space-y-3 font-ochre-ui text-xs text-[#524439]">

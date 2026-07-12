@@ -167,6 +167,6 @@ describe("categoryService.getById", () => {
       prismaMock,
     );
 
-    expect(mockedItemRepository.buildWhereClause).toHaveBeenCalledWith("coke");
+    expect(mockedItemRepository.buildWhereClause).toHaveBeenCalledWith(null, null, "coke");
   });
 });

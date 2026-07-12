@@ -98,54 +98,6 @@ const itemRepository = {
     itemId: string,
     itemSelect: Prisma.ItemSelect,
     stockWhereClause: Prisma.StockWhereInput,
-    skipStockData: number | undefined,
-    takeStockData: number | undefined,
-    sortBy: string,
-    orderBy: "asc" | "desc",
-    tx: PrismaClient | Prisma.TransactionClient,
-  ) => {
-    return await tx.item.findUnique({
-      where: { id: itemId },
-      select: {
-        ...itemSelect,
-        stocks: {
-          where: stockWhereClause,
-          select: {
-            id: true,
-            item: {
-              select: {
-                name: true,
-                id: true,
-              },
-            },
-            quantity: true,
-            type: true,
-            updatedAt: true,
-            expiredAt: true,
-            location: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-          skip: skipStockData,
-          take: takeStockData,
-          ...(sortBy !== "status"
-            ? {
-                orderBy: {
-                  [sortBy]: orderBy,
-                },
-              }
-            : {}),
-        },
-      },
-    });
-  },
-  refactoredGetById: async (
-    itemId: string,
-    itemSelect: Prisma.ItemSelect,
-    stockWhereClause: Prisma.StockWhereInput,
     stockSelectData: Prisma.StockSelect,
     skipStockData: number | undefined,
     takeStockData: number | undefined,

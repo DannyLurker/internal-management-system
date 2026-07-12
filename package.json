@@ -14,9 +14,9 @@
     "prisma:reset": "npx prisma migrate reset",
     "db:seed:test": "dotenv -e .env.test npx prisma db seed",
     "db:seed:prod": "dotenv -e .env npx prisma db seed",
-    "unit_test": "jest --config jest.config.js",
-    "integration_test": "jest --config jest.integration.config.ts",
-    "e2e_test": "npx playwright test"
+    "unit-test": "jest --config jest.config.js",
+    "integration-test": "jest --config jest.integration.config.ts",
+    "e2e-test": "npx playwright test"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
