@@ -63,7 +63,6 @@ export const stockGetSpecificSchema = z.object({
 export type StockGetSpecificSchema = z.infer<typeof stockGetSpecificSchema>;
 
 export const stockUpdateSchema = z.object({
-  stockId: z.string().trim().min(1),
   type: stockEnum,
   locationId: z.string().trim().min(1),
   expiredAt: z.coerce.date().optional(),

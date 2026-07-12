@@ -33,8 +33,11 @@ const stockApi = {
     return result.data;
   },
 
-  update: async (data: StockUpdateSchema) => {
-    const result = await api.patch<StockCUDApiResponse>(`/stocks`, data);
+  update: async (stockId: string, data: StockUpdateSchema) => {
+    const result = await api.patch<StockCUDApiResponse>(
+      `/stocks/${stockId}`,
+      data,
+    );
     return result.data;
   },
 };

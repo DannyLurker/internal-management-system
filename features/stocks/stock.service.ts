@@ -1,15 +1,7 @@
-import prisma from "@/shared/db/prisma";
-import { badRequest, forbidden, notFound } from "@/shared/lib/error-handlers";
+import { badRequest, notFound } from "@/shared/lib/error-handlers";
 import {
-  canDeleteItem,
-  canManageItem,
-} from "@/shared/lib/validations/user-access-validation";
-import sessionValidation from "@/shared/lib/validations/user-session-validation";
-import {
-  stockCreateSchema,
   StockCreateSchema,
-  stockGetManySchema,
-  stockUpdateSchema,
+  StockGetManySchema,
   StockUpdateSchema,
 } from "@/shared/lib/zods/stock.zod";
 import auditLogsRepository from "../audit-logs/audit-log.repository";
@@ -18,39 +10,38 @@ import {
   stockSelectData,
   stockWhereUniqueInput,
 } from "./stock.repository";
-import { Prisma, StockType } from "@prisma/client";
+import { Prisma, PrismaClient, StockType } from "@prisma/client";
+import { Session } from "next-auth";
+import { locationRepository } from "../locations/location.repository";
 
 const stockService = {
-  create: async (rawData: StockCreateSchema) => {
-    const session = await sessionValidation();
-    const validatedData = stockCreateSchema.parse(rawData);
-
-    if (!canManageItem(session.role)) {
-      throw forbidden("You're not allowed to access this feature");
-    }
-
+  create: async (
+    session: Session["user"],
+    data: StockCreateSchema,
+    prisma: PrismaClient | Prisma.TransactionClient,
+  ) => {
     const created = await prisma.$transaction(async (tx) => {
-      // Check if stock with same itemId, locationId, and type already exists
-      const existing = await tx.stock.findFirst({
-        where: {
-          itemId: validatedData.itemId,
-          locationId: validatedData.locationId,
-          type: validatedData.type as StockType,
-          expiredAt: validatedData.expiredAt,
-        },
-      });
-
       // Check if item exists
       const item = await tx.item.findUnique({
-        where: { id: validatedData.itemId },
+        where: { id: data.itemId },
       });
       if (!item) {
         throw notFound("Item not found");
       }
 
+      // Check if stock with same itemId, locationId, and type already exists
+      const existing = await tx.stock.findFirst({
+        where: {
+          itemId: data.itemId,
+          locationId: data.locationId,
+          type: data.type as StockType,
+          expiredAt: data.expiredAt,
+        },
+      });
+
       // Check if location exists
       const location = await tx.location.findUnique({
-        where: { id: validatedData.locationId },
+        where: { id: data.locationId },
       });
       if (!location) {
         throw notFound("Location not found");
@@ -63,17 +54,17 @@ const stockService = {
           existing.id,
           {
             quantity: {
-              increment: validatedData.quantity,
+              increment: data.quantity,
             },
             movements: {
               create: {
                 type: "RECEIVE",
-                quantity: validatedData.quantity,
-                itemId: validatedData.itemId,
-                destinationLocationId: validatedData.locationId,
+                quantity: data.quantity,
+                itemId: data.itemId,
+                destinationLocationId: data.locationId,
                 createdBy: session.id,
-                reason: validatedData.reason,
-                totalCost: validatedData.totalCost,
+                reason: data.reason,
+                totalCost: data.totalCost,
               },
             },
           },
@@ -82,17 +73,17 @@ const stockService = {
       } else {
         stock = await stockRepository.create(
           {
-            quantity: validatedData.quantity,
-            type: validatedData.type as StockType,
-            expiredAt: validatedData.expiredAt,
+            quantity: data.quantity,
+            type: data.type as StockType,
+            expiredAt: data.expiredAt,
             item: {
               connect: {
-                id: validatedData.itemId,
+                id: data.itemId,
               },
             },
             location: {
               connect: {
-                id: validatedData.locationId,
+                id: data.locationId,
               },
             },
             creator: {
@@ -103,12 +94,12 @@ const stockService = {
             movements: {
               create: {
                 type: "RECEIVE",
-                quantity: validatedData.quantity,
-                itemId: validatedData.itemId,
-                destinationLocationId: validatedData.locationId,
+                quantity: data.quantity,
+                itemId: data.itemId,
+                destinationLocationId: data.locationId,
                 createdBy: session.id,
-                reason: validatedData.reason,
-                totalCost: validatedData.totalCost,
+                reason: data.reason,
+                totalCost: data.totalCost,
               },
             },
           },
@@ -142,13 +133,11 @@ const stockService = {
     };
   },
 
-  getById: async (stockId: string) => {
-    const session = await sessionValidation();
-
-    if (!canManageItem(session.role)) {
-      throw forbidden("You're not allowed to access this feature");
-    }
-
+  getById: async (
+    session: Session["user"],
+    stockId: string,
+    prisma: PrismaClient | Prisma.TransactionClient,
+  ) => {
     const whereQuery = stockWhereUniqueInput({
       id: stockId,
     });
@@ -192,22 +181,19 @@ const stockService = {
     };
   },
 
-  getMany: async (params: { [key: string]: string }) => {
-    const session = await sessionValidation();
-    const validatedParams = stockGetManySchema.parse(params);
-
-    if (!canManageItem(session.role)) {
-      throw forbidden("You're not allowed to access this feature");
-    }
-
+  getMany: async (
+    session: Session["user"],
+    params: StockGetManySchema,
+    prisma: PrismaClient | Prisma.TransactionClient,
+  ) => {
     let whereQuery: Prisma.StockWhereInput = {};
 
-    if (validatedParams.searchQuery) {
+    if (params.searchQuery) {
       whereQuery.OR = [
         {
           item: {
             name: {
-              contains: validatedParams.searchQuery,
+              contains: params.searchQuery,
               mode: "insensitive",
             },
           },
@@ -215,7 +201,7 @@ const stockService = {
         {
           location: {
             name: {
-              contains: validatedParams.searchQuery,
+              contains: params.searchQuery,
               mode: "insensitive",
             },
           },
@@ -223,14 +209,14 @@ const stockService = {
       ];
     }
 
-    if (validatedParams.type && validatedParams.sortBy === "stockType") {
-      whereQuery.type = validatedParams.type;
+    if (params.type && params.sortBy === "stockType") {
+      whereQuery.type = params.type;
     }
-    if (validatedParams.locationId) {
-      whereQuery.locationId = validatedParams.locationId;
+    if (params.locationId) {
+      whereQuery.locationId = params.locationId;
     }
-    if (validatedParams.itemId) {
-      whereQuery.itemId = validatedParams.itemId;
+    if (params.itemId) {
+      whereQuery.itemId = params.itemId;
     }
 
     const selectData = stockSelectData({
@@ -262,16 +248,16 @@ const stockService = {
       },
     });
 
-    const skip = (validatedParams.page - 1) * validatedParams.dataPerPage;
-    const take = validatedParams.dataPerPage;
+    const skip = (params.page - 1) * params.dataPerPage;
+    const take = params.dataPerPage;
 
     const stocks = await stockRepository.getMany(
       whereQuery,
       selectData,
       skip,
       take,
-      validatedParams.sortOrder,
-      validatedParams.sortBy,
+      params.sortOrder,
+      params.sortBy,
       prisma,
     );
 
@@ -285,15 +271,13 @@ const stockService = {
     };
   },
 
-  update: async (rawData: StockUpdateSchema) => {
-    const session = await sessionValidation();
-    const validatedData = stockUpdateSchema.parse(rawData);
-
-    if (!canManageItem(session.role)) {
-      throw forbidden("You're not allowed to access this feature");
-    }
-
-    await prisma.$transaction(async (tx) => {
+  update: async (
+    session: Session["user"],
+    stockId: string,
+    data: StockUpdateSchema,
+    prisma: Prisma.TransactionClient | PrismaClient,
+  ) => {
+    const result = await prisma.$transaction(async (tx) => {
       const selectData = stockSelectData({
         quantity: true,
         type: true,
@@ -303,7 +287,7 @@ const stockService = {
       });
 
       const existing = await stockRepository.get(
-        { id: validatedData.stockId },
+        { id: stockId },
         selectData,
         tx,
       );
@@ -311,20 +295,20 @@ const stockService = {
 
       // Check unique constraint if locationId or type is changing
       if (
-        validatedData.locationId !== existing.locationId ||
-        validatedData.type !== existing.type ||
-        validatedData.expiredAt !== existing.expiredAt
+        data.locationId !== existing.locationId ||
+        data.type !== existing.type ||
+        data.expiredAt !== existing.expiredAt
       ) {
         const existingConflict = await tx.stock.findFirst({
           where: {
             itemId: existing.itemId,
-            locationId: validatedData.locationId,
-            type: validatedData.type as StockType,
-            expiredAt: validatedData.expiredAt,
+            locationId: data.locationId,
+            type: data.type as StockType,
+            expiredAt: data.expiredAt,
           },
         });
 
-        if (existingConflict && existingConflict.id !== validatedData.stockId) {
+        if (existingConflict && existingConflict.id !== stockId) {
           throw badRequest(
             "Another stock with this item, location, and type already exists",
           );
@@ -332,21 +316,19 @@ const stockService = {
       }
 
       // Check if location exists
-      const location = await tx.location.findUnique({
-        where: { id: validatedData.locationId },
-      });
+      const location = await locationRepository.findById(data.locationId, tx);
       if (!location) {
         throw notFound("Location not found");
       }
 
       const stock = await stockRepository.update(
-        validatedData.stockId,
+        stockId,
         {
-          type: validatedData.type as StockType,
-          expiredAt: validatedData.expiredAt,
+          type: data.type as StockType,
+          expiredAt: data.expiredAt,
           location: {
             connect: {
-              id: validatedData.locationId,
+              id: data.locationId,
             },
           },
         },
@@ -377,20 +359,21 @@ const stockService = {
         },
         tx,
       );
+
+      return stock;
     });
 
     return {
       message: `Stock updated successfully`,
+      id: result.id,
     };
   },
 
-  delete: async (stockId: string) => {
-    const session = await sessionValidation();
-
-    if (!canDeleteItem(session.role)) {
-      throw forbidden("You're not allowed to access this feature");
-    }
-
+  delete: async (
+    session: Session["user"],
+    stockId: string,
+    prisma: PrismaClient | Prisma.TransactionClient,
+  ) => {
     const result = await prisma.$transaction(async (tx) => {
       const selectData = stockSelectData({
         id: true,
@@ -452,6 +435,7 @@ const stockService = {
       message: `Stock deleted successfully`,
       data: {
         itemId: result.itemId,
+        stockId: result.stock.id,
       },
     };
   },

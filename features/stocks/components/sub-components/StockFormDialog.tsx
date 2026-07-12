@@ -30,6 +30,7 @@ import {
 } from "@/shared/lib/zods/stock.zod";
 import { cn } from "@/shared/lib/utils";
 import { inputClass } from "../../stock.style";
+import { toast } from "sonner";
 
 type LocationOption = { id: string; name: string };
 type ItemOption = { id: string; name: string };
@@ -78,7 +79,6 @@ export default function StockFormDialog({
   const updateForm = useForm<StockUpdateSchema>({
     resolver: zodResolver(stockUpdateSchema) as Resolver<StockUpdateSchema>,
     defaultValues: {
-      stockId: "",
       type: "READY",
       locationId: "",
       expiredAt: undefined,
@@ -94,7 +94,6 @@ export default function StockFormDialog({
 
     if (stock) {
       updateForm.reset({
-        stockId: stock.id,
         type: stock.type,
         locationId: stock.locationId,
         expiredAt: stock.expiredAt ? new Date(stock.expiredAt) : undefined,
@@ -125,10 +124,17 @@ export default function StockFormDialog({
   });
 
   const onUpdateSubmit = updateForm.handleSubmit(async (values) => {
+    if (!stock?.id) {
+      toast.error(
+        "Stock id missing. Something went wrong. Try it again later.",
+      );
+      return;
+    }
+
     const payload = stockUpdateSchema.parse(values);
 
     try {
-      await updateMutation.mutateAsync(payload);
+      await updateMutation.mutateAsync({ stockId: stock.id, payload });
       onOpenChange(false);
       onSuccess();
     } catch {

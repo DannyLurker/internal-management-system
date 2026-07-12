@@ -59,7 +59,13 @@ export const useUpdateItem = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: StockUpdateSchema) => stockApi.update(payload),
+    mutationFn: ({
+      stockId,
+      payload,
+    }: {
+      stockId: string;
+      payload: StockUpdateSchema;
+    }) => stockApi.update(stockId, payload),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: STOCK_KEYS.lists() });
       queryClient.invalidateQueries({ queryKey: ITEM_KEYS.details() });

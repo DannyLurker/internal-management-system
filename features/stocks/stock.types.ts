@@ -30,8 +30,9 @@ export type Stock = {
 };
 
 // Create-Update-Delete
-export type StockCUDApiResponse = ApiResponse<null>;
-
+export type StockCUDApiResponse = ApiResponse<{
+  id: string;
+}>;
 export type StockGetManyApiResponse = ApiResponse<
   StockServiceGetManyResponse["data"]
 >;
