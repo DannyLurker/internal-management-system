@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { useForm, type Resolver } from "react-hook-form";
+import { Controller, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Camera, Plus, X, Calendar, Keyboard } from "lucide-react";
 import {
@@ -33,6 +33,7 @@ import { cn } from "@/shared/lib/utils";
 import { attributesToRecord, parseAttributes } from "../../item.utils";
 import { inputClass } from "../../item.style";
 import { toast } from "sonner";
+import { formatThousand, unformatThousand } from "@/shared/lib/formatter";
 
 type LocationOption = { id: string; name: string };
 type CategoryOption = { id: string; name: string };
@@ -410,53 +411,124 @@ export default function ItemFormDialog({
                 <Label className="font-ochre-ui text-sm">
                   Selling price ($)
                 </Label>
-                <Input
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  className={cn("mt-1.5", inputClass)}
-                  {...(isEdit
-                    ? updateForm.register("sellingPrice", {
-                        setValueAs: (value) =>
-                          value === "" ? undefined : Number(value),
-                      })
-                    : createForm.register("sellingPrice", {
-                        setValueAs: (value) =>
-                          value === "" ? undefined : Number(value),
-                      }))}
-                  required={false}
-                />
+                {isEdit ? (
+                  <Controller
+                    control={updateForm.control}
+                    name="sellingPrice"
+                    render={({ field }) => (
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        className={cn("mt-1.5", inputClass)}
+                        placeholder="1.000"
+                        value={formatThousand(field.value ?? "")}
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+                          const numericValue = unformatThousand(rawValue);
+                          // Directly updates the numerical form state without DOM interference
+                          field.onChange(
+                            numericValue === 0 ? undefined : numericValue,
+                          );
+                        }}
+                      />
+                    )}
+                  />
+                ) : (
+                  <Controller
+                    control={createForm.control}
+                    name="sellingPrice"
+                    render={({ field }) => (
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        className={cn("mt-1.5", inputClass)}
+                        placeholder="1.000"
+                        value={formatThousand(field.value ?? "")}
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+                          const numericValue = unformatThousand(rawValue);
+                          // Directly updates the numerical form state without DOM interference
+                          field.onChange(
+                            numericValue === 0 ? undefined : numericValue,
+                          );
+                        }}
+                      />
+                    )}
+                  />
+                )}
               </div>
               {!isEdit ? (
                 <div>
                   <Label className="font-ochre-ui text-sm">Initial stock</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    className={cn("mt-1.5", inputClass)}
-                    {...createForm.register("stock.quantity", {
-                      setValueAs: (value) =>
-                        value === "" ? undefined : Number(value),
-                    })}
+                  <Controller
+                    control={createForm.control}
+                    name="stock.quantity"
+                    render={({ field }) => (
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        className={cn("mt-1.5", inputClass)}
+                        placeholder="1.000"
+                        value={formatThousand(field.value ?? "")}
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+                          const numericValue = unformatThousand(rawValue);
+                          // Directly updates the numerical form state without DOM interference
+                          field.onChange(
+                            numericValue === 0 ? undefined : numericValue,
+                          );
+                        }}
+                      />
+                    )}
                   />
                 </div>
               ) : null}
               <div>
                 <Label className="font-ochre-ui text-sm">Min. threshold</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  className={cn("mt-1.5", inputClass)}
-                  {...(isEdit
-                    ? updateForm.register("minThreshold", {
-                        setValueAs: (value) =>
-                          value === "" ? undefined : Number(value),
-                      })
-                    : createForm.register("minThreshold", {
-                        setValueAs: (value) =>
-                          value === "" ? undefined : Number(value),
-                      }))}
-                />
+                {isEdit ? (
+                  <Controller
+                    control={updateForm.control}
+                    name="minThreshold"
+                    render={({ field }) => (
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        className={cn("mt-1.5", inputClass)}
+                        placeholder="1.000"
+                        value={formatThousand(field.value ?? "")}
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+                          const numericValue = unformatThousand(rawValue);
+                          field.onChange(
+                            numericValue === 0 ? undefined : numericValue,
+                          );
+                        }}
+                      />
+                    )}
+                  />
+                ) : (
+                  <Controller
+                    control={createForm.control}
+                    name="minThreshold"
+                    render={({ field }) => (
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        className={cn("mt-1.5", inputClass)}
+                        placeholder="1.000"
+                        value={formatThousand(field.value ?? "")}
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+                          const numericValue = unformatThousand(rawValue);
+                          // Directly updates the numerical form state without DOM interference
+                          field.onChange(
+                            numericValue === 0 ? undefined : numericValue,
+                          );
+                        }}
+                      />
+                    )}
+                  />
+                )}
               </div>
             </div>
 
@@ -466,15 +538,26 @@ export default function ItemFormDialog({
                   <Label className="font-ochre-ui text-sm">
                     Total cost ($)
                   </Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    step="0.01"
-                    className={cn("mt-1.5", inputClass)}
-                    {...createForm.register("stock.totalCost", {
-                      setValueAs: (value) =>
-                        value === "" ? undefined : Number(value),
-                    })}
+                  <Controller
+                    control={createForm.control}
+                    name="stock.totalCost"
+                    render={({ field }) => (
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        className={cn("mt-1.5", inputClass)}
+                        placeholder="1.000"
+                        value={formatThousand(field.value ?? "")}
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+                          const numericValue = unformatThousand(rawValue);
+                          // Directly updates the numerical form state without DOM interference
+                          field.onChange(
+                            numericValue === 0 ? undefined : numericValue,
+                          );
+                        }}
+                      />
+                    )}
                   />
                   {createForm.formState.errors.stock?.totalCost ? (
                     <p className="mt-1 font-ochre-ui text-xs text-red-600">

@@ -78,15 +78,4 @@ export function formatMovementLabel(value: string) {
     .join(" ");
 }
 
-// change "1000000" into "10.000.000"
-export const formatThousand = (value: string | number): string => {
-  if (!value) return "";
-  const numString = value.toString().replace(/\D/g, ""); // Hapus semua karakter non-angka
-  return new Intl.NumberFormat("id-ID").format(Number(numString));
-};
 
-// change "10.000.000" into 10000000 for database
-export const unformatThousand = (value: string): number => {
-  if (!value) return 0;
-  return Number(value.replace(/\./g, "")); // Hapus semua titik
-};

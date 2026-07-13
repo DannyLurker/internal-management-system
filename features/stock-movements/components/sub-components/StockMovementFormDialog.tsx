@@ -29,8 +29,8 @@ import {
 import { stockGetManySchema } from "@/shared/lib/zods/stock.zod";
 import { useCreateStockMovement } from "../../stock-movements.hooks";
 import { stockMovementInputClass } from "../../stock-movements.style";
-import { formatThousand, unformatThousand } from "../../stock-movements.utils";
 import { StockType } from "@prisma/client";
+import { formatThousand, unformatThousand } from "@/shared/lib/formatter";
 
 type ItemOption = { id: string; name: string };
 type LocationOption = { id: string; name: string };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { useForm, type Resolver } from "react-hook-form";
+import { Controller, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Calendar, Keyboard } from "lucide-react";
 import {
@@ -31,6 +31,7 @@ import {
 import { cn } from "@/shared/lib/utils";
 import { inputClass } from "../../stock.style";
 import { toast } from "sonner";
+import { formatThousand, unformatThousand } from "@/shared/lib/formatter";
 
 type LocationOption = { id: string; name: string };
 type ItemOption = { id: string; name: string };
@@ -310,13 +311,26 @@ export default function StockFormDialog({
                   Quantity
                 </Label>
 
-                <Input
-                  type={"number"}
-                  placeholder={"100"}
-                  className={cn("w-full", inputClass)}
-                  {...createForm.register("quantity", {
-                    setValueAs: (value) => Number(value),
-                  })}
+                <Controller
+                  control={createForm.control}
+                  name="quantity"
+                  render={({ field }) => (
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      className={cn("mt-1.5", inputClass)}
+                      placeholder="1.000"
+                      value={formatThousand(field.value ?? "")}
+                      onChange={(e) => {
+                        const rawValue = e.target.value;
+                        const numericValue = unformatThousand(rawValue);
+                        // Directly updates the numerical form state without DOM interference
+                        field.onChange(
+                          numericValue === 0 ? undefined : numericValue,
+                        );
+                      }}
+                    />
+                  )}
                 />
                 {(
                   isEdit
@@ -349,15 +363,37 @@ export default function StockFormDialog({
                     <Label className="font-ochre-ui text-sm">
                       Total cost ($)
                     </Label>
-                    <Input
+                    {/* <Input
                       type="number"
                       min={1}
                       step="0.01"
+                      value={}
                       className={cn("mt-1.5", inputClass)}
                       {...createForm.register("totalCost", {
                         setValueAs: (value) =>
                           value === "" ? undefined : Number(value),
                       })}
+                    /> */}
+                    <Controller
+                      control={createForm.control}
+                      name="totalCost"
+                      render={({ field }) => (
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          className={cn("mt-1.5", inputClass)}
+                          placeholder="1.000"
+                          value={formatThousand(field.value ?? "")}
+                          onChange={(e) => {
+                            const rawValue = e.target.value;
+                            const numericValue = unformatThousand(rawValue);
+                            // Directly updates the numerical form state without DOM interference
+                            field.onChange(
+                              numericValue === 0 ? undefined : numericValue,
+                            );
+                          }}
+                        />
+                      )}
                     />
                     {createForm.formState.errors.totalCost ? (
                       <p className="mt-1 font-ochre-ui text-xs text-red-600">
