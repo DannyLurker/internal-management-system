@@ -1,3 +1,4 @@
+import { RuleResult } from "@/shared/lib/types/rule.type";
 import { StockType } from "@prisma/client";
 
 /**
@@ -80,3 +81,22 @@ export function isStockExpiringSoon(
   windowEnd.setDate(windowEnd.getDate() + windowDays);
   return expiredAt >= now && expiredAt <= windowEnd;
 }
+
+export const stockRules = {
+  canUpdateStock: (
+    stockTargetId: string | undefined,
+    currentStockId: string,
+  ): RuleResult => {
+    if (stockTargetId === currentStockId) {
+      return {
+        allowed: false,
+        reason:
+          "Another stock with this item, location, and type already exists",
+      };
+    }
+
+    return {
+      allowed: true,
+    };
+  },
+};

@@ -13,6 +13,7 @@ import {
 import { Prisma, PrismaClient, StockType } from "@prisma/client";
 import { Session } from "next-auth";
 import { locationRepository } from "../locations/location.repository";
+import { stockRules } from "./stock.rule";
 
 const stockService = {
   create: async (
@@ -308,10 +309,13 @@ const stockService = {
           },
         });
 
-        if (existingConflict && existingConflict.id !== stockId) {
-          throw badRequest(
-            "Another stock with this item, location, and type already exists",
-          );
+        const canBeUpdated = stockRules.canUpdateStock(
+          existingConflict?.id,
+          stockId,
+        );
+
+        if (!canBeUpdated.allowed) {
+          throw badRequest(canBeUpdated.reason);
         }
       }
 
