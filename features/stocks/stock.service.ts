@@ -407,10 +407,10 @@ const stockService = {
 
       if (!existing) throw notFound("Stock not found");
 
-      if (existing.movements && existing.movements.length > 0) {
-        throw badRequest(
-          "Stock cannot be deleted because it has history of stock movements.",
-        );
+      const canBeDeleted = stockRules.canDeleteStock(existing.movements);
+
+      if (!canBeDeleted.allowed) {
+        throw badRequest(canBeDeleted.reason);
       }
 
       const stock = await stockRepository.delete(stockId, tx);

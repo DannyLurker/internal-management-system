@@ -99,4 +99,18 @@ export const stockRules = {
       allowed: true,
     };
   },
+
+  canDeleteStock: (stockMovements: { id: string }[]): RuleResult => {
+    if (stockMovements.length < 0) {
+      return {
+        allowed: false,
+        reason:
+          "Stock cannot be deleted because it has history of stock movements.",
+      };
+    }
+
+    return {
+      allowed: true,
+    };
+  },
 };
