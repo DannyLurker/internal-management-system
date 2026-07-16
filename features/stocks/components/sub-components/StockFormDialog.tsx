@@ -21,7 +21,7 @@ import {
   SelectTrigger,
 } from "@/shared/components/ui/select";
 import type { Stock } from "@/features/stocks/stock.types";
-import { useCreateItem, useUpdateItem } from "@/features/stocks/stock.hooks";
+import { useCreateStock, useUpdateStock } from "@/features/stocks/stock.hooks";
 import {
   stockCreateSchema,
   stockUpdateSchema,
@@ -60,8 +60,8 @@ export default function StockFormDialog({
     "picker",
   );
 
-  const createMutation = useCreateItem();
-  const updateMutation = useUpdateItem();
+  const createMutation = useCreateStock();
+  const updateMutation = useUpdateStock();
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   const createForm = useForm<StockCreateSchema>({
@@ -363,17 +363,6 @@ export default function StockFormDialog({
                     <Label className="font-ochre-ui text-sm">
                       Total cost ($)
                     </Label>
-                    {/* <Input
-                      type="number"
-                      min={1}
-                      step="0.01"
-                      value={}
-                      className={cn("mt-1.5", inputClass)}
-                      {...createForm.register("totalCost", {
-                        setValueAs: (value) =>
-                          value === "" ? undefined : Number(value),
-                      })}
-                    /> */}
                     <Controller
                       control={createForm.control}
                       name="totalCost"
@@ -468,11 +457,11 @@ export default function StockFormDialog({
                 className={cn("w-full", inputClass)}
                 {...(isEdit
                   ? updateForm.register("expiredAt", {
-                      setValueAs: (value) => (value === "" ? undefined : value),
-                    })
+                    setValueAs: (value) => (value === "" ? undefined : value),
+                  })
                   : createForm.register("expiredAt", {
-                      setValueAs: (value) => (value === "" ? undefined : value),
-                    }))}
+                    setValueAs: (value) => (value === "" ? undefined : value),
+                  }))}
               />
               {(
                 isEdit

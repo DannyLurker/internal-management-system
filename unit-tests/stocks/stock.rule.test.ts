@@ -1,9 +1,9 @@
+import { describeStockStatusFilter } from "@/features/stocks/stock.rule";
 import {
   DEFAULT_EXPIRING_WINDOW_DAYS,
-  describeStockStatusFilter,
   isStockExpired,
   isStockExpiringSoon,
-} from "@/features/stocks/stock.rule";
+} from "@/features/stocks/stock.utils";
 
 describe("describeStockStatusFilter", () => {
   const now = new Date("2026-07-08T00:00:00.000Z");
