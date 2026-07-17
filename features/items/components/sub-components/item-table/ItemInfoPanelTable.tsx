@@ -110,6 +110,8 @@ export default function ItemInfoPanelTable({
                             "bg-rose-100 text-rose-800",
                           stock?.type === "EXPIRED" &&
                             "bg-gray-150 text-gray-800 border border-gray-300",
+                          stock?.type === "LOST" &&
+                            "bg-slate-200 text-slate-800 border border-slate-400",
                         )}
                       >
                         {stock?.type}
