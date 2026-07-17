@@ -5,9 +5,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import type { StockDelete } from "@/features/stocks/stock.types";
-import { useDeleteItem } from "@/features/stocks/stock.hooks";
 import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
+import { useDeleteStock } from "../../stock.hooks";
 
 type StockDeleteModalProps = {
   open: boolean;
@@ -25,7 +25,7 @@ export default function StockDeleteModal({
   const [mounted, setMounted] = useState(false);
 
   const titleId = useId();
-  const deleteMutation = useDeleteItem();
+  const deleteMutation = useDeleteStock();
 
   const handleClose = () => onOpenChange(false);
 
@@ -36,7 +36,7 @@ export default function StockDeleteModal({
       await deleteMutation.mutateAsync(stock.stockId);
       onOpenChange(false);
       onSuccess();
-    } catch {}
+    } catch { }
   };
 
   useEffect(() => {

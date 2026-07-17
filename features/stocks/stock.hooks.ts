@@ -42,20 +42,19 @@ export const useStockById = (
   });
 };
 
-export const useCreateItem = () => {
+export const useCreateStock = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (payload: StockCreateSchema) => stockApi.create(payload),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: STOCK_KEYS.lists() });
-      queryClient.invalidateQueries({ queryKey: ITEM_KEYS.details() });
       toast.success(data.message);
     },
   });
 };
 
-export const useUpdateItem = () => {
+export const useUpdateStock = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -67,23 +66,20 @@ export const useUpdateItem = () => {
       payload: StockUpdateSchema;
     }) => stockApi.update(stockId, payload),
     onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ITEM_KEYS.detail(data.data.id) });
       queryClient.invalidateQueries({ queryKey: STOCK_KEYS.lists() });
-      queryClient.invalidateQueries({ queryKey: ITEM_KEYS.details() });
       toast.success(data.message);
     },
   });
 };
 
-export const useDeleteItem = () => {
+export const useDeleteStock = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (id: string) => stockApi.delete(id),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: STOCK_KEYS.lists() });
-      queryClient.invalidateQueries({
-        queryKey: ITEM_KEYS.details(),
-      });
       toast.success(data.message);
     },
   });

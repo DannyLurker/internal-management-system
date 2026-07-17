@@ -309,7 +309,7 @@ const stockService = {
           },
         });
 
-        const canBeUpdated = stockRules.canUpdateStock(
+        const canBeUpdated = stockRules.checkCanUpdateStock(
           existingConflict?.id,
           stockId,
         );
@@ -407,10 +407,10 @@ const stockService = {
 
       if (!existing) throw notFound("Stock not found");
 
-      const canBeDeleted = stockRules.canDeleteStock(existing.movements);
+      const deletionResult = stockRules.checkCanDeleteStock(existing.movements);
 
-      if (!canBeDeleted.allowed) {
-        throw badRequest(canBeDeleted.reason);
+      if (!deletionResult.allowed) {
+        throw badRequest(deletionResult.reason);
       }
 
       const stock = await stockRepository.delete(stockId, tx);
