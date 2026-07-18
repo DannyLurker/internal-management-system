@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, ChevronDown, Plus } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, MapPin, Plus } from "lucide-react";
 import { useItem } from "@/features/items/item.hooks";
-import { formatItemPrice } from "@/shared/lib/formatter";
+import { formatItemPrice, formatThousand } from "@/shared/lib/formatter";
 import ItemInfoPanelTable from "./ItemInfoPanelTable";
 import {
   Dialog,
@@ -21,6 +21,7 @@ import {
   StockSortOrder,
 } from "@/features/stocks/stock.types";
 import { itemGetByIdSchema } from "@/shared/lib/zods/item.zod";
+import { ItemOption } from "@/features/stock-movements/stock-movements.types";
 
 type ItemInfoPanelProps = {
   open: boolean;
@@ -29,6 +30,8 @@ type ItemInfoPanelProps = {
   openStockEdit: (stock: Stock) => void;
   openStockDelete: (stock: StockDelete) => void;
   openStockCreate: () => void;
+  onSelectedGlobalItemStock: (item: ItemOption[]) => void;
+  onOpenStockMovement: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 export default function ItemInfoPanel({
@@ -38,6 +41,8 @@ export default function ItemInfoPanel({
   openStockDelete,
   openStockEdit,
   openStockCreate,
+  onSelectedGlobalItemStock,
+  onOpenStockMovement,
 }: ItemInfoPanelProps) {
   const [itemStockPage, setItemStockPage] = useState(1);
   const [itemStocksPerpage, setItemStocksPerpage] = useState(10);
@@ -76,6 +81,9 @@ export default function ItemInfoPanel({
 
   const itemData = data?.data?.item;
 
+  console.log(data);
+
+  const unlocatedItems = data?.data.unlocatedItem;
   const totalLocatedItemQuantity = data?.data.totalLocatedItemQuantity ?? 0;
   const totalUnlocatedItemQuantity = data?.data.totalUnlocatedItemQuantity ?? 0;
   const totalReadyStock = data?.data.totalReadyStock ?? 0;
@@ -462,6 +470,124 @@ export default function ItemInfoPanel({
                   openStockDelete={openStockDelete}
                   openStockEdit={openStockEdit}
                 />
+              </div>
+
+              {/* Unlocated Stock */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-[#eef4ff] pb-2">
+                  <h3 className="font-ochre-brand text-lg font-medium text-[#894d0d]">
+                    Stock Distributions (Unlocated)
+                  </h3>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onOpenStockMovement((prev) => !prev);
+                        onSelectedGlobalItemStock([
+                          {
+                            id: itemData.id as string,
+                            name: itemData.name as string,
+                          },
+                        ]);
+                      }}
+                      className={cn(
+                        "inline-flex shrink-0 items-center gap-2 self-start rounded bg-[#894d0d] px-5 py-1 font-ochre-ui text-sm font-semibold uppercase tracking-wide text-white shadow-[0_8px_24px_-8px_rgba(137,77,13,0.45)]",
+                        "transition-[transform,box-shadow] hover:-translate-y-px",
+                        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#894d0d]",
+                      )}
+                    >
+                      <Plus className="size-4" strokeWidth={2} aria-hidden />
+                      Global New stock
+                    </button>
+                  </div>
+                </div>
+
+                <div className="overflow-hidden rounded-xl border border-[#d9e3f4]/80 bg-white shadow-[0_16px_48px_-20px_rgba(15,23,42,0.08)]">
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="border-b border-[#d9e3f4] text-left h-12 bg-[#f8f9ff]/50">
+                          <th className="px-4 w-16 align-middle text-center font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
+                            No
+                          </th>
+                          <th className="px-4 align-middle font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
+                            Type
+                          </th>
+                          {/* Perbaikan: Menyelaraskan Quantity ke kanan */}
+                          <th className="px-4 align-middle text-right font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
+                            Quantity
+                          </th>
+                          <th className="px-4 pr-6 align-middle text-right font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {unlocatedItems ? (
+                          <tr className="border-b border-[#eef4ff] last:border-0 hover:bg-[#f8f9ff]/40 transition-colors duration-200">
+                            <td className="px-4 py-3 text-center align-middle font-ochre-ui text-sm font-medium text-[#524439]/60">
+                              1
+                            </td>
+                            <td className="px-4 py-3 align-middle font-ochre-ui text-xs">
+                              <span
+                                className={cn(
+                                  "inline-flex rounded px-1.5 py-0.5 font-semibold text-[10px] uppercase tracking-wide",
+                                  unlocatedItems.type === "RECEIVE"
+                                    ? "bg-amber-100 text-amber-800" // Menggunakan Amber agar kontras dengan warna 'READY' (Emerald)
+                                    : "bg-slate-100 text-slate-800",
+                                )}
+                              >
+                                {unlocatedItems.type}
+                              </span>
+                            </td>
+
+                            {/* Perbaikan: Rata kanan agar sejajar dengan thead */}
+                            <td className="px-4 py-3 align-middle text-right font-ochre-ui text-sm font-semibold text-[#121c28]">
+                              {formatThousand(unlocatedItems.quantity ?? 0)}
+                            </td>
+
+                            <td className="px-4 pr-6 py-3 align-middle text-right">
+                              <button
+                                type="button"
+                                // onClick={() =>
+                                //   onSelectedGlobalItemStock([
+                                //     {
+                                //       id: itemData.id as string,
+                                //       name: itemData.name as string,
+                                //     },
+                                //   ])
+                                // }
+                                className={cn(
+                                  "inline-flex shrink-0 items-center gap-1.5 rounded bg-[#894d0d] px-3 py-1 font-ochre-ui text-xs font-semibold uppercase tracking-wide text-white shadow-[0_4px_12px_-4px_rgba(137,77,13,0.35)]",
+                                  "transition-[transform,box-shadow] hover:-translate-y-px hover:shadow-[0_6px_16px_-4px_rgba(137,77,13,0.5)]",
+                                  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#894d0d]",
+                                )}
+                              >
+                                <MapPin
+                                  className="size-3.5"
+                                  strokeWidth={2.5}
+                                  aria-hidden
+                                />
+                                Locate
+                              </button>
+                            </td>
+                          </tr>
+                        ) : (
+                          <tr>
+                            {/* Perbaikan: Diubah menjadi colSpan={4} karena jumlah kolom sekarang ada 4 */}
+                            <td
+                              colSpan={4}
+                              className="px-4 py-12 text-center font-ochre-ui text-sm italic text-[#524439]/60"
+                            >
+                              No unlocated items available
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
           ) : null}

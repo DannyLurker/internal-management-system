@@ -43,6 +43,7 @@ type StockMovementFormDialogProps = {
   items: ItemOption[];
   locations: LocationOption[];
   movementTypes: MovementTypeOption[];
+  hiddenFields?: ("stockBatch" | "itemId" | "movementType")[];
 };
 
 const stockRequiredTypes = new Set<MovementTypeOption>([
@@ -92,6 +93,7 @@ export default function StockMovementFormDialog({
   items,
   locations,
   movementTypes,
+  hiddenFields,
 }: StockMovementFormDialogProps) {
   const formId = useId();
   const createMutation = useCreateStockMovement();
@@ -310,41 +312,47 @@ export default function StockMovementFormDialog({
               </div>
             </div>
 
-            {requiresStock ? (
-              <div>
-                <Label className="font-ochre-ui text-sm">Stock Batch</Label>
-                <Select
-                  value={selectedStockId ?? ""}
-                  onValueChange={(value) =>
-                    form.setValue("stockId", value || undefined, {
-                      shouldValidate: true,
-                    })
-                  }
-                >
-                  <SelectTrigger
-                    className={cn("mt-1.5 w-full", stockMovementInputClass)}
-                  >
-                    {selectedStock
-                      ? `${selectedStock.item.name} - ${selectedStock.location?.name ?? "No location"} - ${selectedStock.type} (${selectedStock.quantity ?? 0})`
-                      : "Select source stock"}
-                  </SelectTrigger>
-                  <SelectContent>
-                    {stockOptions.map((stock) => (
-                      <SelectItem key={stock.id} value={stock.id}>
-                        {stock.item.name} -{" "}
-                        {stock.location?.name ?? "No location"} - {stock.type} (
-                        {stock.quantity ?? 0})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.stockId ? (
-                  <p className="mt-1 font-ochre-ui text-xs text-red-600">
-                    {form.formState.errors.stockId.message}
-                  </p>
+            {hiddenFields?.includes("stockBatch") ? (
+              <div></div>
+            ) : (
+              <>
+                {requiresStock ? (
+                  <div>
+                    <Label className="font-ochre-ui text-sm">Stock Batch</Label>
+                    <Select
+                      value={selectedStockId ?? ""}
+                      onValueChange={(value) =>
+                        form.setValue("stockId", value || undefined, {
+                          shouldValidate: true,
+                        })
+                      }
+                    >
+                      <SelectTrigger
+                        className={cn("mt-1.5 w-full", stockMovementInputClass)}
+                      >
+                        {selectedStock
+                          ? `${selectedStock.item.name} - ${selectedStock.location?.name ?? "No location"} - ${selectedStock.type} (${selectedStock.quantity ?? 0})`
+                          : "Select source stock"}
+                      </SelectTrigger>
+                      <SelectContent>
+                        {stockOptions.map((stock) => (
+                          <SelectItem key={stock.id} value={stock.id}>
+                            {stock.item.name} -{" "}
+                            {stock.location?.name ?? "No location"} -{" "}
+                            {stock.type} ({stock.quantity ?? 0})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {form.formState.errors.stockId ? (
+                      <p className="mt-1 font-ochre-ui text-xs text-red-600">
+                        {form.formState.errors.stockId.message}
+                      </p>
+                    ) : null}
+                  </div>
                 ) : null}
-              </div>
-            ) : null}
+              </>
+            )}
 
             <div className="grid gap-4  ">
               {requiresDestination ? (

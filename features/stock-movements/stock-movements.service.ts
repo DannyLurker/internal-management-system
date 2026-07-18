@@ -83,6 +83,7 @@ const stockMovementsService = {
 
       const createdStockMovement: Prisma.StockMovementUncheckedCreateInput = {
         itemId: payload.itemId,
+        itemName: item.name,
         stockId: payload.stockId,
         type: payload.stockMovementType,
         quantity: payload.quantity,
@@ -373,6 +374,12 @@ const stockMovementsService = {
           },
         },
         {
+          itemName: {
+            contains: validatedParams.searchQuery,
+            mode: "insensitive",
+          },
+        },
+        {
           reason: {
             contains: validatedParams.searchQuery,
             mode: "insensitive",
@@ -406,12 +413,13 @@ const stockMovementsService = {
       type: true,
       reason: true,
       itemId: true,
+      itemName: true,
       stockId: true,
       sourceLocationId: true,
       destinationLocationId: true,
       orderId: true,
       createdAt: true,
-      item: { select: { id: true, name: true } },
+      item: { select: { id: true } },
       stock: { select: { id: true, quantity: true, type: true } },
       sourceLocation: { select: { id: true, name: true } },
       destinationLocation: { select: { id: true, name: true } },

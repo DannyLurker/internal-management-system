@@ -92,7 +92,6 @@
   - Leverages `jest-mock-extended` for strict type-safe mocking of database transaction client (`PrismaClient`) and nested models without actual database connections
   - `getById` test uses a custom `jest.mock` factory with `jest.requireActual` to preserve `createSelectItemData`/`createIncludeItemData` named exports as real identity functions while still auto-mocking all repository methods
 
-
 ## Stock Feature
 
 ### Stock Feature Development
@@ -167,9 +166,10 @@
 - Removed non-existent functionality (quick actions, complex stock manipulation)
 - Aligned with actual API endpoints and schema field names
 - Test coverage: Create (RECEIVE), Get list, Get by ID, Update, and error cases
-- Note: Delete functionality not implemented 
+- Note: Delete functionality not implemented
 
 ## Notes
 
-- Stock movement feature does not have delete functionality 
+- Stock movement feature does not have delete functionality
 - Integration testing is still not really important for now
+- Item delete feature is turned off

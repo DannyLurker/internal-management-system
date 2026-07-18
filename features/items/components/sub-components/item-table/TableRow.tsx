@@ -149,7 +149,8 @@ export default function TableRow({
             </button>
           )}
 
-          {!item.isActive &&
+          {/* Turn off delete feature for a while, can be re-activated in the future  */}
+          {/* {!item.isActive &&
             data?.user.role &&
             canDeleteItem(data?.user.role) && (
               <button
@@ -169,7 +170,7 @@ export default function TableRow({
               >
                 <Trash2 className="size-4" strokeWidth={1.5} />
               </button>
-            )}
+            )} */}
         </div>
       </td>
     </tr>
