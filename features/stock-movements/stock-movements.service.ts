@@ -56,7 +56,8 @@ const stockMovementsService = {
       ];
       if (
         TYPES_REQUIRING_STOCK_ID.includes(payload.stockMovementType) &&
-        !currentStock
+        !currentStock &&
+        !payload.isGlobalStock
       ) {
         throw badRequest(
           `stockId is required for movement type '${payload.stockMovementType}'`,
@@ -104,6 +105,75 @@ const stockMovementsService = {
         );
       }
 
+      // Skip source location validation for TRANSFER movements involving unlocated (global) stock.
+      if (payload.isGlobalStock && payload.stockMovementType === "TRANSFER") {
+        const globalStockQuantity =
+          await stockMovementsRepository.countQuantity(
+            {
+              stockId: null,
+              itemId: item?.id,
+              destinationLocationId: null,
+              sourceLocationId: null,
+              type: "RECEIVE",
+            },
+            tx,
+          );
+
+        if (!globalStockQuantity) throw badRequest("Global stock not foudn");
+
+        if (globalStockQuantity < payload.quantity)
+          throw badRequest("Insufficient stock quantity.");
+
+        const destinationStock = await stockRepository.findOrUpdateOrCreate(
+          // Find
+          {
+            expiredAt: payload.expiredAt ?? null,
+            locationId: destLoc?.id,
+            itemId: item.id,
+            type: "READY",
+          },
+          // Update
+          {
+            quantity: {
+              increment: payload.quantity,
+            },
+          },
+          // Create
+          {
+            item: { connect: { id: payload.itemId } },
+            creator: { connect: { id: session.id } },
+            quantity: payload.quantity,
+            location: {
+              connect: { id: payload.destinationLocationId },
+            },
+            expiredAt: payload.expiredAt,
+            type: "READY",
+          },
+          prisma,
+        );
+
+        await stockMovementsRepository.create(
+          {
+            ...createdStockMovement,
+            stockId: null,
+            destinationLocationId: null,
+            sourceLocationId: null,
+            type: "TRANSFER",
+            quantity: -payload.quantity,
+          },
+          tx,
+        );
+
+        movement = await stockMovementsRepository.create(
+          {
+            ...createdStockMovement,
+            stockId: destinationStock.id,
+            totalCost: null,
+          },
+          tx,
+        );
+      }
+
       // RECEIVE / LAUNDRY_IN against an existing stock row: increment in place.
       if (
         currentStock?.id &&
@@ -126,7 +196,11 @@ const stockMovementsService = {
       }
 
       // TRANSFER
-      if (currentStock && payload.stockMovementType === "TRANSFER") {
+      if (
+        currentStock &&
+        payload.stockMovementType === "TRANSFER" &&
+        !payload.isGlobalStock // In a regular transfer, current location is needed and the system takes it from retrieving stock data
+      ) {
         if (payload.destinationLocationId === currentStock.locationId)
           throw badRequest(
             "Source location and destination location can't be same",

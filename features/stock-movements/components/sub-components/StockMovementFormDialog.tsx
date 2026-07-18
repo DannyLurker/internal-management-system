@@ -42,6 +42,7 @@ type StockMovementFormDialogProps = {
   onSuccess: () => void;
   items: ItemOption[];
   locations: LocationOption[];
+  isGlobalStock?: boolean;
   movementTypes: MovementTypeOption[];
   hiddenFields?: ("stockBatch" | "itemId" | "movementType")[];
 };
@@ -94,9 +95,15 @@ export default function StockMovementFormDialog({
   locations,
   movementTypes,
   hiddenFields,
+  isGlobalStock,
 }: StockMovementFormDialogProps) {
   const formId = useId();
   const createMutation = useCreateStockMovement();
+
+  const defaultType =
+    movementTypes.length === 1 && movementTypes[0] === "TRANSFER"
+      ? "TRANSFER"
+      : "RECEIVE";
 
   const form = useForm<StockMovementCreateSchema>({
     resolver: zodResolver(
@@ -105,12 +112,14 @@ export default function StockMovementFormDialog({
     defaultValues: {
       itemId: "",
       stockId: undefined,
-      stockMovementType: "RECEIVE",
+      isGlobalStock: isGlobalStock ?? undefined,
+      stockMovementType: defaultType,
       quantity: undefined,
       totalCost: undefined,
       reason: "",
       destinationLocationId: undefined,
       orderId: undefined,
+      expiredAt: undefined,
     },
   });
 
@@ -166,13 +175,16 @@ export default function StockMovementFormDialog({
     stockOptions = stockOptions.filter((stock) => stock.type !== avoidedType);
   }
 
+  console.log(isGlobalStock);
+
   useEffect(() => {
     if (!open) return;
 
     form.reset({
       itemId: items[0]?.id ?? "",
       stockId: undefined,
-      stockMovementType: "RECEIVE",
+      stockMovementType: defaultType,
+      isGlobalStock: isGlobalStock ?? undefined,
       quantity: undefined,
       totalCost: undefined,
       reason: "",
@@ -330,16 +342,21 @@ export default function StockMovementFormDialog({
                       <SelectTrigger
                         className={cn("mt-1.5 w-full", stockMovementInputClass)}
                       >
-                        {selectedStock
-                          ? `${selectedStock.item.name} - ${selectedStock.location?.name ?? "No location"} - ${selectedStock.type} (${selectedStock.quantity ?? 0})`
-                          : "Select source stock"}
+                        <span className="block truncate text-left">
+                          {selectedStock
+                            ? `${selectedStock.item.name} - ${selectedStock.location?.name ?? "No location"} - ${selectedStock.type} (${selectedStock.quantity ?? 0}) - (${selectedStock.expiredAt?.toString().split("T")[0] ?? "Can't be expired"})`
+                            : "Select source stock"}
+                        </span>
                       </SelectTrigger>
                       <SelectContent>
                         {stockOptions.map((stock) => (
                           <SelectItem key={stock.id} value={stock.id}>
                             {stock.item.name} -{" "}
                             {stock.location?.name ?? "No location"} -{" "}
-                            {stock.type} ({stock.quantity ?? 0})
+                            {stock.type} ({stock.quantity ?? 0}) - (
+                            {stock.expiredAt?.toString().split("T")[0] ??
+                              "Can't be expired"}
+                            )
                           </SelectItem>
                         ))}
                       </SelectContent>

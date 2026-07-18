@@ -21,7 +21,10 @@ import { useLocations } from "@/features/locations/location.hooks";
 import { categoryGetManySchema } from "@/shared/lib/zods/category.zod";
 import ItemTable, { ItemTableFilters } from "./sub-components/item-table";
 import StockMovementFormDialog from "@/features/stock-movements/components/sub-components/StockMovementFormDialog";
-import { ItemOption } from "@/features/stock-movements/stock-movements.types";
+import {
+  ItemOption,
+  StockMovementFormOpenType,
+} from "@/features/stock-movements/stock-movements.types";
 
 type LocationOption = { id: string; name: string };
 
@@ -64,6 +67,9 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
   ]);
   const [stockMovementFormOpen, setStockMovementFormOpen] =
     useState<boolean>(false);
+
+  const [stockMovementFormOpenType, setStockMovementFormOpenType] =
+    useState<StockMovementFormOpenType>("GLOBAL_STOCK");
 
   useEffect(() => {
     const id = window.setTimeout(
@@ -344,6 +350,7 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
           openStockCreate={openStockCreate}
           onSelectedGlobalItemStock={setSelectedGlobalItemStock}
           onOpenStockMovement={setStockMovementFormOpen}
+          onStockMovementFormOpenType={setStockMovementFormOpenType}
         />
       ) : null}
 
@@ -365,8 +372,15 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
 
       <StockMovementFormDialog
         items={selectedGlobalItemStock}
-        locations={[]}
-        movementTypes={["RECEIVE"]}
+        locations={
+          stockMovementFormOpenType === "GLOBAL_STOCK" ? [] : locations
+        }
+        isGlobalStock={true}
+        movementTypes={
+          stockMovementFormOpenType === "GLOBAL_STOCK"
+            ? ["RECEIVE"]
+            : ["TRANSFER"]
+        }
         onOpenChange={setStockMovementFormOpen}
         open={stockMovementFormOpen}
         onSuccess={handleStockMovementFormSuccess}

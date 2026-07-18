@@ -21,7 +21,10 @@ import {
   StockSortOrder,
 } from "@/features/stocks/stock.types";
 import { itemGetByIdSchema } from "@/shared/lib/zods/item.zod";
-import { ItemOption } from "@/features/stock-movements/stock-movements.types";
+import {
+  ItemOption,
+  StockMovementFormOpenType,
+} from "@/features/stock-movements/stock-movements.types";
 
 type ItemInfoPanelProps = {
   open: boolean;
@@ -32,6 +35,7 @@ type ItemInfoPanelProps = {
   openStockCreate: () => void;
   onSelectedGlobalItemStock: (item: ItemOption[]) => void;
   onOpenStockMovement: React.Dispatch<React.SetStateAction<boolean>>;
+  onStockMovementFormOpenType: (type: StockMovementFormOpenType) => void;
 };
 
 export default function ItemInfoPanel({
@@ -43,6 +47,7 @@ export default function ItemInfoPanel({
   openStockCreate,
   onSelectedGlobalItemStock,
   onOpenStockMovement,
+  onStockMovementFormOpenType,
 }: ItemInfoPanelProps) {
   const [itemStockPage, setItemStockPage] = useState(1);
   const [itemStocksPerpage, setItemStocksPerpage] = useState(10);
@@ -483,6 +488,7 @@ export default function ItemInfoPanel({
                     <button
                       type="button"
                       onClick={() => {
+                        onStockMovementFormOpenType("GLOBAL_STOCK");
                         onOpenStockMovement((prev) => !prev);
                         onSelectedGlobalItemStock([
                           {
@@ -524,7 +530,7 @@ export default function ItemInfoPanel({
                         </tr>
                       </thead>
                       <tbody>
-                        {unlocatedItems ? (
+                        {unlocatedItems?.quantity ? (
                           <tr className="border-b border-[#eef4ff] last:border-0 hover:bg-[#f8f9ff]/40 transition-colors duration-200">
                             <td className="px-4 py-3 text-center align-middle font-ochre-ui text-sm font-medium text-[#524439]/60">
                               1
@@ -550,14 +556,16 @@ export default function ItemInfoPanel({
                             <td className="px-4 pr-6 py-3 align-middle text-right">
                               <button
                                 type="button"
-                                // onClick={() =>
-                                //   onSelectedGlobalItemStock([
-                                //     {
-                                //       id: itemData.id as string,
-                                //       name: itemData.name as string,
-                                //     },
-                                //   ])
-                                // }
+                                onClick={() => {
+                                  onStockMovementFormOpenType("ALLOCATE_STOCK");
+                                  onOpenStockMovement((prev) => !prev);
+                                  onSelectedGlobalItemStock([
+                                    {
+                                      id: itemData.id as string,
+                                      name: itemData.name as string,
+                                    },
+                                  ]);
+                                }}
                                 className={cn(
                                   "inline-flex shrink-0 items-center gap-1.5 rounded bg-[#894d0d] px-3 py-1 font-ochre-ui text-xs font-semibold uppercase tracking-wide text-white shadow-[0_4px_12px_-4px_rgba(137,77,13,0.35)]",
                                   "transition-[transform,box-shadow] hover:-translate-y-px hover:shadow-[0_6px_16px_-4px_rgba(137,77,13,0.5)]",
@@ -569,7 +577,7 @@ export default function ItemInfoPanel({
                                   strokeWidth={2.5}
                                   aria-hidden
                                 />
-                                Locate
+                                Allocate
                               </button>
                             </td>
                           </tr>
