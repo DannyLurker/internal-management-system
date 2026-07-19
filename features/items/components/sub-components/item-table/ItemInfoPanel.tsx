@@ -86,8 +86,6 @@ export default function ItemInfoPanel({
 
   const itemData = data?.data?.item;
 
-  console.log(data);
-
   const unlocatedItems = data?.data.unlocatedItem;
   const totalLocatedItemQuantity = data?.data.totalLocatedItemQuantity ?? 0;
   const totalUnlocatedItemQuantity = data?.data.totalUnlocatedItemQuantity ?? 0;
@@ -415,7 +413,7 @@ export default function ItemInfoPanel({
                     </select>
                   </div>
 
-                  {
+                  {sortBy === "stockType" && (
                     <div className="flex items-center gap-2">
                       <span className="font-ochre-ui text-xs font-medium uppercase tracking-wide text-[#524439]/70">
                         Status:
@@ -429,11 +427,12 @@ export default function ItemInfoPanel({
                         <option value="READY">Ready</option>
                         <option value="DIRTY">Dirty</option>
                         <option value="DAMAGED">Damaged</option>
+                        <option value="LOST">LOST</option>
                         <option value="EXPIRED">Expired</option>
                         <option value="EXPIRING_SOON">Expiring Soon</option>
                       </select>
                     </div>
-                  }
+                  )}
 
                   <div className="flex items-center gap-1">
                     <button

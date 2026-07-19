@@ -220,7 +220,6 @@ const itemService = {
         itemId: item?.id,
         destinationLocationId: null,
         sourceLocationId: null,
-        type: "RECEIVE",
       },
       prisma,
     );

@@ -255,6 +255,15 @@ const stockMovementsService = {
           },
           tx,
         );
+        movement = await stockMovementsRepository.create(
+          {
+            ...createdStockMovement,
+            stockId: currentStock.id,
+            quantity: -payload.quantity,
+            totalCost: null,
+          },
+          tx,
+        );
       }
 
       // ADJUSTMENT (quantity can be positive or negative)

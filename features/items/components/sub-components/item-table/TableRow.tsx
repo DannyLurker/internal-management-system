@@ -1,12 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { Info, Pencil, PowerIcon, PowerOff, Trash2 } from "lucide-react";
+import { Info, Pencil, PowerIcon, PowerOff } from "lucide-react";
 import type { Item } from "@/features/items/item.types";
 import { cn } from "@/shared/lib/utils";
 import { formatItemDate, formatItemPrice } from "@/shared/lib/formatter";
-import { useSession } from "next-auth/react";
-import { canDeleteItem } from "@/shared/lib/validations/user-access-validation";
 
 type TableRowProps = {
   item: Item;
@@ -23,8 +21,6 @@ export default function TableRow({
   onStatusChange,
   onDelete,
 }: TableRowProps) {
-  const { data } = useSession();
-
   const categoryLabel = item.category?.name ?? "General";
 
   return (

@@ -102,23 +102,29 @@ export default function StockTable({
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Stock Type filter */}
-          <Select
-            value={filters.type}
-            onValueChange={(value) => onFiltersChange({ type: value ?? "ALL" })}
-          >
-            <SelectTrigger className="h-10 min-w-36 rounded-lg border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15">
-              <SelectValue>
-                {filters.type === "ALL" ? "Type: All" : `Type: ${filters.type}`}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Type: All</SelectItem>
-              <SelectItem value="READY">Ready</SelectItem>
-              <SelectItem value="DIRTY">Dirty</SelectItem>
-              <SelectItem value="DAMAGED">Damaged</SelectItem>
-              <SelectItem value="EXPIRED">Expired</SelectItem>
-            </SelectContent>
-          </Select>
+          {sortBy === "stockType" && (
+            <Select
+              value={filters.type}
+              onValueChange={(value) =>
+                onFiltersChange({ type: value ?? "ALL" })
+              }
+            >
+              <SelectTrigger className="h-10 min-w-36 rounded-lg border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15">
+                <SelectValue>
+                  {filters.type === "ALL"
+                    ? "Type: All"
+                    : `Type: ${filters.type}`}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Type: All</SelectItem>
+                <SelectItem value="READY">Ready</SelectItem>
+                <SelectItem value="DIRTY">Dirty</SelectItem>
+                <SelectItem value="DAMAGED">Damaged</SelectItem>
+                <SelectItem value="EXPIRED">Expired</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
 
           {/* Location filter */}
           <Select

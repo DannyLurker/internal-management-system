@@ -4,6 +4,9 @@ export const stockMovementInputClass =
 export const stockMovementPanelClass =
   "rounded-xl border border-[#d9e3f4]/80 bg-white shadow-[0_16px_48px_-20px_rgba(15,23,42,0.08)]";
 
+export const datePickerInputClass =
+  "rounded border-[#d9e3f4] bg-white font-ochre-ui text-sm focus-visible:border-[#894d0d]/50 focus-visible:ring-[#894d0d]/25";
+
 export const movementTone: Record<string, string> = {
   RECEIVE: "border-emerald-500/40 bg-emerald-50 text-emerald-800",
   TRANSFER: "border-sky-500/40 bg-sky-50 text-sky-800",
