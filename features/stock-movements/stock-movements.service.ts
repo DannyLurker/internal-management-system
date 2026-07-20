@@ -251,6 +251,7 @@ const stockMovementsService = {
           {
             ...createdStockMovement,
             stockId: destinationStock.id,
+            sourceLocationId: currentStock.locationId,
             totalCost: null,
           },
           tx,
@@ -260,6 +261,7 @@ const stockMovementsService = {
             ...createdStockMovement,
             stockId: currentStock.id,
             quantity: -payload.quantity,
+            sourceLocationId: currentStock.locationId,
             totalCost: null,
           },
           tx,

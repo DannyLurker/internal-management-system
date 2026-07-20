@@ -15,6 +15,7 @@ import { Prisma, PrismaClient, StockType } from "@prisma/client";
 import { Session } from "next-auth";
 import { locationRepository } from "../locations/location.repository";
 import { stockRules } from "./stock.rule";
+import stockMovementsRepository from "../stock-movements/stock-movements.repository";
 
 const stockService = {
   create: async (
@@ -147,17 +148,7 @@ const stockService = {
       id: stockId,
     });
 
-    if (params.sortBy === "type") {
-      if (!params.stockMovementType) {
-        whereQuery.movements = {
-          every: {
-            type: params.stockMovementType,
-          },
-        };
-      }
-    }
-
-    const skipStockMovementData = (params.page - 1) * 10;
+    const skipStockMovementData = (params.page - 1) * params.dataPerPage;
     const takeStockMovementData = params.dataPerPage;
 
     const selectData = stockSelectData({
@@ -182,10 +173,48 @@ const stockService = {
         },
       },
       movements: {
+        where: params.stockMovementType
+          ? {
+              type: params.stockMovementType,
+            }
+          : undefined,
         skip: skipStockMovementData,
         take: takeStockMovementData,
         orderBy: {
           [params.sortBy]: params.sortOrder,
+        },
+        select: {
+          id: true,
+          quantity: true,
+          totalCost: true,
+          type: true,
+          reason: true,
+          itemId: true,
+          itemName: true,
+          sourceLocationId: true,
+          sourceLocation: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          destinationLocationId: true,
+          destinationLocation: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          stockId: true,
+          orderId: true,
+          createdBy: true,
+          createdAt: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       },
       creator: {
@@ -200,9 +229,20 @@ const stockService = {
 
     if (!stock) throw notFound("Stock not found");
 
+    const movementsCount = await stockMovementsRepository.countRows(
+      {
+        stockId: stockId,
+        ...(params.stockMovementType ? { type: params.stockMovementType } : {}),
+      },
+      prisma,
+    );
+
     return {
       message: "Stock retrieved successfully",
-      data: stock,
+      data: {
+        stock,
+        movementsCount,
+      },
     };
   },
 

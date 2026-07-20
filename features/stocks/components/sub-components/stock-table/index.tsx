@@ -41,6 +41,7 @@ type StockTableProps = {
   itemOptions: { id: string; name: string }[];
   onEdit: (stock: Stock) => void;
   onDelete: (stock: StockDelete) => void;
+  onInfo: (stockId: string) => void;
 };
 
 export default function StockTable({
@@ -62,6 +63,7 @@ export default function StockTable({
   itemOptions,
   onEdit,
   onDelete,
+  onInfo,
 }: StockTableProps) {
   const totalPages = Math.ceil(totalCount / dataPerPage);
   const hasNextPage = page * dataPerPage < totalCount;
@@ -247,6 +249,7 @@ export default function StockTable({
                     stock={stock}
                     onEdit={onEdit}
                     onDelete={onDelete}
+                    onInfo={onInfo}
                   />
                 ))
               )}

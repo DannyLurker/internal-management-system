@@ -145,6 +145,7 @@ describe("stockMovementsService.getMany", () => {
     const expectedWhere = {
       OR: [
         { item: { name: { contains: "Pantry", mode: "insensitive" } } },
+        { itemName: { contains: "Pantry", mode: "insensitive" } },
         { reason: { contains: "Pantry", mode: "insensitive" } },
       ],
     };
