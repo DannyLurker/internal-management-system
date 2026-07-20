@@ -7,11 +7,11 @@ import {
   ChevronDown,
   ChevronsLeft,
   ChevronsRight,
+  Info,
 } from "lucide-react";
 import { useStockById } from "@/features/stocks/stock.hooks";
 import {
   formatItemDate,
-  formatItemPrice,
   formatThousand,
 } from "@/shared/lib/formatter";
 import {
@@ -25,6 +25,7 @@ import { cn, formatTimestamp } from "@/shared/lib/utils";
 import { movementTone } from "@/features/stock-movements/stock-movements.style";
 import { StockGetByIdSchema } from "@/shared/lib/zods/stock.zod";
 import { MovementType } from "@prisma/client";
+import StockMovementInfoDialog from "@/features/stock-movements/components/sub-components/StockMovementInfoDialog";
 
 type StockInfoPanelProps = {
   open: boolean;
@@ -73,6 +74,8 @@ export default function StockInfoPanel({
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [movementTypeFilter, setMovementTypeFilter] = useState("ALL");
   const [showDetails, setShowDetails] = useState(false);
+  const [selectedMovementId, setSelectedMovementId] = useState<string | null>(null);
+  const [movementDialogOpen, setMovementDialogOpen] = useState(false);
 
 
   const [activeStockId, setActiveStockId] = useState<string | null>(null);
@@ -137,7 +140,7 @@ export default function StockInfoPanel({
     : "";
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <><Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         showCloseButton
         className="flex h-[85vh] max-h-[85vh] w-full max-w-lg flex-col gap-0 overflow-hidden rounded-lg border-[#eef4ff] p-0 sm:max-w-4xl md:max-w-6xl data-[state=open]:animate-in data-[state=open]:zoom-in-95 data-[state=open]:slide-in-from-bottom-4 data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=closed]:slide-out-to-bottom-4 duration-300 ease-out"
@@ -161,18 +164,17 @@ export default function StockInfoPanel({
           className={cn(
             "mx-6 mt-3 inline-flex w-fit items-center gap-1.5 self-start rounded-md border border-[#e5eeff] bg-[#f8f9ff]/80 px-3 py-1.5 font-ochre-ui text-xs font-semibold uppercase tracking-wide text-[#565e74] shadow-[0_2px_8px_-2px_rgba(15,23,42,0.08)] outline-none transition-all duration-300",
             "hover:-translate-y-px hover:border-[#894d0d]/35 hover:text-[#894d0d] hover:shadow-[0_4px_12px_-2px_rgba(15,23,42,0.12)]",
-            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#894d0d]",
+            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#894d0d]"
           )}
         >
           <span>{showDetails ? "Hide details" : "Show details"}</span>
           <ChevronDown
             className={cn(
               "size-3.5 transition-transform duration-300 ease-in-out",
-              showDetails ? "rotate-180" : "rotate-0",
+              showDetails ? "rotate-180" : "rotate-0"
             )}
             strokeWidth={2}
-            aria-hidden
-          />
+            aria-hidden />
         </button>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-6 py-2">
@@ -188,8 +190,7 @@ export default function StockInfoPanel({
               {Array.from({ length: 4 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-4 animate-pulse rounded-md bg-[#eef4ff]/80"
-                />
+                  className="h-4 animate-pulse rounded-md bg-[#eef4ff]/80" />
               ))}
             </div>
           ) : stockData ? (
@@ -199,13 +200,13 @@ export default function StockInfoPanel({
                 id="stock-info-collapsible"
                 className={cn(
                   "grid overflow-hidden transition-[grid-template-rows] duration-500 ease-in-out",
-                  showDetails ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+                  showDetails ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
                 )}
               >
                 <div
                   className={cn(
                     "grid min-h-0 grid-cols-1 md:grid-cols-2 gap-4 items-start transition-opacity duration-300 ease-in-out pb-2",
-                    showDetails ? "opacity-100 delay-150" : "opacity-0",
+                    showDetails ? "opacity-100 delay-150" : "opacity-0"
                   )}
                 >
                   <div className="rounded-lg border border-[#eef4ff] bg-[#f8f9ff]/50 p-4 col-span-2">
@@ -242,7 +243,7 @@ export default function StockInfoPanel({
                           <span
                             className={cn(
                               "inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
-                              badgeClass,
+                              badgeClass
                             )}
                           >
                             {stockData.type}
@@ -346,7 +347,7 @@ export default function StockInfoPanel({
                       className={cn(
                         "rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 p-1.5 text-[#565e74] outline-none transition-colors hover:border-[#894d0d]/35 hover:text-[#894d0d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#894d0d]",
                         sortOrder === "asc" &&
-                        "border-[#894d0d]/35 text-[#894d0d] ring-2 ring-[#894d0d]/15",
+                        "border-[#894d0d]/35 text-[#894d0d] ring-2 ring-[#894d0d]/15"
                       )}
                       aria-label="Sort ascending"
                     >
@@ -358,7 +359,7 @@ export default function StockInfoPanel({
                       className={cn(
                         "rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 p-1.5 text-[#565e74] outline-none transition-colors hover:border-[#894d0d]/35 hover:text-[#894d0d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#894d0d]",
                         sortOrder === "desc" &&
-                        "border-[#894d0d]/35 text-[#894d0d] ring-2 ring-[#894d0d]/15",
+                        "border-[#894d0d]/35 text-[#894d0d] ring-2 ring-[#894d0d]/15"
                       )}
                       aria-label="Sort descending"
                     >
@@ -414,10 +415,10 @@ export default function StockInfoPanel({
                             </div>
                           </th>
                           <th className="px-4 align-middle font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
-                            Reason / Cost
-                          </th>
-                          <th className="px-4 align-middle font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
                             Creator
+                          </th>
+                          <th className="px-4 w-16 align-middle text-center font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
+                            Actions
                           </th>
                         </tr>
                       </thead>
@@ -442,12 +443,7 @@ export default function StockInfoPanel({
                         ) : (
                           movements.map((m, idx) => {
                             const sourceName = m.sourceLocation?.name ?? "—";
-                            const destinationName =
-                              m.destinationLocation?.name ?? "—";
-                            const costLabel =
-                              m.totalCost == null
-                                ? "—"
-                                : formatItemPrice(m.totalCost);
+                            const destinationName = m.destinationLocation?.name ?? "—";
 
                             return (
                               <tr
@@ -464,7 +460,7 @@ export default function StockInfoPanel({
                                     className={cn(
                                       "inline-flex rounded border px-2 py-0.5 font-semibold text-[10px] uppercase tracking-wide",
                                       movementTone[m.type] ??
-                                      "border-[#d9e3f4] bg-[#eef4ff] text-[#565e74]",
+                                      "border-[#d9e3f4] bg-[#eef4ff] text-[#565e74]"
                                     )}
                                   >
                                     {formatMovementType(m.type)}
@@ -483,20 +479,20 @@ export default function StockInfoPanel({
                                   {formatTimestamp(m.createdAt)}
                                 </td>
                                 <td className="px-4 py-3 align-middle font-ochre-ui text-xs text-[#524439]">
-                                  <div
-                                    className="max-w-50 truncate"
-                                    title={m.reason}
-                                  >
-                                    {m.reason}
-                                  </div>
-                                  {m.totalCost != null && (
-                                    <div className="text-[10px] text-[#524439]/70 mt-0.5">
-                                      Cost: {costLabel}
-                                    </div>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3 align-middle font-ochre-ui text-xs text-[#524439]">
                                   {m.user?.name ?? "—"}
+                                </td>
+                                <td className="px-4 py-3 text-center align-middle">
+                                  <button
+                                    type="button"
+                                    aria-label="View movement details"
+                                    onClick={() => {
+                                      setSelectedMovementId(m.id);
+                                      setMovementDialogOpen(true);
+                                    }}
+                                    className="inline-flex items-center justify-center rounded-md border border-[#e5eeff] bg-[#f8f9ff]/80 p-1.5 text-[#565e74] outline-none transition-all duration-200 hover:border-[#894d0d]/35 hover:bg-[#fff7f0] hover:text-[#894d0d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#894d0d]"
+                                  >
+                                    <Info className="size-3.5" strokeWidth={1.75} />
+                                  </button>
                                 </td>
                               </tr>
                             );
@@ -533,7 +529,7 @@ export default function StockInfoPanel({
                             "rounded-md border border-[#d9e3f4] p-1.5 text-[#565e74]",
                             !hasPrevPage && "cursor-not-allowed opacity-40",
                             hasPrevPage &&
-                            "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+                            "hover:border-[#894d0d]/40 hover:text-[#894d0d]"
                           )}
                           aria-label="First page"
                         >
@@ -547,7 +543,7 @@ export default function StockInfoPanel({
                             "rounded-md border border-[#d9e3f4] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[#565e74]",
                             !hasPrevPage && "cursor-not-allowed opacity-40",
                             hasPrevPage &&
-                            "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+                            "hover:border-[#894d0d]/40 hover:text-[#894d0d]"
                           )}
                         >
                           Prev
@@ -563,7 +559,7 @@ export default function StockInfoPanel({
                             "rounded-md border border-[#d9e3f4] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[#565e74]",
                             !hasNextPage && "cursor-not-allowed opacity-40",
                             hasNextPage &&
-                            "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+                            "hover:border-[#894d0d]/40 hover:text-[#894d0d]"
                           )}
                         >
                           Next
@@ -576,7 +572,7 @@ export default function StockInfoPanel({
                             "rounded-md border border-[#d9e3f4] p-1.5 text-[#565e74]",
                             !hasNextPage && "cursor-not-allowed opacity-40",
                             hasNextPage &&
-                            "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+                            "hover:border-[#894d0d]/40 hover:text-[#894d0d]"
                           )}
                           aria-label="Last page"
                         >
@@ -592,5 +588,12 @@ export default function StockInfoPanel({
         </div>
       </DialogContent>
     </Dialog>
+      <StockMovementInfoDialog
+        movementId={selectedMovementId}
+        open={movementDialogOpen}
+        onOpenChange={(nextOpen) => {
+          setMovementDialogOpen(nextOpen);
+          if (!nextOpen) setSelectedMovementId(null);
+        }} /></>
   );
 }
