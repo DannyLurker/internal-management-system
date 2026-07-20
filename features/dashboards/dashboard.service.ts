@@ -10,7 +10,7 @@ const dashboardService = {
     params: ManagerDashboardParamSchema,
     prisma: Prisma.TransactionClient | PrismaClient,
   ) => {
-    const [totalInventoryValue, totalSpend, totalStockWastage] =  Promise.all([
+    const [totalInventoryValue, totalSpend, totalStockWastageValue] =  Promise.all([
         await stockMovementsRepository.
     ])
   },
