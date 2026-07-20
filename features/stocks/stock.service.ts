@@ -1,6 +1,7 @@
 import { badRequest, notFound } from "@/shared/lib/error-handlers";
 import {
   StockCreateSchema,
+  StockGetByIdSchema,
   StockGetManySchema,
   StockUpdateSchema,
 } from "@/shared/lib/zods/stock.zod";
@@ -8,7 +9,7 @@ import auditLogsRepository from "../audit-logs/audit-log.repository";
 import {
   stockRepository,
   stockSelectData,
-  stockWhereUniqueInput,
+  stockWhereInput,
 } from "./stock.repository";
 import { Prisma, PrismaClient, StockType } from "@prisma/client";
 import { Session } from "next-auth";
@@ -59,6 +60,7 @@ const stockService = {
             },
             movements: {
               create: {
+                itemName: item.name,
                 type: "RECEIVE",
                 quantity: data.quantity,
                 itemId: data.itemId,
@@ -95,6 +97,7 @@ const stockService = {
             movements: {
               create: {
                 type: "RECEIVE",
+                itemName: item.name,
                 quantity: data.quantity,
                 itemId: data.itemId,
                 destinationLocationId: data.locationId,
@@ -137,11 +140,25 @@ const stockService = {
   getById: async (
     session: Session["user"],
     stockId: string,
+    params: StockGetByIdSchema,
     prisma: PrismaClient | Prisma.TransactionClient,
   ) => {
-    const whereQuery = stockWhereUniqueInput({
+    const whereQuery = stockWhereInput({
       id: stockId,
     });
+
+    if (params.sortBy === "type") {
+      if (!params.stockMovementType) {
+        whereQuery.movements = {
+          every: {
+            type: params.stockMovementType,
+          },
+        };
+      }
+    }
+
+    const skipStockMovementData = (params.page - 1) * 10;
+    const takeStockMovementData = params.dataPerPage;
 
     const selectData = stockSelectData({
       id: true,
@@ -164,6 +181,13 @@ const stockService = {
           name: true,
         },
       },
+      movements: {
+        skip: skipStockMovementData,
+        take: takeStockMovementData,
+        orderBy: {
+          [params.sortBy]: params.sortOrder,
+        },
+      },
       creator: {
         select: {
           id: true,
@@ -172,7 +196,7 @@ const stockService = {
       },
     });
 
-    const stock = await stockRepository.get(whereQuery, selectData, prisma);
+    const stock = await stockRepository.getById(whereQuery, selectData, prisma);
 
     if (!stock) throw notFound("Stock not found");
 
@@ -287,7 +311,7 @@ const stockService = {
         itemId: true,
       });
 
-      const existing = await stockRepository.get(
+      const existing = await stockRepository.getById(
         { id: stockId },
         selectData,
         tx,
@@ -399,7 +423,7 @@ const stockService = {
         },
       });
 
-      const existing = await stockRepository.get(
+      const existing = await stockRepository.getById(
         { id: stockId },
         selectData,
         tx,
