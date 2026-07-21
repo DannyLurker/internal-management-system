@@ -34,6 +34,7 @@ describe("itemService.update", () => {
       name: "Updated Item",
       categoryId: "cat-2",
       sellingPrice: 18000,
+      costPrice: 7000,
     };
 
     mockedItemRepository.update.mockResolvedValue(updatedItemMock as any);
@@ -43,6 +44,7 @@ describe("itemService.update", () => {
       description: "Updated description",
       categoryId: "cat-2",
       sellingPrice: 18000,
+      costPrice: 7000,
       isActive: true,
       attributes: {},
     };
@@ -71,6 +73,7 @@ describe("itemService.update", () => {
           name: "Updated Item",
           categoryId: "cat-2",
           sellingPrice: 18000,
+          costPrice: 7000,
         },
       },
       prismaMock,
@@ -93,6 +96,7 @@ describe("itemService.update", () => {
     const updateData = {
       name: "Updated Item",
       description: "Updated description",
+      costPrice: 7000,
       isActive: true,
       attributes: {},
     };

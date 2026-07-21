@@ -197,6 +197,7 @@ model Item {
   image        String?
   description  String
   sellingPrice Int?
+  costPrice    Int
   attributes   Json?
   minThreshold Int     @default(0)
   isActive     Boolean @default(true)

@@ -5,15 +5,15 @@ import stockMovementsRepository from "../stock-movements/stock-movements.reposit
 
 const dashboardService = {
   // Manager Dashboard
-  managerGetDashboard: async (
-    session: Session["user"],
-    params: ManagerDashboardParamSchema,
-    prisma: Prisma.TransactionClient | PrismaClient,
-  ) => {
-    const [totalInventoryValue, totalSpend, totalStockWastageValue] =  Promise.all([
-        await stockMovementsRepository.
-    ])
-  },
+  // managerGetDashboard: async (
+  //   session: Session["user"],
+  //   params: ManagerDashboardParamSchema,
+  //   prisma: Prisma.TransactionClient | PrismaClient,
+  // ) => {
+  //   const [totalInventoryValue, totalSpend, totalStockWastageValue] =  Promise.all([
+  //       await stockMovementsRepository.
+  //   ])
+  // },
 };
 
 export default dashboardService;

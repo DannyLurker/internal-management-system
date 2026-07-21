@@ -55,7 +55,10 @@ export default function TableHeader({
           CATEGORY
         </th>
         <th className="px-4 align-middle font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
-          PRICE
+          SELLING PRICE
+        </th>
+        <th className="px-4 align-middle font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
+          COST PRICE
         </th>
         <th className="px-4 align-middle font-ochre-ui text-[10px] font-semibold uppercase tracking-wider text-[#524439]/80">
           <button

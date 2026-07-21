@@ -52,6 +52,7 @@ const itemRepository = {
         description: data.description,
         image: data.image,
         sellingPrice: data.sellingPrice ? data.sellingPrice : undefined,
+        costPrice: data.costPrice,
         attributes: data.attributes,
         minThreshold: data.minThreshold ? data.minThreshold : undefined,
         createdBy: userId,
@@ -117,15 +118,15 @@ const itemRepository = {
           take: takeStockData,
           ...(sortBy !== "stockType"
             ? {
-                orderBy: {
-                  [sortBy]: orderBy,
-                },
-              }
+              orderBy: {
+                [sortBy]: orderBy,
+              },
+            }
             : {
-                orderBy: {
-                  quantity: orderBy,
-                },
-              }),
+              orderBy: {
+                quantity: orderBy,
+              },
+            }),
         },
       },
     });

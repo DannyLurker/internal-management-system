@@ -79,6 +79,7 @@ export default function ItemFormDialog({
       locationId: "",
       image: "",
       sellingPrice: undefined,
+      costPrice: 0,
       minThreshold: 0,
       attributes: {},
       stock: {
@@ -98,6 +99,7 @@ export default function ItemFormDialog({
       categoryId: "",
       image: "",
       sellingPrice: undefined,
+      costPrice: 0,
       minThreshold: 0,
       attributes: {},
     },
@@ -117,6 +119,7 @@ export default function ItemFormDialog({
         categoryId: item.categoryId ?? "",
         image: item.image ?? "",
         sellingPrice: price,
+        costPrice: item.costPrice,
         minThreshold: item.minThreshold,
         attributes: (item.attributes as Record<string, unknown> | null) ?? {},
       });
@@ -130,6 +133,7 @@ export default function ItemFormDialog({
         locationId: locations[0]?.id ?? "",
         image: "",
         sellingPrice: undefined,
+        costPrice: 0,
         minThreshold: 0,
         attributes: {},
         stock: {
@@ -406,7 +410,7 @@ export default function ItemFormDialog({
             <legend className="font-ochre-ui text-[11px] font-semibold uppercase tracking-wider text-[#524439]">
               Financial controls &amp; availability
             </legend>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-4">
               <div>
                 <Label className="font-ochre-ui text-sm">
                   Selling price ($)
@@ -456,6 +460,66 @@ export default function ItemFormDialog({
                     )}
                   />
                 )}
+              </div>
+              <div>
+                <Label className="font-ochre-ui text-sm">Cost price ($)</Label>
+                {isEdit ? (
+                  <Controller
+                    control={updateForm.control}
+                    name="costPrice"
+                    render={({ field }) => (
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        className={cn("mt-1.5", inputClass)}
+                        placeholder="1.000"
+                        value={formatThousand(field.value ?? "")}
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+                          const numericValue = unformatThousand(rawValue);
+                          field.onChange(
+                            numericValue === 0 ? undefined : numericValue,
+                          );
+                        }}
+                      />
+                    )}
+                  />
+                ) : (
+                  <Controller
+                    control={createForm.control}
+                    name="costPrice"
+                    render={({ field }) => (
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        className={cn("mt-1.5", inputClass)}
+                        placeholder="1.000"
+                        value={formatThousand(field.value ?? "")}
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+                          const numericValue = unformatThousand(rawValue);
+                          field.onChange(
+                            numericValue === 0 ? undefined : numericValue,
+                          );
+                        }}
+                      />
+                    )}
+                  />
+                )}
+                {(
+                  isEdit
+                    ? updateForm.formState.errors.costPrice
+                    : createForm.formState.errors.costPrice
+                ) ? (
+                  <p className="mt-1 font-ochre-ui text-xs text-red-600">
+                    {
+                      (isEdit
+                        ? updateForm.formState.errors.costPrice
+                        : createForm.formState.errors.costPrice
+                      )?.message
+                    }
+                  </p>
+                ) : null}
               </div>
               {!isEdit ? (
                 <div>
