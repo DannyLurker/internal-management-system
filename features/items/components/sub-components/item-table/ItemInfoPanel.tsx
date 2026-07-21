@@ -497,9 +497,10 @@ export default function ItemInfoPanel({
                         ]);
                       }}
                       className={cn(
-                        "inline-flex shrink-0 items-center gap-2 self-start rounded bg-[#894d0d] px-5 py-1 font-ochre-ui text-sm font-semibold uppercase tracking-wide text-white shadow-[0_8px_24px_-8px_rgba(137,77,13,0.45)]",
+                        "inline-flex shrink-0 items-center gap-2 self-start rounded bg-[#894d0d] px-5 py-1 font-ochre-ui text-sm font-semibold uppercase tracking-wide text-white shadow-[0_8px_24px_-8px_rgba(137,77,13,0.45)] max-w-full",
                         "transition-[transform,box-shadow] hover:-translate-y-px",
                         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#894d0d]",
+                        "text-wrap",
                       )}
                     >
                       <Plus className="size-4" strokeWidth={2} aria-hidden />

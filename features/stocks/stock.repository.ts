@@ -172,6 +172,39 @@ export const stockRepository = {
     };
   },
 
+  totalInventoryValue: async (
+    where: Prisma.StockWhereInput,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    // 1. Group by itemId and sum the quantities in the database
+    const stockGroups = await tx.stock.groupBy({
+      by: ["itemId"],
+      where,
+      _sum: {
+        quantity: true,
+      },
+    });
+
+    // 2. Fetch the selling prices for those specific items
+    const itemIds = stockGroups.map((g) => g.itemId);
+    const items = await tx.item.findMany({
+      where: { id: { in: itemIds } },
+      select: { id: true, sellingPrice: true },
+    });
+
+    // Create a quick lookup map for prices
+    const priceMap = new Map(items.map((i) => [i.id, i.sellingPrice || 0]));
+
+    // 3. Calculate the total value
+    const totalValue = stockGroups.reduce((acc, group) => {
+      const quantity = group._sum.quantity || 0;
+      const price = priceMap.get(group.itemId) || 0;
+      return acc + quantity * price;
+    }, 0);
+
+    return totalValue;
+  },
+
   countQuantity: async (
     where: Prisma.StockWhereInput,
     tx: PrismaClient | Prisma.TransactionClient,

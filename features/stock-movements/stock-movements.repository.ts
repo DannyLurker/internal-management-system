@@ -120,6 +120,20 @@ const stockMovementsRepository = {
     return result._sum.quantity;
   },
 
+  totalStockWastageValue: async (
+    where: Prisma.StockMovementWhereInput,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    const result = await tx.stockMovement.aggregate({
+      where,
+      _sum: {
+        totalCost: true,
+      },
+    });
+
+    return result._sum.totalCost;
+  },
+
   update: async (
     movementId: string,
     data: Prisma.StockMovementUpdateInput,
