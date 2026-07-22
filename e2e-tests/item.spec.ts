@@ -54,6 +54,7 @@ test.describe("CRUD operations for Item", () => {
         categoryId: testCategoryId,
         locationId: testLocationId,
         sellingPrice,
+        costPrice: 250000,
         image: "https://example.com/luxury-king-pillow.jpg",
         stock: {
           quantity: 50,
@@ -146,6 +147,7 @@ test.describe("CRUD operations for Item", () => {
         description: "Updated firm edition of premium goose down pillow",
         categoryId: testCategoryId,
         sellingPrice: updatedSellingPrice,
+        costPrice: 280000,
         image: "https://example.com/luxury-king-pillow-firm.jpg",
       },
     });
@@ -205,6 +207,7 @@ test.describe("CRUD operations for Item", () => {
         categoryId: testCategoryId,
         locationId: testLocationId,
         sellingPrice: 100000,
+        costPrice: 50000,
       },
     });
 
@@ -223,6 +226,7 @@ test.describe("CRUD operations for Item", () => {
         categoryId: "XX",
         locationId: testLocationId,
         sellingPrice: 100000,
+        costPrice: 50000,
       },
     });
 
@@ -241,6 +245,7 @@ test.describe("CRUD operations for Item", () => {
         description: "Updated description",
         categoryId: testCategoryId,
         sellingPrice: 200000,
+        costPrice: 100000,
       },
     });
 

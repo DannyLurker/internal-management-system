@@ -76,7 +76,6 @@ export const stockRules = {
       allowed: true,
     };
   },
-
   checkCanDeleteStock: (
     stockMovements: { id: string }[] | undefined,
   ): RuleResult => {

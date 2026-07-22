@@ -35,6 +35,7 @@ describe("itemService.create", () => {
       description: "A description",
       categoryId: "cat-1",
       sellingPrice: 15000,
+      costPrice: 5000,
       attributes: {},
       createdAt: new Date(),
       createdBy: "user-1",
@@ -51,6 +52,7 @@ describe("itemService.create", () => {
       categoryId: "cat-1",
       locationId: "loc-1",
       sellingPrice: 15000,
+      costPrice: 5000,
       stock: {
         quantity: 10,
         totalCost: 100000,
@@ -79,6 +81,7 @@ describe("itemService.create", () => {
           categoryId: "cat-1",
           locationId: "loc-1",
           sellingPrice: 15000,
+          costPrice: 5000,
           initialStock: 10,
         },
       },
@@ -102,6 +105,7 @@ describe("itemService.create", () => {
       description: "A description",
       categoryId: "cat-1",
       sellingPrice: 15000,
+      costPrice: 5000,
       attributes: {},
       createdAt: new Date(),
       createdBy: "user-1",
@@ -118,6 +122,7 @@ describe("itemService.create", () => {
       categoryId: "cat-1",
       locationId: "loc-1",
       sellingPrice: 15000,
+      costPrice: 5000,
       minThreshold: 10,
       attributes: {},
     };
@@ -152,6 +157,7 @@ describe("itemService.create", () => {
       description: "A description",
       categoryId: "cat-1",
       locationId: "loc-1",
+      costPrice: 5000,
       attributes: {},
     };
 

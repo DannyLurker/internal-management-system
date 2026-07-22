@@ -212,6 +212,16 @@ export default function ItemInfoPanel({
                           </div>
                           <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
                             <dt className="text-[#524439]/70 font-medium">
+                              Cost Price
+                            </dt>
+                            <dd className="font-semibold text-[#121c28]">
+                              {itemData.costPrice
+                                ? formatItemPrice(itemData.costPrice)
+                                : "—"}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                            <dt className="text-[#524439]/70 font-medium">
                               Stock Status
                             </dt>
                             <dd
@@ -438,11 +448,10 @@ export default function ItemInfoPanel({
                     <button
                       type="button"
                       onClick={() => setOrderBy("asc")}
-                      className={`rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 p-1.5 text-[#565e74] outline-none transition-colors hover:border-[#894d0d]/35 hover:text-[#894d0d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#894d0d]${
-                        orderBy === "asc"
+                      className={`rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 p-1.5 text-[#565e74] outline-none transition-colors hover:border-[#894d0d]/35 hover:text-[#894d0d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#894d0d]${orderBy === "asc"
                           ? " border-[#894d0d]/35 text-[#894d0d] ring-2 ring-[#894d0d]/15"
                           : ""
-                      }`}
+                        }`}
                       aria-label="Sort ascending"
                     >
                       <ArrowUp className="size-4" strokeWidth={1.5} />
@@ -450,11 +459,10 @@ export default function ItemInfoPanel({
                     <button
                       type="button"
                       onClick={() => setOrderBy("desc")}
-                      className={`rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 p-1.5 text-[#565e74] outline-none transition-colors hover:border-[#894d0d]/35 hover:text-[#894d0d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#894d0d]${
-                        orderBy === "desc"
+                      className={`rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 p-1.5 text-[#565e74] outline-none transition-colors hover:border-[#894d0d]/35 hover:text-[#894d0d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#894d0d]${orderBy === "desc"
                           ? " border-[#894d0d]/35 text-[#894d0d] ring-2 ring-[#894d0d]/15"
                           : ""
-                      }`}
+                        }`}
                       aria-label="Sort descending"
                     >
                       <ArrowDown className="size-4" strokeWidth={1.5} />

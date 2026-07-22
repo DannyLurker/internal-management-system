@@ -206,7 +206,7 @@ export default function ItemTable({
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="border-b border-[#eef4ff]">
-                    <td className="px-4 py-3" colSpan={7}>
+                    <td className="px-4 py-3" colSpan={8}>
                       <div className="h-10 animate-pulse rounded-md bg-[#eef4ff]/80" />
                     </td>
                   </tr>
@@ -214,7 +214,7 @@ export default function ItemTable({
               ) : items.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-4 py-12 text-center font-ochre-ui text-sm text-[#524439]"
                   >
                     No items match your filters.
@@ -257,7 +257,7 @@ export default function ItemTable({
                   "rounded-md border border-[#d9e3f4] p-1.5 text-[#565e74]",
                   !hasPrevPage && "cursor-not-allowed opacity-40",
                   hasPrevPage &&
-                    "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+                  "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
                 )}
                 aria-label="First page"
               >
@@ -271,7 +271,7 @@ export default function ItemTable({
                   "rounded-md border border-[#d9e3f4] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[#565e74]",
                   !hasPrevPage && "cursor-not-allowed opacity-40",
                   hasPrevPage &&
-                    "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+                  "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
                 )}
               >
                 Prev
@@ -287,7 +287,7 @@ export default function ItemTable({
                   "rounded-md border border-[#d9e3f4] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[#565e74]",
                   !hasNextPage && "cursor-not-allowed opacity-40",
                   hasNextPage &&
-                    "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+                  "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
                 )}
               >
                 Next
@@ -300,7 +300,7 @@ export default function ItemTable({
                   "rounded-md border border-[#d9e3f4] p-1.5 text-[#565e74]",
                   !hasNextPage && "cursor-not-allowed opacity-40",
                   hasNextPage &&
-                    "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+                  "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
                 )}
                 aria-label="Last page"
               >

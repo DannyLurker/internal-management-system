@@ -7,6 +7,12 @@ export const createSelectStockMovementData = <
   select: T,
 ): T => select;
 
+export const createStockMovementWhereInput = <
+  T extends Prisma.StockMovementWhereInput,
+>(
+  where: T,
+): T => where;
+
 const stockMovementsRepository = {
   findOne: async (
     where: Prisma.StockMovementWhereInput,
@@ -120,7 +126,7 @@ const stockMovementsRepository = {
     return result._sum.quantity;
   },
 
-  totalStockWastageValue: async (
+  calculateInventoryValue: async (
     where: Prisma.StockMovementWhereInput,
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
