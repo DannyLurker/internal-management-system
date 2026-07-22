@@ -14,6 +14,10 @@ export const createIncludeItemData = <T extends Prisma.ItemSelect>(
   select: T,
 ): T => select;
 
+export const createItemWhereInput = <T extends Prisma.ItemWhereInput>(
+  select: T,
+): T => select;
+
 const itemRepository = {
   // it's still for search query
   buildWhereClause: (
@@ -96,6 +100,19 @@ const itemRepository = {
     });
   },
 
+  findMany: async (
+    where: Prisma.ItemWhereInput,
+    select: Prisma.ItemSelect,
+    options: Prisma.ItemFindManyArgs,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    return await tx.item.findMany({
+      where,
+      select,
+      ...options,
+    });
+  },
+
   getById: async (
     itemId: string,
     itemSelect: Prisma.ItemSelect,
@@ -118,15 +135,15 @@ const itemRepository = {
           take: takeStockData,
           ...(sortBy !== "stockType"
             ? {
-              orderBy: {
-                [sortBy]: orderBy,
-              },
-            }
+                orderBy: {
+                  [sortBy]: orderBy,
+                },
+              }
             : {
-              orderBy: {
-                quantity: orderBy,
-              },
-            }),
+                orderBy: {
+                  quantity: orderBy,
+                },
+              }),
         },
       },
     });

@@ -2,8 +2,10 @@ import z from "zod";
 import { dataPerPage, page } from "./general.zod";
 
 export const managerDashboardParamSchema = z.object({
-  lowStockAlertPagination: page,
+  lowStockAlertPage: page,
   lowStockAlertDataPerPage: dataPerPage,
+  flaggedExpiredStockPage: page,
+  flaggedExpiredStockDataPerPage: dataPerPage,
 });
 
 export type ManagerDashboardParamSchema = z.infer<

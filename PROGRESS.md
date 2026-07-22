@@ -173,8 +173,3 @@
 - Stock movement feature does not have delete functionality
 - Integration testing is still not really important for now
 - Item delete feature is turned off
-
-## for a while
-
-1. work on manager dashboard
-2. Add another field at item called, "Cost price" to track MRO inventory value.
