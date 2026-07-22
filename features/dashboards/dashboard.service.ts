@@ -41,7 +41,13 @@ const dashboardService = {
 
     const lowStockAlertDataPerPage = params.lowStockAlertDataPerPage;
 
-    const lowStocks = prisma.$queryRaw`
+    const lowStocks = await prisma.$queryRaw<{
+      id: string;
+      name: string;
+      minThreshold: number;
+      isActive: boolean;
+      currentStock: number;
+    }>`
     SELECT
       i."id",
       i."name",
@@ -64,10 +70,13 @@ const dashboardService = {
     `;
 
     return {
-      totalSpend,
-      totalInventoryValue,
-      totalStockWastageValue,
-      lowStocks,
+      message: "Manager dashboard data retrieved successfully",
+      data: {
+        totalSpend,
+        totalInventoryValue,
+        totalStockWastageValue,
+        lowStocks,
+      },
     };
   },
 };
