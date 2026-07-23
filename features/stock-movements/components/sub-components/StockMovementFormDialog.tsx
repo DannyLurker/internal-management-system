@@ -50,6 +50,8 @@ type StockMovementFormDialogProps = {
   neededDatePicker?: boolean;
   movementTypes: MovementTypeOption[];
   hiddenFields?: ("stockBatch" | "itemId" | "movementType")[];
+  defaultStockId?: string;
+  defaultItemId?: string;
 };
 
 const stockRequiredTypes = new Set<MovementTypeOption>([
@@ -101,6 +103,8 @@ export default function StockMovementFormDialog({
   movementTypes,
   hiddenFields,
   isGlobalStock,
+  defaultStockId,
+  defaultItemId,
 }: StockMovementFormDialogProps) {
   const formId = useId();
   const createMutation = useCreateStockMovement();
@@ -187,8 +191,8 @@ export default function StockMovementFormDialog({
     if (!open) return;
 
     form.reset({
-      itemId: items[0]?.id ?? "",
-      stockId: undefined,
+      itemId: defaultItemId ?? items[0]?.id ?? "",
+      stockId: defaultStockId ?? undefined,
       stockMovementType: defaultType,
       isGlobalStock: isGlobalStock ?? undefined,
       quantity: undefined,
@@ -197,14 +201,27 @@ export default function StockMovementFormDialog({
       destinationLocationId: locations[0]?.id,
       orderId: undefined,
     });
-  }, [form, items, locations, open]);
+  }, [
+    defaultItemId,
+    defaultStockId,
+    defaultType,
+    form,
+    isGlobalStock,
+    items,
+    locations,
+    open,
+  ]);
 
   useEffect(() => {
     if (!requiresStock) {
       form.setValue("stockId", undefined);
       return;
     }
-  }, [form, requiresStock, selectedStock]);
+
+    if (defaultStockId) {
+      form.setValue("stockId", defaultStockId, { shouldValidate: true });
+    }
+  }, [defaultStockId, form, requiresStock, selectedStock]);
 
   useEffect(() => {
     if (requiresDestination) {
@@ -271,7 +288,7 @@ export default function StockMovementFormDialog({
                         form.setValue("itemId", value ?? "", {
                           shouldValidate: true,
                         });
-                        form.setValue("stockId", undefined);
+                        form.setValue("stockId", defaultStockId ?? undefined);
                       }}
                     >
                       <SelectTrigger
@@ -311,7 +328,7 @@ export default function StockMovementFormDialog({
                         shouldValidate: true,
                       },
                     );
-                    form.setValue("stockId", undefined);
+                    form.setValue("stockId", defaultStockId ?? undefined);
                   }}
                 >
                   <SelectTrigger
