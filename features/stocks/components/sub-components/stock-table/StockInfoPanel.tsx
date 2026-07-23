@@ -8,6 +8,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Info,
+  Plus,
 } from "lucide-react";
 import { useStockById } from "@/features/stocks/stock.hooks";
 import {
@@ -26,6 +27,8 @@ import { movementTone } from "@/features/stock-movements/stock-movements.style";
 import { StockGetByIdSchema } from "@/shared/lib/zods/stock.zod";
 import { MovementType } from "@prisma/client";
 import StockMovementInfoDialog from "@/features/stock-movements/components/sub-components/StockMovementInfoDialog";
+import StockMovementFormDialog from "@/features/stock-movements/components/sub-components/StockMovementFormDialog";
+import { useLocations } from "@/features/locations/location.hooks";
 
 type StockInfoPanelProps = {
   open: boolean;
@@ -76,6 +79,7 @@ export default function StockInfoPanel({
   const [showDetails, setShowDetails] = useState(false);
   const [selectedMovementId, setSelectedMovementId] = useState<string | null>(null);
   const [movementDialogOpen, setMovementDialogOpen] = useState(false);
+  const [movementFormOpen, setMovementFormOpen] = useState(false);
 
 
   const [activeStockId, setActiveStockId] = useState<string | null>(null);
@@ -104,11 +108,31 @@ export default function StockInfoPanel({
     };
   }, [movementPage, movementsPerPage, sortBy, sortOrder, movementTypeFilter]);
 
-  const { data, isLoading, isError } = useStockById(activeStockId ?? "", params, {
+  const { data, isLoading, isError, refetch } = useStockById(activeStockId ?? "", params, {
     enabled: open && Boolean(activeStockId),
   });
 
+  const { data: locationsResponse } = useLocations(
+    {
+      page: 1,
+      dataPerPage: 100,
+      sortBy: "name",
+      sortOrderEnum: "asc",
+    },
+    { enabled: movementFormOpen },
+  );
+
   const stockData = data?.data?.stock;
+  const locations =
+    locationsResponse?.data.locations.map((location) => ({
+      id: location.id,
+      name: location.name,
+    })) ?? [];
+  const movementItemOptions = useMemo(() => {
+    if (!stockData?.item) return [];
+
+    return [{ id: stockData.item.id, name: stockData.item.name }];
+  }, [stockData?.item]);
   const movements = stockData?.movements ?? [];
   const totalMovements = data?.data?.movementsCount ?? 0;
 
@@ -299,6 +323,20 @@ export default function StockInfoPanel({
                   <h3 className="font-ochre-brand text-lg font-medium text-[#894d0d]">
                     Stock Movements History
                   </h3>
+                  <button
+                    type="button"
+                    disabled={!stockData || !activeStockId}
+                    onClick={() => setMovementFormOpen(true)}
+                    className={cn(
+                      "inline-flex shrink-0 items-center gap-2 self-start rounded bg-[#894d0d] px-5 py-1 font-ochre-ui text-sm font-semibold uppercase tracking-wide text-white shadow-[0_8px_24px_-8px_rgba(137,77,13,0.45)]",
+                      "transition-[transform,box-shadow] hover:-translate-y-px",
+                      "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#894d0d]",
+                      "disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0",
+                    )}
+                  >
+                    <Plus className="size-4" strokeWidth={2} aria-hidden />
+                    New movement
+                  </button>
                 </div>
 
                 {/* Filter and sorting controls */}
@@ -594,6 +632,19 @@ export default function StockInfoPanel({
         onOpenChange={(nextOpen) => {
           setMovementDialogOpen(nextOpen);
           if (!nextOpen) setSelectedMovementId(null);
-        }} /></>
+        }} />
+      <StockMovementFormDialog
+        open={movementFormOpen}
+        onOpenChange={setMovementFormOpen}
+        onSuccess={() => {
+          void refetch();
+        }}
+        items={movementItemOptions}
+        locations={locations}
+        movementTypes={Object.values(MovementType)}
+        defaultStockId={activeStockId ?? undefined}
+        defaultItemId={stockData?.item.id}
+        hiddenFields={["itemId"]}
+      /></>
   );
 }

@@ -90,7 +90,6 @@ const dashboardService = {
       totalFlaggedExpiredItems / params.flaggedExpiredStockDataPerPage,
     );
 
-    // 3. Extract IDs while preserving array order
     const itemIds = groupedFlaggedExpiredStocks.map((data) => data.itemId);
 
     let flaggedExpiredStocks: Array<{ id: string; name: string }> = [];
@@ -123,7 +122,6 @@ const dashboardService = {
     const totalInventoryValue =
       (totalSpend ?? 0) - (totalStockWastageValue ?? 0);
 
-    // 4. Low Stock Raw Query Fix (LIMIT and OFFSET were inverted in your snippet)
     const lowStockAlertOffset =
       (params.lowStockAlertPage - 1) * params.lowStockAlertDataPerPage;
     const lowStockAlertLimit = params.lowStockAlertDataPerPage;
