@@ -1,5 +1,5 @@
-const page = () => {
-  return <div>Dashboard</div>;
-};
+import DashboardClient from "@/features/dashboards/components/DashboardClient";
 
-export default page;
+export default function ManagerDashboardPage() {
+  return <DashboardClient />;
+}
