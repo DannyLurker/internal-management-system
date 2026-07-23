@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { dashboardStyles } from "../dashboard.styles";
 import { useManagerDashboard } from "../dashboard.hooks";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
@@ -20,6 +20,9 @@ export default function FlaggedExpiredTable() {
     const expiredStocks = data?.data?.data?.flaggedExpiredStocks?.items || [];
     const pagination = data?.data?.data?.flaggedExpiredStocks?.pagination;
     const totalItems = pagination?.totalItems || 0;
+    const totalPages = pagination?.totalPages || 1;
+    const hasPrevPage = page > 1;
+    const hasNextPage = page < totalPages;
 
     const startCount = (page - 1) * dataPerPage + 1;
     const endCount = Math.min(page * dataPerPage, totalItems);
@@ -34,32 +37,32 @@ export default function FlaggedExpiredTable() {
             </div>
 
             <div className="w-full overflow-x-auto">
-                <table className="w-full text-left font-sans text-sm pb-4">
+                <table className="w-full text-left font-ochre-ui text-sm border-collapse min-w-180">
                     <thead>
-                        <tr className="border-b border-[#F5F2ED] text-[#565e74] uppercase tracking-wider text-[11px] font-semibold">
-                            <th className="px-6 py-4">Item Name</th>
-                            <th className="px-6 py-4">Status</th>
-                            <th className="px-6 py-4 text-right">Action</th>
+                        <tr className="border-b border-[#eef4ff] text-[#565e74] uppercase tracking-wider text-[11px] font-semibold bg-white">
+                            <th className="px-6 py-4 font-semibold text-[#524439]">Item Name</th>
+                            <th className="px-6 py-4 font-semibold text-[#524439]">Status</th>
+                            <th className="px-6 py-4 text-right font-semibold text-[#524439]">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         {isLoading ? (
                             Array.from({ length: 3 }).map((_, i) => (
-                                <tr key={i} className="border-b border-[#F5F2ED]/50 animate-pulse">
-                                    <td className="px-6 py-4"><div className="h-4 bg-[#F5F2ED] rounded w-3/4"></div></td>
-                                    <td className="px-6 py-4"><div className="h-5 bg-[#F5F2ED] rounded w-16"></div></td>
-                                    <td className="px-6 py-4"><div className="h-4 bg-[#F5F2ED] rounded w-12 ml-auto"></div></td>
+                                <tr key={i} className="border-b border-[#eef4ff] bg-white">
+                                    <td className="px-6 py-3" colSpan={3}>
+                                        <div className="h-10 animate-pulse rounded-md bg-[#eef4ff]/80" />
+                                    </td>
                                 </tr>
                             ))
                         ) : expiredStocks.length === 0 ? (
                             <tr>
-                                <td colSpan={3} className="px-6 py-8 text-center text-[#565e74]">
+                                <td colSpan={3} className="px-6 py-12 text-center text-[#524439] bg-white">
                                     No expired stocks found.
                                 </td>
                             </tr>
                         ) : (
                             expiredStocks.map((item) => (
-                                <tr key={item.id} className="border-b border-[#F5F2ED] hover:bg-[#F8F9FF] transition-colors">
+                                <tr key={item.id} className="border-b border-[#eef4ff] hover:bg-[#f8f9ff]/50 bg-white transition-colors">
                                     <td className="px-6 py-4 font-medium text-[#121c28]">{item.name}</td>
                                     <td className="px-6 py-4">
                                         <span className={cn(dashboardStyles.statusPill, dashboardStyles.criticalStatus)}>
@@ -77,27 +80,40 @@ export default function FlaggedExpiredTable() {
             </div>
 
             {/* Pagination component */}
-            <div className="px-6 py-4 flex items-center justify-between border-t border-[#F5F2ED]/50 text-sm text-[#565e74]">
-                <span>
-                    Showing {totalItems === 0 ? 0 : startCount} to {endCount} of {totalItems}
-                </span>
-                <div className="flex gap-2">
-                    <button
-                        disabled={page === 1}
-                        onClick={() => setPage(p => Math.max(1, p - 1))}
-                        className="p-1 rounded hover:bg-[#F5F2ED] disabled:opacity-50 transition-colors"
-                    >
-                        <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <button
-                        disabled={page >= (pagination?.totalPages || 1)}
-                        onClick={() => setPage(p => p + 1)}
-                        className="p-1 rounded hover:bg-[#F5F2ED] disabled:opacity-50 transition-colors"
-                    >
-                        <ChevronRight className="w-5 h-5" />
-                    </button>
+            {(!isLoading && totalItems > 0) && (
+                <div className={dashboardStyles.paginationContainer}>
+                    <p>
+                        Showing {" "}
+                        <span className="font-semibold text-[#121c28]">{startCount}</span>{" "}
+                        to{" "}
+                        <span className="font-semibold text-[#121c28]">{endCount}</span>{" "}
+                        of{" "}
+                        <span className="font-semibold text-[#121c28]">{totalItems}</span>{" "}
+                        items
+                    </p>
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            disabled={!hasPrevPage}
+                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                            className={dashboardStyles.paginationTextButton}
+                        >
+                            Prev
+                        </button>
+                        <span className={dashboardStyles.paginationActiveIndicator}>
+                            {page}
+                        </span>
+                        <button
+                            type="button"
+                            disabled={!hasNextPage}
+                            onClick={() => setPage(p => p + 1)}
+                            className={dashboardStyles.paginationTextButton}
+                        >
+                            Next
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }
