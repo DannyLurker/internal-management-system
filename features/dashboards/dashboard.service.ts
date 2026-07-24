@@ -11,7 +11,7 @@ import itemRepository, {
 import { stockWhereInput } from "../stocks/stock.repository";
 
 const dashboardService = {
-  managerGetDashboard: async (
+  getFinancialSummary: async (
     session: Session["user"],
     params: ManagerDashboardParamSchema,
     prisma: Prisma.TransactionClient | PrismaClient,
@@ -21,25 +21,9 @@ const dashboardService = {
     });
 
     const totalWastageValueWhereInput = createStockMovementWhereInput({
-      OR: [
-        {
-          type: {
-            in: [
-              "DISCARD",
-              "MARK_AS_DAMAGED",
-              "MARK_AS_EXPIRED",
-              "MARK_AS_LOST",
-            ],
-          },
-        },
-        {
-          stock: {
-            expiredAt: {
-              lte: new Date(),
-            },
-          },
-        },
-      ],
+      type: {
+        in: ["DISCARD", "MARK_AS_DAMAGED", "MARK_AS_EXPIRED", "MARK_AS_LOST"],
+      },
     });
 
     const expiredStockWhere = stockWhereInput({
@@ -126,13 +110,15 @@ const dashboardService = {
       (params.lowStockAlertPage - 1) * params.lowStockAlertDataPerPage;
     const lowStockAlertLimit = params.lowStockAlertDataPerPage;
 
-    const lowStocks = await prisma.$queryRaw<{
-      id: string;
-      name: string;
-      minThreshold: number;
-      isActive: boolean;
-      currentStock: number;
-    }>`
+    const rawLowStocks = await prisma.$queryRaw<
+      {
+        id: string;
+        name: string;
+        minThreshold: number;
+        isActive: boolean;
+        currentStock: number;
+      }[]
+    >`
       SELECT
         i."id",
         i."name",
@@ -154,6 +140,27 @@ const dashboardService = {
       OFFSET ${lowStockAlertOffset};
     `;
 
+    const lowStocks = rawLowStocks.map((stock) => ({
+      ...stock,
+      currentStock: Number(stock.currentStock),
+    }));
+
+    const [{ count }] = await prisma.$queryRaw<{ count: bigint }[]>`
+      SELECT COUNT(*) FROM (
+        SELECT i."id"
+        FROM "Item" i
+        LEFT JOIN "Stock" s ON s."itemId" = i."id" AND s."type" = 'READY'
+        WHERE i."isActive" = true
+        GROUP BY i."id", i."minThreshold"
+        HAVING COALESCE(SUM(s."quantity"), 0) <= i."minThreshold"
+      ) AS low_stock_count;
+    `;
+
+    const totalLowStockItems = Number(count);
+    const totalLowStockPages = Math.ceil(
+      totalLowStockItems / params.lowStockAlertDataPerPage,
+    );
+
     return {
       message: "Manager dashboard data retrieved successfully",
       data: {
@@ -161,6 +168,8 @@ const dashboardService = {
         totalInventoryValue,
         totalStockWastageValue,
         lowStocks,
+        totalLowStockItems,
+        totalLowStockPages,
         flaggedExpiredStocks: {
           items: flaggedExpiredStocks,
           pagination: {

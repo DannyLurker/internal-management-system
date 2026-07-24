@@ -1,5 +1,4 @@
 import { Roles } from "@prisma/client";
-import { permission } from "process";
 
 const PERMISSIONS = {
   MANAGE_LOCATION: ["HOTEL_MANAGER", "SUPERVISOR"] as Roles[],
@@ -53,5 +52,3 @@ export const canDeleteStockMovement = (role: Roles) => {
 export const canAccessManagerDashboard = (role: Roles) => {
   return role === PERMISSIONS.ACCESS_MANAGER_DASHBOARD;
 };
-
-

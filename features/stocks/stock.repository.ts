@@ -6,7 +6,7 @@ import { StockGetManySchema } from "@/shared/lib/zods/stock.zod";
 export interface StockStatusFilterParams {
   sortBy: string;
   stockStatusType?: string;
-  itemSearchQuery: string | null;
+  itemSearchQuery?: string;
 }
 
 export const stockWhereInput = (where: Prisma.StockWhereInput) => where;
@@ -79,22 +79,17 @@ export const stockRepository = {
     sortBy: StockGetManySchema["sortBy"],
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
+    const orderBy: Prisma.StockOrderByWithRelationInput =
+      sortBy === "stockType"
+        ? { quantity: sortOrder }
+        : { [sortBy]: sortOrder };
+
     return tx.stock.findMany({
       where,
       select,
       skip,
       take,
-      ...(sortBy === "stockType"
-        ? {
-            orderBy: {
-              quantity: sortOrder,
-            },
-          }
-        : {
-            orderBy: {
-              [sortBy]: sortOrder,
-            },
-          }),
+      orderBy,
     });
   },
 

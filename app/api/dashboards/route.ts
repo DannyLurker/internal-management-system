@@ -27,15 +27,26 @@ export async function GET(req: Request) {
 
     switch (session.role) {
       case "HOTEL_MANAGER":
-        const result = await dashboardService.managerGetDashboard(
+        const managerDashboardData = await dashboardService.getFinancialSummary(
           session,
           params,
           prisma,
         );
 
         response = {
-          message: result.message,
-          data: result.data,
+          message: managerDashboardData.message,
+          data: managerDashboardData.data,
+          status: 200,
+        };
+        break;
+
+      case "ACCOUNTANT":
+        const accountantDashboardData =
+          await dashboardService.getFinancialSummary(session, params, prisma);
+
+        response = {
+          message: accountantDashboardData.message,
+          data: accountantDashboardData.data,
           status: 200,
         };
         break;
@@ -44,7 +55,7 @@ export async function GET(req: Request) {
         throw forbidden("You're not allowed to access this feature.");
     }
 
-    return Response.json(response, { status: 200 });
+    return Response.json(response, { status: response.status });
   } catch (error) {
     printConsoleError(error, "GET", req.url);
     return handleError(error);

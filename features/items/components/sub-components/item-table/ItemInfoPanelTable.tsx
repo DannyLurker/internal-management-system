@@ -114,15 +114,15 @@ export default function ItemInfoPanelTable({
                           className={cn(
                             "inline-flex rounded px-1.5 py-0.5 font-semibold text-[10px] uppercase tracking-wide",
                             stock?.type === "READY" &&
-                              "bg-emerald-100 text-emerald-800",
+                            "bg-emerald-100 text-emerald-800",
                             stock?.type === "DIRTY" &&
-                              "bg-amber-100 text-amber-800",
+                            "bg-amber-100 text-amber-800",
                             stock?.type === "DAMAGED" &&
-                              "bg-rose-100 text-rose-800",
+                            "bg-rose-100 text-rose-800",
                             stock?.type === "EXPIRED" &&
-                              "bg-gray-150 text-gray-800 border border-gray-300",
+                            "bg-gray-150 text-gray-800 border border-gray-300",
                             stock?.type === "LOST" &&
-                              "bg-slate-200 text-slate-800 border border-slate-400",
+                            "bg-slate-200 text-slate-800 border border-slate-400",
                           )}
                         >
                           {stock?.type}
@@ -251,7 +251,7 @@ export default function ItemInfoPanelTable({
                     "rounded-md border border-[#d9e3f4] p-1.5 text-[#565e74]",
                     !hasPrevPage && "cursor-not-allowed opacity-40",
                     hasPrevPage &&
-                      "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+                    "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
                   )}
                   aria-label="First page"
                 >
@@ -265,7 +265,7 @@ export default function ItemInfoPanelTable({
                     "rounded-md border border-[#d9e3f4] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[#565e74]",
                     !hasPrevPage && "cursor-not-allowed opacity-40",
                     hasPrevPage &&
-                      "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+                    "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
                   )}
                 >
                   Prev
@@ -281,7 +281,7 @@ export default function ItemInfoPanelTable({
                     "rounded-md border border-[#d9e3f4] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[#565e74]",
                     !hasNextPage && "cursor-not-allowed opacity-40",
                     hasNextPage &&
-                      "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+                    "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
                   )}
                 >
                   Next
@@ -294,7 +294,7 @@ export default function ItemInfoPanelTable({
                     "rounded-md border border-[#d9e3f4] p-1.5 text-[#565e74]",
                     !hasNextPage && "cursor-not-allowed opacity-40",
                     hasNextPage &&
-                      "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
+                    "hover:border-[#894d0d]/40 hover:text-[#894d0d]",
                   )}
                   aria-label="Last page"
                 >

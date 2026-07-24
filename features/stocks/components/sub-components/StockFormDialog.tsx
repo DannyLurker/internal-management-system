@@ -42,7 +42,6 @@ type StockFormDialogProps = {
   stock: Stock | null;
   onSuccess: () => void;
   locations: LocationOption[];
-  // Since I also use this component at other feature, like "ItemInfoPanelTable.tsx", I need to change several things to make it works. One of them is items, from required to optional
   items?: ItemOption[];
 };
 
@@ -80,22 +79,16 @@ export default function StockFormDialog({
   const updateForm = useForm<StockUpdateSchema>({
     resolver: zodResolver(stockUpdateSchema) as Resolver<StockUpdateSchema>,
     defaultValues: {
-      type: "READY",
       locationId: "",
       expiredAt: undefined,
     },
   });
-
-  const watchedType = isEdit
-    ? updateForm.watch("type")
-    : createForm.watch("type");
 
   useEffect(() => {
     if (!open) return;
 
     if (stock) {
       updateForm.reset({
-        type: stock.type,
         locationId: stock.locationId,
         expiredAt: stock.expiredAt ? new Date(stock.expiredAt) : undefined,
       });
@@ -160,12 +153,13 @@ export default function StockFormDialog({
           className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-5"
           onSubmit={isEdit ? onUpdateSubmit : onCreateSubmit}
         >
-          {/* Item selector (only for creation) */}
+          {/* Stock details fieldset */}
           <fieldset className="space-y-4">
             <legend className="font-ochre-ui text-[11px] font-semibold uppercase tracking-wider text-[#524439]">
               Stock details
             </legend>
 
+            {/* Item Selector (creation mode only) */}
             {!isEdit ? (
               <div>
                 <Label className="font-ochre-ui text-sm">Item</Label>
@@ -185,39 +179,37 @@ export default function StockFormDialog({
                         className={cn("mt-1.5 w-full", inputClass)}
                       >
                         {selectedId
-                          ? (items!.find((i) => i.id === selectedId)?.name ??
+                          ? (items?.find((i) => i.id === selectedId)?.name ??
                             "Select an item")
                           : "Select an item"}
                       </SelectTrigger>
                       <SelectContent>
-                        {!isEdit &&
-                          items &&
-                          items.map((item) => (
-                            <SelectItem key={item.id} value={item.id}>
-                              {item.name}
-                            </SelectItem>
-                          ))}
+                        {items?.map((item) => (
+                          <SelectItem key={item.id} value={item.id}>
+                            {item.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   );
                 })()}
-                {createForm.formState.errors.itemId ? (
+                {createForm.formState.errors.itemId && (
                   <p className="mt-1 font-ochre-ui text-xs text-red-600">
                     {createForm.formState.errors.itemId.message}
                   </p>
-                ) : null}
+                )}
               </div>
             ) : (
               <div>
                 <Label className="font-ochre-ui text-sm">Item</Label>
                 <p className="mt-1.5 font-ochre-ui text-sm font-semibold text-[#121c28]">
-                  {stock?.item.name}
+                  {stock?.item?.name}
                 </p>
               </div>
             )}
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              {/* Location */}
+            <div className="grid gap-4">
+              {/* Location Selection */}
               <div>
                 <Label className="font-ochre-ui text-sm">Location</Label>
                 {(() => {
@@ -258,125 +250,45 @@ export default function StockFormDialog({
                     </Select>
                   );
                 })()}
-              </div>
-
-              {/* Stock Type */}
-              <div>
-                <Label className="font-ochre-ui text-sm">Type</Label>
-                {(() => {
-                  const selectedType = isEdit
-                    ? updateForm.watch("type")
-                    : createForm.watch("type");
-
-                  return (
-                    <Select
-                      value={selectedType}
-                      onValueChange={(v) => {
-                        if (isEdit) {
-                          updateForm.setValue(
-                            "type",
-                            v as StockUpdateSchema["type"],
-                            { shouldValidate: true },
-                          );
-                        } else {
-                          createForm.setValue(
-                            "type",
-                            v as StockCreateSchema["type"],
-                            { shouldValidate: true },
-                          );
-                        }
-                      }}
-                    >
-                      <SelectTrigger
-                        className={cn("mt-1.5 w-full", inputClass)}
-                      >
-                        {selectedType ?? "Select type"}
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="READY">Ready</SelectItem>
-                        <SelectItem value="DIRTY">Dirty</SelectItem>
-                        <SelectItem value="DAMAGED">Damaged</SelectItem>
-                        <SelectItem value="EXPIRED">Expired</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  );
-                })()}
-              </div>
-            </div>
-
-            {/*  Quantity  */}
-            {!isEdit && (
-              <div className="mt-6 space-y-3">
-                <Label className="font-ochre-ui text-sm font-semibold text-[#121c28]">
-                  Quantity
-                </Label>
-
-                <Controller
-                  control={createForm.control}
-                  name="quantity"
-                  render={({ field }) => (
-                    <Input
-                      type="text"
-                      inputMode="numeric"
-                      className={cn("mt-1.5", inputClass)}
-                      placeholder="1.000"
-                      value={formatThousand(field.value ?? "")}
-                      onChange={(e) => {
-                        const rawValue = e.target.value;
-                        const numericValue = unformatThousand(rawValue);
-                        // Directly updates the numerical form state without DOM interference
-                        field.onChange(
-                          numericValue === 0 ? undefined : numericValue,
-                        );
-                      }}
-                    />
-                  )}
-                />
-                {(
-                  isEdit
-                    ? updateForm.formState.errors.expiredAt
-                    : createForm.formState.errors.expiredAt
-                ) ? (
+                {(isEdit
+                  ? updateForm.formState.errors.locationId
+                  : createForm.formState.errors.locationId) && (
                   <p className="mt-1 font-ochre-ui text-xs text-red-600">
                     {
                       (isEdit
-                        ? updateForm.formState.errors.expiredAt
-                        : createForm.formState.errors.expiredAt
+                        ? updateForm.formState.errors.locationId
+                        : createForm.formState.errors.locationId
                       )?.message
                     }
                   </p>
-                ) : null}
+                )}
               </div>
-            )}
-          </fieldset>
+            </div>
 
-          {/* Cost and Reason – only for creation */}
-          {!isEdit && (
-            <fieldset className="mt-6 space-y-4">
-              <legend className="font-ochre-ui text-[11px] font-semibold uppercase tracking-wider text-[#524439]">
-                Transaction details
-              </legend>
-
-              <div className="grid gap-4 sm:grid-cols-2 rounded-lg bg-[#eef4ff]/50 p-4 border border-[#eef4ff]">
-                {watchedType === "READY" && (
+            {/* Total Cost & Reason Fields (Creation Mode Only) */}
+            {!isEdit && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {/* Quantity Field (Creation Mode Only) */}
+                {!isEdit && (
                   <div>
-                    <Label className="font-ochre-ui text-sm">
-                      Total cost ($)
-                    </Label>
+                    <Label className="font-ochre-ui text-sm">Quantity</Label>
                     <Controller
                       control={createForm.control}
-                      name="totalCost"
+                      name="quantity"
                       render={({ field }) => (
                         <Input
                           type="text"
                           inputMode="numeric"
                           className={cn("mt-1.5", inputClass)}
                           placeholder="1.000"
-                          value={formatThousand(field.value ?? "")}
+                          value={
+                            field.value !== undefined
+                              ? formatThousand(field.value)
+                              : ""
+                          }
                           onChange={(e) => {
                             const rawValue = e.target.value;
                             const numericValue = unformatThousand(rawValue);
-                            // Directly updates the numerical form state without DOM interference
                             field.onChange(
                               numericValue === 0 ? undefined : numericValue,
                             );
@@ -384,48 +296,84 @@ export default function StockFormDialog({
                         />
                       )}
                     />
-                    {createForm.formState.errors.totalCost ? (
+                    {createForm.formState.errors.quantity && (
                       <p className="mt-1 font-ochre-ui text-xs text-red-600">
-                        {createForm.formState.errors.totalCost.message}
+                        {createForm.formState.errors.quantity.message}
                       </p>
-                    ) : null}
+                    )}
                   </div>
                 )}
 
-                <div className={watchedType === "READY" ? "" : "sm:col-span-2"}>
+                {/* Total Cost Input */}
+                <div>
                   <Label className="font-ochre-ui text-sm">
-                    Reason for stock transaction
+                    Total cost (Optional)
                   </Label>
-                  <Input
-                    placeholder="e.g. Initial stock receipt"
-                    className={cn("mt-1.5", inputClass)}
-                    {...createForm.register("reason")}
+                  <Controller
+                    control={createForm.control}
+                    name="totalCost"
+                    render={({ field }) => (
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        className={cn("mt-1.5", inputClass)}
+                        placeholder="100.000"
+                        value={
+                          field.value !== undefined
+                            ? formatThousand(field.value)
+                            : ""
+                        }
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+                          const numericValue = unformatThousand(rawValue);
+                          field.onChange(
+                            numericValue === 0 ? undefined : numericValue,
+                          );
+                        }}
+                      />
+                    )}
                   />
-                  {createForm.formState.errors.reason ? (
+                  {createForm.formState.errors.totalCost && (
                     <p className="mt-1 font-ochre-ui text-xs text-red-600">
-                      {createForm.formState.errors.reason.message}
+                      {createForm.formState.errors.totalCost.message}
                     </p>
-                  ) : null}
+                  )}
                 </div>
               </div>
-            </fieldset>
-          )}
+            )}
 
-          {/* Expiration Date */}
+            {/* Reason Input */}
+            <div>
+              <Label className="font-ochre-ui text-sm">Reason (Optional)</Label>
+              <Input
+                type="text"
+                className={cn("mt-1.5", inputClass)}
+                placeholder="e.g., Initial stock, Weekly delivery"
+                {...createForm.register("reason")}
+              />
+              {createForm.formState.errors.reason && (
+                <p className="mt-1 font-ochre-ui text-xs text-red-600">
+                  {createForm.formState.errors.reason.message}
+                </p>
+              )}
+            </div>
+          </fieldset>
+
+          {/* Expiration Date Section */}
           <fieldset className="mt-6 space-y-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <Label className="font-ochre-ui text-sm font-semibold text-[#121c28]">
                 Expiration date (Optional)
               </Label>
 
-              <div className="inline-flex rounded-lg bg-[#eef4ff] p-0.5 border border-[#d9e3f4]/40">
+              <div className="inline-flex rounded-lg border border-[#d9e3f4]/40 bg-[#eef4ff] p-0.5">
                 <button
                   type="button"
                   onClick={() => setExpiryInputMode("picker")}
                   className={cn(
-                    "inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold tracking-wide transition-all duration-200 cursor-pointer",
+                    "inline-flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1 text-xs font-semibold tracking-wide transition-all duration-200",
                     expiryInputMode === "picker"
-                      ? "bg-white text-[#894d0d] shadow-[0_2px_8px_rgba(137,77,13,0.12)] font-bold"
+                      ? "bg-white font-bold text-[#894d0d] shadow-[0_2px_8px_rgba(137,77,13,0.12)]"
                       : "text-[#565e74] hover:text-[#121c28]",
                   )}
                 >
@@ -436,9 +384,9 @@ export default function StockFormDialog({
                   type="button"
                   onClick={() => setExpiryInputMode("manual")}
                   className={cn(
-                    "inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold tracking-wide transition-all duration-200 cursor-pointer",
+                    "inline-flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1 text-xs font-semibold tracking-wide transition-all duration-200",
                     expiryInputMode === "manual"
-                      ? "bg-white text-[#894d0d] shadow-[0_2px_8px_rgba(137,77,13,0.12)] font-bold"
+                      ? "bg-white font-bold text-[#894d0d] shadow-[0_2px_8px_rgba(137,77,13,0.12)]"
                       : "text-[#565e74] hover:text-[#121c28]",
                   )}
                 >
@@ -457,17 +405,15 @@ export default function StockFormDialog({
                 className={cn("w-full", inputClass)}
                 {...(isEdit
                   ? updateForm.register("expiredAt", {
-                    setValueAs: (value) => (value === "" ? undefined : value),
-                  })
+                      setValueAs: (value) => (value === "" ? undefined : value),
+                    })
                   : createForm.register("expiredAt", {
-                    setValueAs: (value) => (value === "" ? undefined : value),
-                  }))}
+                      setValueAs: (value) => (value === "" ? undefined : value),
+                    }))}
               />
-              {(
-                isEdit
-                  ? updateForm.formState.errors.expiredAt
-                  : createForm.formState.errors.expiredAt
-              ) ? (
+              {(isEdit
+                ? updateForm.formState.errors.expiredAt
+                : createForm.formState.errors.expiredAt) && (
                 <p className="mt-1 font-ochre-ui text-xs text-red-600">
                   {
                     (isEdit
@@ -476,9 +422,9 @@ export default function StockFormDialog({
                     )?.message
                   }
                 </p>
-              ) : null}
+              )}
             </div>
-            <p className="mt-1.5 font-ochre-ui text-xs text-[#524439]/70 leading-normal">
+            <p className="mt-1.5 font-ochre-ui text-xs leading-normal text-[#524439]/70">
               {expiryInputMode === "picker"
                 ? "Select the date when this stock batch will expire using the calendar picker."
                 : "Type the date in YYYY-MM-DD format (e.g., 2026-12-31)."}
@@ -486,7 +432,7 @@ export default function StockFormDialog({
           </fieldset>
         </form>
 
-        <DialogFooter className="shrink-0 gap-2 border-t border-[#eef4ff] bg-[#f8f9ff]/50 px-6 py-4 sm:justify-end mb-1">
+        <DialogFooter className="mb-1 shrink-0 gap-2 border-t border-[#eef4ff] bg-[#f8f9ff]/50 px-6 py-4 sm:justify-end">
           <Button
             type="button"
             variant="outline"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo } from "react";
 import { Controller, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -28,13 +28,9 @@ import {
 } from "@/shared/lib/zods/stock-movements.zod";
 import { stockGetManySchema } from "@/shared/lib/zods/stock.zod";
 import { useCreateStockMovement } from "../../stock-movements.hooks";
-import {
-  datePickerInputClass,
-  stockMovementInputClass,
-} from "../../stock-movements.style";
+import { stockMovementInputClass } from "../../stock-movements.style";
 import { StockType } from "@prisma/client";
 import { formatThousand, unformatThousand } from "@/shared/lib/formatter";
-import { Calendar, Keyboard } from "lucide-react";
 
 type ItemOption = { id: string; name: string };
 type LocationOption = { id: string; name: string };
@@ -108,9 +104,6 @@ export default function StockMovementFormDialog({
 }: StockMovementFormDialogProps) {
   const formId = useId();
   const createMutation = useCreateStockMovement();
-  const [expiryInputMode, setExpiryInputMode] = useState<"picker" | "manual">(
-    "picker",
-  );
 
   const defaultType =
     movementTypes.length === 1 && movementTypes[0] === "TRANSFER"
@@ -131,7 +124,6 @@ export default function StockMovementFormDialog({
       reason: "",
       destinationLocationId: undefined,
       orderId: undefined,
-      expiredAt: undefined,
     },
   });
 
@@ -440,66 +432,6 @@ export default function StockMovementFormDialog({
                 </div>
               ) : null}
             </div>
-          </fieldset>
-
-          <fieldset className="mt-6 space-y-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <Label className="font-ochre-ui text-sm font-semibold text-[#121c28]">
-                Expiration date (Optional)
-              </Label>
-
-              <div className="inline-flex rounded-lg bg-[#eef4ff] p-0.5 border border-[#d9e3f4]/40">
-                <button
-                  type="button"
-                  onClick={() => setExpiryInputMode("picker")}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold tracking-wide transition-all duration-200 cursor-pointer",
-                    expiryInputMode === "picker"
-                      ? "bg-white text-[#894d0d] shadow-[0_2px_8px_rgba(137,77,13,0.12)] font-bold"
-                      : "text-[#565e74] hover:text-[#121c28]",
-                  )}
-                >
-                  <Calendar className="size-3.5 text-[#894d0d]" />
-                  Calendar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setExpiryInputMode("manual")}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold tracking-wide transition-all duration-200 cursor-pointer",
-                    expiryInputMode === "manual"
-                      ? "bg-white text-[#894d0d] shadow-[0_2px_8px_rgba(137,77,13,0.12)] font-bold"
-                      : "text-[#565e74] hover:text-[#121c28]",
-                  )}
-                >
-                  <Keyboard className="size-3.5 text-[#894d0d]" />
-                  Manual
-                </button>
-              </div>
-            </div>
-
-            <div className="relative">
-              <Input
-                type={expiryInputMode === "picker" ? "date" : "text"}
-                placeholder={
-                  expiryInputMode === "picker" ? undefined : "YYYY-MM-DD"
-                }
-                className={cn("w-full", datePickerInputClass)}
-                {...form.register("expiredAt", {
-                  setValueAs: (value) => (value === "" ? undefined : value),
-                })}
-              />
-              {form.formState.errors.expiredAt ? (
-                <p className="mt-1 font-ochre-ui text-xs text-red-600">
-                  {form.formState.errors.expiredAt.message}
-                </p>
-              ) : null}
-            </div>
-            <p className="mt-1.5 font-ochre-ui text-xs text-[#524439]/70 leading-normal">
-              {expiryInputMode === "picker"
-                ? "Select the date when this stock batch will expire using the calendar picker."
-                : "Type the date in YYYY-MM-DD format (e.g., 2026-12-31)."}
-            </p>
           </fieldset>
 
           <fieldset className="mt-6 space-y-4">

@@ -4,7 +4,7 @@ export function formatItemSku(id: string) {
   return `HOS-${suffix}`;
 }
 
-export function formatItemPrice(
+export function formatPrice(
   value: number | string | null | undefined | { toString(): string },
 ) {
   const num = value == null ? 0 : Number(String(value));

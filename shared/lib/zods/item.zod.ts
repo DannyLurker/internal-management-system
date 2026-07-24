@@ -16,18 +16,6 @@ export const itemCreateSchema = z.object({
   description: z.string().trim().min(1),
   image: z.string().optional(),
   sellingPrice: z.number().min(1).optional(),
-  costPrice: z
-    .number({ error: "Cost price must be filled and it must be number" })
-    .min(1)
-    .superRefine((val, ctx) => {
-      if (isNaN(val)) {
-        ctx.addIssue({
-          code: "invalid_value" as any,
-          path: ["Cost price"],
-          message: "Cost price is required and it must be number ",
-        });
-      }
-    }),
   minThreshold: z.number().optional(),
   attributes: z.record(z.any(), z.any()).optional().default({}),
   stock: z
@@ -100,7 +88,6 @@ export const itemUpdateSchema = z.object({
   description: z.string().trim().min(1),
   image: z.string().optional(),
   sellingPrice: z.number().min(1).optional(),
-  costPrice: z.number().min(1),
   attributes: z.record(z.any(), z.any()).optional().default({}),
   minThreshold: z.number().optional(),
   isActive: z.boolean().default(true),

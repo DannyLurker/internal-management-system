@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { useStockMovement } from "../..//stock-movements.hooks";
-import { formatItemDate, formatItemPrice } from "@/shared/lib/formatter";
+import { formatItemDate, formatPrice } from "@/shared/lib/formatter";
 import { formatMovementLabel } from "../../stock-movements.utils";
 
 type StockMovementInfoDialogProps = {
@@ -94,7 +94,7 @@ export default function StockMovementInfoDialog({
                   value={
                     movement.totalCost == null
                       ? "-"
-                      : formatItemPrice(movement.totalCost)
+                      : formatPrice(movement.totalCost)
                   }
                 />
                 <DetailLine
