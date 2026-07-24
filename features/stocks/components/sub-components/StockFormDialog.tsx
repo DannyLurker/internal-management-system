@@ -80,22 +80,16 @@ export default function StockFormDialog({
   const updateForm = useForm<StockUpdateSchema>({
     resolver: zodResolver(stockUpdateSchema) as Resolver<StockUpdateSchema>,
     defaultValues: {
-      type: "READY",
       locationId: "",
       expiredAt: undefined,
     },
   });
-
-  const watchedType = isEdit
-    ? updateForm.watch("type")
-    : createForm.watch("type");
 
   useEffect(() => {
     if (!open) return;
 
     if (stock) {
       updateForm.reset({
-        type: stock.type,
         locationId: stock.locationId,
         expiredAt: stock.expiredAt ? new Date(stock.expiredAt) : undefined,
       });
@@ -259,49 +253,6 @@ export default function StockFormDialog({
                   );
                 })()}
               </div>
-
-              {/* Stock Type */}
-              <div>
-                <Label className="font-ochre-ui text-sm">Type</Label>
-                {(() => {
-                  const selectedType = isEdit
-                    ? updateForm.watch("type")
-                    : createForm.watch("type");
-
-                  return (
-                    <Select
-                      value={selectedType}
-                      onValueChange={(v) => {
-                        if (isEdit) {
-                          updateForm.setValue(
-                            "type",
-                            v as StockUpdateSchema["type"],
-                            { shouldValidate: true },
-                          );
-                        } else {
-                          createForm.setValue(
-                            "type",
-                            v as StockCreateSchema["type"],
-                            { shouldValidate: true },
-                          );
-                        }
-                      }}
-                    >
-                      <SelectTrigger
-                        className={cn("mt-1.5 w-full", inputClass)}
-                      >
-                        {selectedType ?? "Select type"}
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="READY">Ready</SelectItem>
-                        <SelectItem value="DIRTY">Dirty</SelectItem>
-                        <SelectItem value="DAMAGED">Damaged</SelectItem>
-                        <SelectItem value="EXPIRED">Expired</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  );
-                })()}
-              </div>
             </div>
 
             {/*  Quantity  */}
@@ -350,67 +301,6 @@ export default function StockFormDialog({
             )}
           </fieldset>
 
-          {/* Cost and Reason – only for creation */}
-          {!isEdit && (
-            <fieldset className="mt-6 space-y-4">
-              <legend className="font-ochre-ui text-[11px] font-semibold uppercase tracking-wider text-[#524439]">
-                Transaction details
-              </legend>
-
-              <div className="grid gap-4 sm:grid-cols-2 rounded-lg bg-[#eef4ff]/50 p-4 border border-[#eef4ff]">
-                {watchedType === "READY" && (
-                  <div>
-                    <Label className="font-ochre-ui text-sm">
-                      Total cost ($)
-                    </Label>
-                    <Controller
-                      control={createForm.control}
-                      name="totalCost"
-                      render={({ field }) => (
-                        <Input
-                          type="text"
-                          inputMode="numeric"
-                          className={cn("mt-1.5", inputClass)}
-                          placeholder="1.000"
-                          value={formatThousand(field.value ?? "")}
-                          onChange={(e) => {
-                            const rawValue = e.target.value;
-                            const numericValue = unformatThousand(rawValue);
-                            // Directly updates the numerical form state without DOM interference
-                            field.onChange(
-                              numericValue === 0 ? undefined : numericValue,
-                            );
-                          }}
-                        />
-                      )}
-                    />
-                    {createForm.formState.errors.totalCost ? (
-                      <p className="mt-1 font-ochre-ui text-xs text-red-600">
-                        {createForm.formState.errors.totalCost.message}
-                      </p>
-                    ) : null}
-                  </div>
-                )}
-
-                <div className={watchedType === "READY" ? "" : "sm:col-span-2"}>
-                  <Label className="font-ochre-ui text-sm">
-                    Reason for stock transaction
-                  </Label>
-                  <Input
-                    placeholder="e.g. Initial stock receipt"
-                    className={cn("mt-1.5", inputClass)}
-                    {...createForm.register("reason")}
-                  />
-                  {createForm.formState.errors.reason ? (
-                    <p className="mt-1 font-ochre-ui text-xs text-red-600">
-                      {createForm.formState.errors.reason.message}
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-            </fieldset>
-          )}
-
           {/* Expiration Date */}
           <fieldset className="mt-6 space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
@@ -457,11 +347,11 @@ export default function StockFormDialog({
                 className={cn("w-full", inputClass)}
                 {...(isEdit
                   ? updateForm.register("expiredAt", {
-                    setValueAs: (value) => (value === "" ? undefined : value),
-                  })
+                      setValueAs: (value) => (value === "" ? undefined : value),
+                    })
                   : createForm.register("expiredAt", {
-                    setValueAs: (value) => (value === "" ? undefined : value),
-                  }))}
+                      setValueAs: (value) => (value === "" ? undefined : value),
+                    }))}
               />
               {(
                 isEdit

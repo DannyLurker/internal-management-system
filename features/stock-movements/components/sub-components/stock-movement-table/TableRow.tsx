@@ -2,7 +2,7 @@
 
 import { Eye } from "lucide-react";
 import type { StockMovementGetManyApiResponse } from "@/features/stock-movements/stock-movements.types";
-import { formatItemDate, formatItemPrice } from "@/shared/lib/formatter";
+import { formatItemDate, formatPrice } from "@/shared/lib/formatter";
 import { cn } from "@/shared/lib/utils";
 import { movementTone } from "@/features/stock-movements/stock-movements.style";
 
@@ -27,7 +27,7 @@ export default function TableRow({ movement, onInfo }: TableRowProps) {
   const costLabel =
     movement.totalCost == null
       ? "No cost logged"
-      : formatItemPrice(movement.totalCost);
+      : formatPrice(movement.totalCost);
 
   return (
     <tr className="border-b border-[#eef4ff] last:border-0 hover:bg-[#f8f9ff]/80">

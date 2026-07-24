@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Info, Pencil, PowerIcon, PowerOff } from "lucide-react";
 import type { Item } from "@/features/items/item.types";
 import { cn } from "@/shared/lib/utils";
-import { formatItemDate, formatItemPrice } from "@/shared/lib/formatter";
+import { formatItemDate, formatPrice } from "@/shared/lib/formatter";
 
 type TableRowProps = {
   item: Item;
@@ -71,10 +71,10 @@ export default function TableRow({
         </span>
       </td>
       <td className="px-4 py-3 align-middle font-ochre-ui text-sm text-[#121c28]">
-        {item.sellingPrice ? formatItemPrice(item.sellingPrice) : "-"}
+        {item.sellingPrice ? formatPrice(item.sellingPrice) : "-"}
       </td>
       <td className="px-4 py-3 align-middle font-ochre-ui text-sm text-[#121c28]">
-        {item.costPrice ? formatItemPrice(item.costPrice) : "-"}
+        {item.costPrice ? formatPrice(item.costPrice) : "-"}
       </td>
 
       <td className="px-4 py-3 align-middle font-ochre-ui text-sm text-[#524439]">

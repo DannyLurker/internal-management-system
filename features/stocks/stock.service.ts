@@ -361,14 +361,12 @@ const stockService = {
       // Check unique constraint if locationId or type is changing
       if (
         data.locationId !== existing.locationId ||
-        data.type !== existing.type ||
         data.expiredAt !== existing.expiredAt
       ) {
         const existingConflict = await tx.stock.findFirst({
           where: {
             itemId: existing.itemId,
             locationId: data.locationId,
-            type: data.type as StockType,
             expiredAt: data.expiredAt,
           },
         });
@@ -392,7 +390,6 @@ const stockService = {
       const stock = await stockRepository.update(
         stockId,
         {
-          type: data.type as StockType,
           expiredAt: data.expiredAt,
           location: {
             connect: {
