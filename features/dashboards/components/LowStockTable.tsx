@@ -40,9 +40,6 @@ export default function LowStockTable() {
               </th>
               <th className="px-6 py-4 font-semibold text-[#524439]">Min</th>
               <th className="px-6 py-4 font-semibold text-[#524439]">Status</th>
-              <th className="px-6 py-4 text-right font-semibold text-[#524439]">
-                Action
-              </th>
             </tr>
           </thead>
           <tbody>
@@ -91,11 +88,6 @@ export default function LowStockTable() {
                         ? "Critical"
                         : "Low"}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button className={dashboardStyles.actionText}>
-                      View Details
-                    </button>
                   </td>
                 </tr>
               ))

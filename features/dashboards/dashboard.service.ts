@@ -126,13 +126,15 @@ const dashboardService = {
       (params.lowStockAlertPage - 1) * params.lowStockAlertDataPerPage;
     const lowStockAlertLimit = params.lowStockAlertDataPerPage;
 
-    const rawLowStocks = await prisma.$queryRaw<{
-      id: string;
-      name: string;
-      minThreshold: number;
-      isActive: boolean;
-      currentStock: number;
-    }[]>`
+    const rawLowStocks = await prisma.$queryRaw<
+      {
+        id: string;
+        name: string;
+        minThreshold: number;
+        isActive: boolean;
+        currentStock: number;
+      }[]
+    >`
       SELECT
         i."id",
         i."name",

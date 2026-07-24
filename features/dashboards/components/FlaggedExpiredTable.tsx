@@ -30,8 +30,12 @@ export default function FlaggedExpiredTable() {
   return (
     <div className={dashboardStyles.tableCard}>
       <div className={dashboardStyles.tableHeader}>
-        <div className="flex items-center gap-3">
+        <div className="flex gap-3 flex-col">
           <h2 className={dashboardStyles.tableTitle}>Flagged Expired Stocks</h2>
+          <p>
+            These stocks have reached their expiration date, but their status
+            has not been updated yet.
+          </p>
         </div>
         <Calendar className="w-5 h-5 text-[#565e74]" strokeWidth={1.5} />
       </div>
