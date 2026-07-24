@@ -160,7 +160,6 @@ const dashboardService = {
     const totalLowStockPages = Math.ceil(
       totalLowStockItems / params.lowStockAlertDataPerPage,
     );
-
     return {
       message: "Manager dashboard data retrieved successfully",
       data: {

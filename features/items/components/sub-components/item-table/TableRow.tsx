@@ -73,6 +73,9 @@ export default function TableRow({
       <td className="px-4 py-3 align-middle font-ochre-ui text-sm text-[#121c28]">
         {item.sellingPrice ? formatPrice(item.sellingPrice) : "-"}
       </td>
+      <td className="px-4 py-3 align-middle font-ochre-ui text-sm text-[#121c28]">
+        {item.costPrice ? formatPrice(item.costPrice) : "-"}
+      </td>
 
       <td className="px-4 py-3 align-middle font-ochre-ui text-sm text-[#524439]">
         {formatItemDate(item.updatedAt)}

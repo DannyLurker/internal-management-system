@@ -76,6 +76,8 @@ export default function StockFormDialog({
     },
   });
 
+  const watchedType = createForm.watch("type");
+
   const updateForm = useForm<StockUpdateSchema>({
     resolver: zodResolver(stockUpdateSchema) as Resolver<StockUpdateSchema>,
     defaultValues: {
@@ -250,45 +252,106 @@ export default function StockFormDialog({
                     </Select>
                   );
                 })()}
-                {(isEdit
-                  ? updateForm.formState.errors.locationId
-                  : createForm.formState.errors.locationId) && (
-                  <p className="mt-1 font-ochre-ui text-xs text-red-600">
-                    {
-                      (isEdit
-                        ? updateForm.formState.errors.locationId
-                        : createForm.formState.errors.locationId
-                      )?.message
-                    }
-                  </p>
-                )}
+              </div>
+
+              {/* Stock Type */}
+              <div>
+                <Label className="font-ochre-ui text-sm">Type</Label>
+                {(() => {
+                  const selectedType = createForm.watch("type");
+
+                  return (
+                    <Select
+                      value={selectedType}
+                      onValueChange={(v) => {
+                        createForm.setValue(
+                          "type",
+                          v as StockCreateSchema["type"],
+                          { shouldValidate: true },
+                        );
+                      }}
+                    >
+                      <SelectTrigger
+                        className={cn("mt-1.5 w-full", inputClass)}
+                      >
+                        {selectedType ?? "Select type"}
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="READY">Ready</SelectItem>
+                        <SelectItem value="DIRTY">Dirty</SelectItem>
+                        <SelectItem value="DAMAGED">Damaged</SelectItem>
+                        <SelectItem value="EXPIRED">Expired</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  );
+                })()}
               </div>
             </div>
 
-            {/* Total Cost & Reason Fields (Creation Mode Only) */}
+            {/*  Quantity  */}
             {!isEdit && (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {/* Quantity Field (Creation Mode Only) */}
-                {!isEdit && (
+              <div className="mt-6 space-y-3">
+                <Label className="font-ochre-ui text-sm font-semibold text-[#121c28]">
+                  Quantity
+                </Label>
+
+                <Controller
+                  control={createForm.control}
+                  name="quantity"
+                  render={({ field }) => (
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      className={cn("mt-1.5", inputClass)}
+                      placeholder="1.000"
+                      value={formatThousand(field.value ?? "")}
+                      onChange={(e) => {
+                        const rawValue = e.target.value;
+                        const numericValue = unformatThousand(rawValue);
+                        // Directly updates the numerical form state without DOM interference
+                        field.onChange(
+                          numericValue === 0 ? undefined : numericValue,
+                        );
+                      }}
+                    />
+                  )}
+                />
+                {createForm.formState.errors.quantity && (
+                  <p className="mt-1 font-ochre-ui text-xs text-red-600">
+                    {createForm.formState.errors.quantity.message}
+                  </p>
+                )}
+              </div>
+            )}
+          </fieldset>
+
+          {/* Cost and Reason – only for creation */}
+          {!isEdit && (
+            <fieldset className="mt-6 space-y-4">
+              <legend className="font-ochre-ui text-[11px] font-semibold uppercase tracking-wider text-[#524439]">
+                Transaction details
+              </legend>
+
+              <div className="grid gap-4 sm:grid-cols-2 rounded-lg bg-[#eef4ff]/50 p-4 border border-[#eef4ff]">
+                {watchedType === "READY" && (
                   <div>
-                    <Label className="font-ochre-ui text-sm">Quantity</Label>
+                    <Label className="font-ochre-ui text-sm">
+                      Total cost ($)
+                    </Label>
                     <Controller
                       control={createForm.control}
-                      name="quantity"
+                      name="totalCost"
                       render={({ field }) => (
                         <Input
                           type="text"
                           inputMode="numeric"
                           className={cn("mt-1.5", inputClass)}
                           placeholder="1.000"
-                          value={
-                            field.value !== undefined
-                              ? formatThousand(field.value)
-                              : ""
-                          }
+                          value={formatThousand(field.value ?? "")}
                           onChange={(e) => {
                             const rawValue = e.target.value;
                             const numericValue = unformatThousand(rawValue);
+                            // Directly updates the numerical form state without DOM interference
                             field.onChange(
                               numericValue === 0 ? undefined : numericValue,
                             );
@@ -296,70 +359,34 @@ export default function StockFormDialog({
                         />
                       )}
                     />
-                    {createForm.formState.errors.quantity && (
+                    {createForm.formState.errors.totalCost ? (
                       <p className="mt-1 font-ochre-ui text-xs text-red-600">
-                        {createForm.formState.errors.quantity.message}
+                        {createForm.formState.errors.totalCost.message}
                       </p>
-                    )}
+                    ) : null}
                   </div>
                 )}
 
-                {/* Total Cost Input */}
-                <div>
+                <div className={watchedType === "READY" ? "" : "sm:col-span-2"}>
                   <Label className="font-ochre-ui text-sm">
-                    Total cost (Optional)
+                    Reason for stock transaction
                   </Label>
-                  <Controller
-                    control={createForm.control}
-                    name="totalCost"
-                    render={({ field }) => (
-                      <Input
-                        type="text"
-                        inputMode="numeric"
-                        className={cn("mt-1.5", inputClass)}
-                        placeholder="100.000"
-                        value={
-                          field.value !== undefined
-                            ? formatThousand(field.value)
-                            : ""
-                        }
-                        onChange={(e) => {
-                          const rawValue = e.target.value;
-                          const numericValue = unformatThousand(rawValue);
-                          field.onChange(
-                            numericValue === 0 ? undefined : numericValue,
-                          );
-                        }}
-                      />
-                    )}
+                  <Input
+                    placeholder="e.g. Initial stock receipt"
+                    className={cn("mt-1.5", inputClass)}
+                    {...createForm.register("reason")}
                   />
-                  {createForm.formState.errors.totalCost && (
+                  {createForm.formState.errors.reason ? (
                     <p className="mt-1 font-ochre-ui text-xs text-red-600">
-                      {createForm.formState.errors.totalCost.message}
+                      {createForm.formState.errors.reason.message}
                     </p>
-                  )}
+                  ) : null}
                 </div>
               </div>
-            )}
+            </fieldset>
+          )}
 
-            {/* Reason Input */}
-            <div>
-              <Label className="font-ochre-ui text-sm">Reason (Optional)</Label>
-              <Input
-                type="text"
-                className={cn("mt-1.5", inputClass)}
-                placeholder="e.g., Initial stock, Weekly delivery"
-                {...createForm.register("reason")}
-              />
-              {createForm.formState.errors.reason && (
-                <p className="mt-1 font-ochre-ui text-xs text-red-600">
-                  {createForm.formState.errors.reason.message}
-                </p>
-              )}
-            </div>
-          </fieldset>
-
-          {/* Expiration Date Section */}
+          {/* Expiration Date */}
           <fieldset className="mt-6 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <Label className="font-ochre-ui text-sm font-semibold text-[#121c28]">
