@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, ChevronDown, MapPin, Plus } from "lucide-react";
 import { useItem } from "@/features/items/item.hooks";
-import { formatItemPrice, formatThousand } from "@/shared/lib/formatter";
+import { formatPrice, formatThousand } from "@/shared/lib/formatter";
 import ItemInfoPanelTable from "./ItemInfoPanelTable";
 import {
   Dialog,
@@ -206,7 +206,7 @@ export default function ItemInfoPanel({
                             </dt>
                             <dd className="font-semibold text-[#121c28]">
                               {itemData.sellingPrice
-                                ? formatItemPrice(itemData.sellingPrice)
+                                ? formatPrice(itemData.sellingPrice)
                                 : "—"}
                             </dd>
                           </div>
@@ -216,7 +216,7 @@ export default function ItemInfoPanel({
                             </dt>
                             <dd className="font-semibold text-[#121c28]">
                               {itemData.costPrice
-                                ? formatItemPrice(itemData.costPrice)
+                                ? (itemData.costPrice)
                                 : "—"}
                             </dd>
                           </div>
@@ -448,10 +448,11 @@ export default function ItemInfoPanel({
                     <button
                       type="button"
                       onClick={() => setOrderBy("asc")}
-                      className={`rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 p-1.5 text-[#565e74] outline-none transition-colors hover:border-[#894d0d]/35 hover:text-[#894d0d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#894d0d]${orderBy === "asc"
+                      className={`rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 p-1.5 text-[#565e74] outline-none transition-colors hover:border-[#894d0d]/35 hover:text-[#894d0d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#894d0d]${
+                        orderBy === "asc"
                           ? " border-[#894d0d]/35 text-[#894d0d] ring-2 ring-[#894d0d]/15"
                           : ""
-                        }`}
+                      }`}
                       aria-label="Sort ascending"
                     >
                       <ArrowUp className="size-4" strokeWidth={1.5} />
@@ -459,10 +460,11 @@ export default function ItemInfoPanel({
                     <button
                       type="button"
                       onClick={() => setOrderBy("desc")}
-                      className={`rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 p-1.5 text-[#565e74] outline-none transition-colors hover:border-[#894d0d]/35 hover:text-[#894d0d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#894d0d]${orderBy === "desc"
+                      className={`rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 p-1.5 text-[#565e74] outline-none transition-colors hover:border-[#894d0d]/35 hover:text-[#894d0d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#894d0d]${
+                        orderBy === "desc"
                           ? " border-[#894d0d]/35 text-[#894d0d] ring-2 ring-[#894d0d]/15"
                           : ""
-                        }`}
+                      }`}
                       aria-label="Sort descending"
                     >
                       <ArrowDown className="size-4" strokeWidth={1.5} />

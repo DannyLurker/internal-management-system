@@ -18,6 +18,7 @@ import stockMovementsApi from "./stock-movements.api";
 import { toast } from "sonner";
 import STOCK_KEYS from "../stocks/stock.keys";
 import ITEM_KEYS from "../items/item.keys";
+import { dashboardKeys } from "../dashboards/dashboard.keys";
 
 export const useStockMovementsHooks = (
   params: StockMovementGetManySchema,
@@ -68,6 +69,10 @@ export const useCreateStockMovement = () => {
           sortOrder: "asc",
           itemId: data.data.itemId || undefined,
         }),
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: dashboardKeys.manager(),
       });
 
       toast.success(data.message);

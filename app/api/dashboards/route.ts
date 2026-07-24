@@ -44,7 +44,7 @@ export async function GET(req: Request) {
         throw forbidden("You're not allowed to access this feature.");
     }
 
-    return Response.json(response, { status: 200 });
+    return Response.json(response, { status: response.status });
   } catch (error) {
     printConsoleError(error, "GET", req.url);
     return handleError(error);
