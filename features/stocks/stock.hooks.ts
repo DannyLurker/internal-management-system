@@ -69,7 +69,9 @@ export const useUpdateStock = () => {
       payload: StockUpdateSchema;
     }) => stockApi.update(stockId, payload),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ITEM_KEYS.detail(data.data.id) });
+      queryClient.invalidateQueries({
+        queryKey: ITEM_KEYS.detail(data.data.stockId),
+      });
       queryClient.invalidateQueries({ queryKey: STOCK_KEYS.lists() });
       toast.success(data.message);
     },
@@ -83,6 +85,9 @@ export const useDeleteStock = () => {
     mutationFn: (id: string) => stockApi.delete(id),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: STOCK_KEYS.lists() });
+      queryClient.invalidateQueries({
+        queryKey: ITEM_KEYS.detail(data.data.itemId ?? ""),
+      });
       toast.success(data.message);
     },
   });

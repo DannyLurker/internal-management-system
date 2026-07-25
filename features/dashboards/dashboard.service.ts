@@ -67,6 +67,7 @@ const dashboardService = {
     });
 
     const expiredStockSelectData = stockSelectData({
+      id: true,
       item: {
         select: {
           name: true,
@@ -79,7 +80,7 @@ const dashboardService = {
       },
       expiredAt: true,
       quantity: true,
-    });
+    }) satisfies Prisma.StockSelect;
 
     const [
       totalSpend,

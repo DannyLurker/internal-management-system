@@ -5,6 +5,7 @@ import { dashboardStyles } from "../dashboard.styles";
 import { useManagerDashboard } from "../dashboard.hooks";
 import { Calendar } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { formatItemDate } from "@/shared/lib/formatter";
 
 export default function FlaggedExpiredTable() {
   const [page, setPage] = useState(1);
@@ -17,10 +18,10 @@ export default function FlaggedExpiredTable() {
     flaggedExpiredStockDataPerPage: dataPerPage,
   });
 
-  const expiredStocks = data?.data?.data?.flaggedExpiredStocks?.items || [];
-  const pagination = data?.data?.data?.flaggedExpiredStocks?.pagination;
-  const totalItems = pagination?.totalItems || 0;
-  const totalPages = pagination?.totalPages || 1;
+  const expiredStocks =
+    data?.data?.flaggedExpiredStocks?.flaggedExpiredStockData || [];
+  const totalItems = data?.data?.flaggedExpiredStocks?.totalExpiredCount || 0;
+  const totalPages = Math.ceil(totalItems / dataPerPage) || 1;
   const hasPrevPage = page > 1;
   const hasNextPage = page < totalPages;
 
@@ -47,7 +48,15 @@ export default function FlaggedExpiredTable() {
               <th className="px-6 py-4 font-semibold text-[#524439]">
                 Item Name
               </th>
-              <th className="px-6 py-4 font-semibold text-[#524439]">Status</th>
+              <th className="px-6 py-4 font-semibold text-[#524439]">
+                Location
+              </th>
+              <th className="px-6 py-4 font-semibold text-[#524439]">
+                Expired At
+              </th>
+              <th className="px-6 py-4 font-semibold text-[#524439]">
+                Quantity
+              </th>
               <th className="px-6 py-4 text-right font-semibold text-[#524439]">
                 Action
               </th>
@@ -72,24 +81,19 @@ export default function FlaggedExpiredTable() {
                 </td>
               </tr>
             ) : (
-              expiredStocks.map((item) => (
+              expiredStocks.map((item, i) => (
                 <tr
-                  key={item.id}
+                  key={item.id + i}
                   className="border-b border-[#eef4ff] hover:bg-[#f8f9ff]/50 bg-white transition-colors"
                 >
                   <td className="px-6 py-4 font-medium text-[#121c28]">
-                    {item.name}
+                    {item.item?.name}
                   </td>
+                  <td className="px-6 py-4">{item.location?.name}</td>
                   <td className="px-6 py-4">
-                    <span
-                      className={cn(
-                        dashboardStyles.statusPill,
-                        dashboardStyles.criticalStatus,
-                      )}
-                    >
-                      EXPIRED
-                    </span>
+                    {item.expiredAt ? formatItemDate(item.expiredAt) : "-"}
                   </td>
+                  <td className="px-6 py-4">{item.quantity}</td>
                   <td className="px-6 py-4 text-right">
                     <button className={dashboardStyles.actionText}>
                       View Details

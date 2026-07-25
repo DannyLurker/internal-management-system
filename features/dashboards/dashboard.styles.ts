@@ -7,13 +7,20 @@ export const dashboardStyles = {
   headerActions: "flex items-center gap-6",
 
   kpiGrid: "grid grid-cols-1 md:grid-cols-3 gap-6 mb-8",
+  // Replace kpiCard, kpiLabelContainer, and kpiDetail with these styles:
   kpiCard:
-    "flex flex-col justify-between overflow-hidden rounded-xl border border-[#d9e3f4]/80 bg-white shadow-[0_16px_48px_-20px_rgba(15,23,42,0.08)] hover:-translate-y-px hover:shadow-[0_24px_56px_-24px_rgba(15,23,42,0.12)] transition-all p-6",
-  kpiLabelContainer: "flex justify-between items-center mb-4",
-  kpiLabel:
-    "font-ochre-ui uppercase tracking-wide text-xs font-semibold text-[#524439]/70",
-  kpiValue: "font-ochre-brand text-xl lg:text-2xl text-[#121c28]",
+    "flex flex-col justify-between overflow-hidden rounded-xl border border-[#d9e3f4]/80 bg-white shadow-[0_16px_48px_-20px_rgba(15,23,42,0.08)] hover:-translate-y-px hover:shadow-[0_24px_56px_-24px_rgba(15,23,42,0.12)] transition-all p-5",
 
+  kpiLabelContainer: "flex justify-between items-center mb-2",
+
+  kpiLabel:
+    "font-ochre-ui uppercase tracking-wide text-xs font-semibold text-[#524439]/80",
+
+  kpiValue:
+    "font-ochre-brand text-2xl lg:text-3xl font-semibold text-[#121c28] my-1",
+
+  kpiDetail:
+    "font-ochre-ui text-xs text-[#524439]/70 mt-2 border-t border-[#f0f4f9] pt-2 line-clamp-2",
   tableCard:
     "overflow-hidden rounded-xl border border-[#d9e3f4]/80 bg-white shadow-[0_16px_48px_-20px_rgba(15,23,42,0.08)] mb-8",
   tableHeader:

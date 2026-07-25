@@ -17,7 +17,7 @@ export default function LowStockTable() {
     flaggedExpiredStockDataPerPage: 10,
   });
 
-  const lowStocks = data?.data?.data?.lowStocks || [];
+  const lowStocks = data?.data?.data?.lowStockData || [];
 
   return (
     <div className={dashboardStyles.tableCard}>

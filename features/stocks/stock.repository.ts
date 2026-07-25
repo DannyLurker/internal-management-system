@@ -34,17 +34,17 @@ export const stockRepository = {
     });
   },
 
-  findMany: async (
+  findMany: async <T extends Prisma.StockSelect>(
     where: Prisma.StockWhereInput,
-    select: Prisma.StockSelect,
+    select: Prisma.Subset<T, Prisma.StockSelect>,
     options: Prisma.StockFindManyArgs,
     tx: PrismaClient | Prisma.TransactionClient,
-  ) => {
-    return await tx.stock.findMany({
+  ): Promise<Prisma.StockGetPayload<{ select: T }>[]> => {
+    return (await tx.stock.findMany({
       where,
       select,
       ...options,
-    });
+    })) as Prisma.StockGetPayload<{ select: T }>[];
   },
 
   findOrUpdateOrCreate: async (

@@ -34,15 +34,18 @@ export default function DashboardClient() {
             <KPICard
               label="Total Inventory Value"
               value={formatPrice(totalValue)}
+              description="Active Stock with READY type and hasn't expired yet"
               icon={<Wallet className="w-5 h-5" />}
             />
             <KPICard
               label="Total Spend"
               value={formatPrice(totalSpend)}
+              description="Receive stocks"
               icon={<TrendingDown className="w-5 h-5" />}
             />
             <KPICard
               label="Total Stock Wastage"
+              description="Combination of mark as expired, lost, and damaged"
               value={formatPrice(totalWastage)}
               icon={<PackageMinus className="w-5 h-5" />}
             />

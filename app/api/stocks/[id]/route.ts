@@ -34,7 +34,8 @@ export async function DELETE(
     const response: StockCUDApiResponse = {
       message: result.message,
       data: {
-        id: result.data.stockId,
+        stockId: result.data.stockId,
+        itemId: result.data.itemId,
       },
       status: 200,
     };
@@ -109,7 +110,7 @@ export async function PATCH(
     const response: StockCUDApiResponse = {
       message: result.message,
       data: {
-        id: result.id,
+        stockId: result.id,
       },
       status: 200,
     };

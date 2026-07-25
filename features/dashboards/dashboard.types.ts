@@ -2,7 +2,7 @@ import { ApiResponse } from "@/shared/lib/api-client";
 import dashboardService from "./dashboard.service";
 
 type GetManagerDashboardServiceResult = Awaited<
-  ReturnType<typeof dashboardService.managerGetDashboard>
+  ReturnType<typeof dashboardService.getFinancialSummary>
 >;
 
 export type GetDashboardApiResponse = ApiResponse<

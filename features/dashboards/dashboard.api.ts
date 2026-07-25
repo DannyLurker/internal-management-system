@@ -4,9 +4,11 @@ import { ManagerDashboardParamSchema } from "@/shared/lib/zods/dashboard.zod";
 
 const dashboardApi = {
   getManagerDashboard: async (params: ManagerDashboardParamSchema) => {
-    return api.get<GetDashboardApiResponse>("/dashboards/", {
+    const result = await api.get<GetDashboardApiResponse>("/dashboards/", {
       params,
     });
+
+    return result.data;
   },
 };
 
