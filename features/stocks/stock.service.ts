@@ -59,6 +59,9 @@ const stockService = {
             quantity: {
               increment: data.quantity,
             },
+            totalCost: {
+              increment: data.totalCost,
+            },
             movements: {
               create: {
                 itemName: item.name,
@@ -95,6 +98,7 @@ const stockService = {
                 id: session.id,
               },
             },
+            totalCost: data.totalCost,
             movements: {
               create: {
                 type: "RECEIVE",

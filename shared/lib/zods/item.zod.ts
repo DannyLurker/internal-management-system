@@ -16,6 +16,7 @@ export const itemCreateSchema = z.object({
   description: z.string().trim().min(1),
   image: z.string().optional(),
   sellingPrice: z.number().min(1).optional(),
+  costPrice: z.number().min(1),
   minThreshold: z.number().optional(),
   attributes: z.record(z.any(), z.any()).optional().default({}),
   stock: z

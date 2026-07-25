@@ -64,7 +64,6 @@ describe("stockService.update", () => {
     expiredDate.setDate(expiredDate.getDate() + 14);
 
     const updateData = {
-      type: "DAMAGED" as StockType,
       expiredAt: expiredDate,
       locationId: "loc-2",
     };
@@ -79,7 +78,6 @@ describe("stockService.update", () => {
     expect(mockedStockRepository.update).toHaveBeenCalledWith(
       "stock-1",
       expect.objectContaining({
-        type: "DAMAGED",
         expiredAt: expiredDate,
         location: { connect: { id: "loc-2" } },
       }),

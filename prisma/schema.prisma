@@ -221,6 +221,7 @@ model Item {
 model Stock {
   id        String    @id @default(cuid())
   quantity  Int
+  totalCost Int       @default(0)
   type      StockType @default(READY)
   expiredAt DateTime?
 

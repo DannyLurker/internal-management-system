@@ -207,8 +207,6 @@ export default function ItemInfoPanel({
                             <dd className="font-semibold text-[#121c28]">
                               {itemData.sellingPrice
                                 ? formatPrice(itemData.sellingPrice)
-<<<<<<< HEAD
-=======
                                 : "—"}
                             </dd>
                           </div>
@@ -217,10 +215,7 @@ export default function ItemInfoPanel({
                               Cost Price
                             </dt>
                             <dd className="font-semibold text-[#121c28]">
-                              {itemData.costPrice
-                                ? (itemData.costPrice)
->>>>>>> 7914186989a9268586d7ca8032a60259b4079a77
-                                : "—"}
+                              {itemData.costPrice ? itemData.costPrice : "—"}
                             </dd>
                           </div>
 

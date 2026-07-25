@@ -18,15 +18,7 @@ export const stockSelectData = <T extends Prisma.StockSelect>(select: T): T =>
   select;
 
 export const stockRepository = {
-  create: async (
-    data: Prisma.StockCreateInput,
-    tx: PrismaClient | Prisma.TransactionClient,
-  ) => {
-    return tx.stock.create({
-      data,
-    });
-  },
-
+  // Prisma based method, for easier testing rather than keep mocking prisma
   findById: async (id: string, tx: PrismaClient | Prisma.TransactionClient) => {
     return await tx.stock.findUnique({
       where: { id },
@@ -39,6 +31,19 @@ export const stockRepository = {
   ) => {
     return await tx.stock.findFirst({
       where,
+    });
+  },
+
+  findMany: async (
+    where: Prisma.StockWhereInput,
+    select: Prisma.StockSelect,
+    options: Prisma.StockFindManyArgs,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    return await tx.stock.findMany({
+      where,
+      select,
+      ...options,
     });
   },
 
@@ -70,6 +75,15 @@ export const stockRepository = {
     return stock;
   },
 
+  // Routing
+  create: async (
+    data: Prisma.StockCreateInput,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    return tx.stock.create({
+      data,
+    });
+  },
   getMany: async <T extends Prisma.StockSelect>(
     where: Prisma.StockWhereInput,
     select: T,
@@ -103,6 +117,28 @@ export const stockRepository = {
       select,
     });
   },
+
+  update: async (
+    stockId: string,
+    data: Prisma.StockUpdateInput,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    return tx.stock.update({
+      where: { id: stockId },
+      data,
+    });
+  },
+
+  delete: async (
+    stockId: string,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    return tx.stock.delete({
+      where: { id: stockId },
+    });
+  },
+
+  // Helper
 
   // currently buildStockWhereClause is used for location page stock status filter. Check /features/location
   // TODO: need to refactor it when we implement to other domain
@@ -171,30 +207,26 @@ export const stockRepository = {
     where: Prisma.StockWhereInput,
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
-    // 1. Group by itemId and sum the quantities in the database
-    const stockGroups = await tx.stock.groupBy({
-      by: ["itemId"],
+    const stocks = await tx.stock.findMany({
       where,
-      _sum: {
+      select: {
         quantity: true,
+        totalCost: true,
+        item: {
+          select: {
+            costPrice: true,
+          },
+        },
       },
     });
 
-    // 2. Fetch the selling prices for those specific items
-    const itemIds = stockGroups.map((g) => g.itemId);
-    const items = await tx.item.findMany({
-      where: { id: { in: itemIds } },
-      select: { id: true, sellingPrice: true },
-    });
+    const totalValue = stocks.reduce((acc, stock) => {
+      const batchCost =
+        stock.totalCost && stock.totalCost > 0
+          ? stock.totalCost
+          : stock.quantity * (stock.item.costPrice ?? 0);
 
-    // Create a quick lookup map for prices
-    const priceMap = new Map(items.map((i) => [i.id, i.sellingPrice || 0]));
-
-    // 3. Calculate the total value
-    const totalValue = stockGroups.reduce((acc, group) => {
-      const quantity = group._sum.quantity || 0;
-      const price = priceMap.get(group.itemId) || 0;
-      return acc + quantity * price;
+      return acc + batchCost;
     }, 0);
 
     return totalValue;
@@ -239,23 +271,57 @@ export const stockRepository = {
     return result;
   },
 
-  update: async (
-    stockId: string,
-    data: Prisma.StockUpdateInput,
-    tx: PrismaClient | Prisma.TransactionClient,
+  getLowStocks: async (
+    lowStockAlertLimit: number,
+    lowStockAlertOffset: number,
+    tx: Prisma.TransactionClient | PrismaClient,
   ) => {
-    return tx.stock.update({
-      where: { id: stockId },
-      data,
-    });
+    const rawLowStocks = await tx.$queryRaw<
+      {
+        id: string;
+        name: string;
+        minThreshold: number;
+        isActive: boolean;
+        currentStock: number;
+      }[]
+    >`
+      SELECT
+        i."id",
+        i."name",
+        i."minThreshold",
+        i."isActive",
+        COALESCE(SUM(s."quantity"), 0) AS "currentStock"
+      FROM "Item" i
+      LEFT JOIN "Stock" s
+        ON s."itemId" = i."id"
+        AND s."type" = 'READY'
+      WHERE i."isActive" = true
+      GROUP BY
+        i."id",
+        i."name",
+        i."minThreshold",
+        i."isActive"
+      HAVING COALESCE(SUM(s."quantity"), 0) <= i."minThreshold"
+      LIMIT ${lowStockAlertLimit}
+      OFFSET ${lowStockAlertOffset};
+    `;
+
+    return rawLowStocks.map((stock) => ({
+      ...stock,
+      currentStock: Number(stock.currentStock),
+    }));
   },
 
-  delete: async (
-    stockId: string,
-    tx: PrismaClient | Prisma.TransactionClient,
-  ) => {
-    return tx.stock.delete({
-      where: { id: stockId },
-    });
+  getTotalLowStocks: async (tx: Prisma.TransactionClient | PrismaClient) => {
+    return await tx.$queryRaw<{ count: bigint }[]>`
+      SELECT COUNT(*) FROM (
+        SELECT i."id"
+        FROM "Item" i
+        LEFT JOIN "Stock" s ON s."itemId" = i."id" AND s."type" = 'READY'
+        WHERE i."isActive" = true
+        GROUP BY i."id", i."minThreshold"
+        HAVING COALESCE(SUM(s."quantity"), 0) <= i."minThreshold"
+      ) AS low_stock_count;
+    `;
   },
 };

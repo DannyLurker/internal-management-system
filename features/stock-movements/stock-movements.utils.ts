@@ -24,6 +24,7 @@ export async function markStockAs(
   currentStock: StockRecord,
   targetType: TargetStockType,
   quantity: number,
+  totalCost: number | undefined,
   session: Session,
   createdStockMovement: Prisma.StockMovementUncheckedCreateInput,
   tx: Prisma.TransactionClient,
@@ -31,12 +32,23 @@ export async function markStockAs(
   const remaining = currentStock.quantity - quantity;
   if (remaining < 0) throw badRequest("Insufficient stock quantity.");
 
+  // Calculate proportional cost if totalCost isn't explicitly passed
+  const currentTotalCost = currentStock.totalCost ?? 0;
+  const unitCost =
+    currentStock.quantity > 0 ? currentTotalCost / currentStock.quantity : 0;
+  const costToTransfer = totalCost ?? quantity * unitCost;
+
+  // 1. Decrement quantity AND totalCost from source stock
   await stockRepository.update(
     currentStock.id,
-    { quantity: { decrement: quantity } },
+    {
+      quantity: { decrement: quantity },
+      totalCost: { decrement: costToTransfer },
+    },
     tx,
   );
 
+  // 2. Increment target stock
   const targetStock = await stockRepository.findOrUpdateOrCreate(
     // Find
     {
@@ -46,13 +58,17 @@ export async function markStockAs(
       expiredAt: currentStock.expiredAt,
     },
     // Update
-    { quantity: { increment: quantity } },
+    {
+      quantity: { increment: quantity },
+      totalCost: { increment: costToTransfer },
+    },
     // Create
     {
       item: { connect: { id: currentStock.itemId } },
       location: { connect: { id: currentStock.locationId } },
       creator: { connect: { id: session.id } },
       quantity,
+      totalCost: costToTransfer,
       type: targetType,
       expiredAt: currentStock.expiredAt,
     },
@@ -63,6 +79,7 @@ export async function markStockAs(
     {
       ...createdStockMovement,
       stockId: targetStock.id,
+      totalCost: costToTransfer,
       type: MOVEMENT_TYPE_BY_TARGET[targetType],
       sourceLocationId: currentStock.locationId,
       destinationLocationId: currentStock.locationId,
@@ -77,5 +94,3 @@ export function formatMovementLabel(value: string) {
     .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
     .join(" ");
 }
-
-

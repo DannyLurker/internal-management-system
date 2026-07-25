@@ -4,11 +4,11 @@ import { Session } from "next-auth";
 import stockMovementsRepository, {
   createStockMovementWhereInput,
 } from "../stock-movements/stock-movements.repository";
-import itemRepository, {
-  createItemWhereInput,
-  createSelectItemData,
-} from "../items/item.repository";
-import { stockWhereInput } from "../stocks/stock.repository";
+import {
+  stockRepository,
+  stockSelectData,
+  stockWhereInput,
+} from "../stocks/stock.repository";
 
 const dashboardService = {
   getFinancialSummary: async (
@@ -17,12 +17,42 @@ const dashboardService = {
     prisma: Prisma.TransactionClient | PrismaClient,
   ) => {
     const totalSpendWhereInput = createStockMovementWhereInput({
-      type: "RECEIVE",
+      OR: [{ type: "RECEIVE" }, { type: "ADJUSTMENT", totalCost: { gt: 0 } }],
     });
 
     const totalWastageValueWhereInput = createStockMovementWhereInput({
-      type: {
-        in: ["DISCARD", "MARK_AS_DAMAGED", "MARK_AS_EXPIRED", "MARK_AS_LOST"],
+      OR: [
+        {
+          type: {
+            in: [
+              "DISCARD",
+              "MARK_AS_DAMAGED",
+              "MARK_AS_EXPIRED",
+              "MARK_AS_LOST",
+            ],
+          },
+        },
+        { type: "ADJUSTMENT", totalCost: { lt: 0 } },
+      ],
+    });
+
+    const totalInventoryValueWhereInput = stockWhereInput({
+      type: "READY",
+      OR: [
+        {
+          expiredAt: {
+            gte: new Date(),
+          },
+        },
+        {
+          expiredAt: {
+            equals: null,
+          },
+        },
+      ],
+
+      quantity: {
+        gte: 0,
       },
     });
 
@@ -36,11 +66,27 @@ const dashboardService = {
       },
     });
 
+    const expiredStockSelectData = stockSelectData({
+      item: {
+        select: {
+          name: true,
+        },
+      },
+      location: {
+        select: {
+          name: true,
+        },
+      },
+      expiredAt: true,
+      quantity: true,
+    });
+
     const [
       totalSpend,
       totalStockWastageValue,
-      groupedFlaggedExpiredStocks,
-      totalExpiredCountGroup,
+      totalInventoryValue,
+      flaggedExpiredStocks,
+      totalExpiredCount,
     ] = await Promise.all([
       stockMovementsRepository.calculateInventoryValue(
         totalSpendWhereInput,
@@ -50,133 +96,49 @@ const dashboardService = {
         totalWastageValueWhereInput,
         prisma,
       ),
-      prisma.stock.groupBy({
-        by: ["itemId"],
-        where: expiredStockWhere,
-        orderBy: {
-          _max: {
-            updatedAt: "asc",
-          },
-        },
-        skip:
-          (params.flaggedExpiredStockPage - 1) *
-          params.flaggedExpiredStockDataPerPage,
-        take: params.flaggedExpiredStockDataPerPage,
-      }),
-      prisma.stock.groupBy({
-        by: ["itemId"],
-        where: expiredStockWhere,
-      }),
-    ]);
-
-    const totalFlaggedExpiredItems = totalExpiredCountGroup.length;
-    const totalFlaggedExpiredPages = Math.ceil(
-      totalFlaggedExpiredItems / params.flaggedExpiredStockDataPerPage,
-    );
-
-    const itemIds = groupedFlaggedExpiredStocks.map((data) => data.itemId);
-
-    let flaggedExpiredStocks: Array<{ id: string; name: string }> = [];
-
-    if (itemIds.length > 0) {
-      const itemFlaggedExpiredWhereInput = createItemWhereInput({
-        id: { in: itemIds },
-      });
-
-      const itemFlaggedExpiredSelectData = createSelectItemData({
-        id: true,
-        name: true,
-      });
-
-      const rawItems = await itemRepository.findMany(
-        itemFlaggedExpiredWhereInput,
-        itemFlaggedExpiredSelectData,
-        {},
+      stockRepository.totalInventoryValue(
+        totalInventoryValueWhereInput,
         prisma,
-      );
-
-      // Re-map items to maintain the exact pagination order from groupBy
-      const itemMap = new Map(rawItems.map((item) => [item.id, item]));
-      flaggedExpiredStocks = itemIds.flatMap((id) => {
-        const item = itemMap.get(id);
-        return item ? [{ id: item.id, name: item.name }] : [];
-      });
-    }
-
-    const totalInventoryValue =
-      (totalSpend ?? 0) - (totalStockWastageValue ?? 0);
+      ),
+      stockRepository.findMany(
+        expiredStockWhere,
+        expiredStockSelectData,
+        {
+          orderBy: {
+            expiredAt: "asc",
+          },
+          skip: (params.flaggedExpiredStockPage - 1) * 10,
+          take: params.flaggedExpiredStockDataPerPage,
+        },
+        prisma,
+      ),
+      stockRepository.countRows(expiredStockWhere, prisma),
+    ]);
 
     const lowStockAlertOffset =
       (params.lowStockAlertPage - 1) * params.lowStockAlertDataPerPage;
     const lowStockAlertLimit = params.lowStockAlertDataPerPage;
 
-    const rawLowStocks = await prisma.$queryRaw<
-      {
-        id: string;
-        name: string;
-        minThreshold: number;
-        isActive: boolean;
-        currentStock: number;
-      }[]
-    >`
-      SELECT
-        i."id",
-        i."name",
-        i."minThreshold",
-        i."isActive",
-        COALESCE(SUM(s."quantity"), 0) AS "currentStock"
-      FROM "Item" i
-      LEFT JOIN "Stock" s
-        ON s."itemId" = i."id"
-        AND s."type" = 'READY'
-      WHERE i."isActive" = true
-      GROUP BY
-        i."id",
-        i."name",
-        i."minThreshold",
-        i."isActive"
-      HAVING COALESCE(SUM(s."quantity"), 0) <= i."minThreshold"
-      LIMIT ${lowStockAlertLimit}
-      OFFSET ${lowStockAlertOffset};
-    `;
+    const lowStocks = await stockRepository.getLowStocks(
+      lowStockAlertLimit,
+      lowStockAlertOffset,
+      prisma,
+    );
 
-    const lowStocks = rawLowStocks.map((stock) => ({
-      ...stock,
-      currentStock: Number(stock.currentStock),
-    }));
-
-    const [{ count }] = await prisma.$queryRaw<{ count: bigint }[]>`
-      SELECT COUNT(*) FROM (
-        SELECT i."id"
-        FROM "Item" i
-        LEFT JOIN "Stock" s ON s."itemId" = i."id" AND s."type" = 'READY'
-        WHERE i."isActive" = true
-        GROUP BY i."id", i."minThreshold"
-        HAVING COALESCE(SUM(s."quantity"), 0) <= i."minThreshold"
-      ) AS low_stock_count;
-    `;
+    const [{ count }] = await stockRepository.getTotalLowStocks(prisma);
 
     const totalLowStockItems = Number(count);
-    const totalLowStockPages = Math.ceil(
-      totalLowStockItems / params.lowStockAlertDataPerPage,
-    );
     return {
       message: "Manager dashboard data retrieved successfully",
       data: {
         totalSpend,
         totalInventoryValue,
         totalStockWastageValue,
-        lowStocks,
-        totalLowStockItems,
-        totalLowStockPages,
+        lowStockData: lowStocks,
+        totalLowStockCount: totalLowStockItems,
         flaggedExpiredStocks: {
-          items: flaggedExpiredStocks,
-          pagination: {
-            page: params.flaggedExpiredStockPage,
-            dataPerPage: params.flaggedExpiredStockDataPerPage,
-            totalItems: totalFlaggedExpiredItems,
-            totalPages: totalFlaggedExpiredPages,
-          },
+          flaggedExpiredStockData: flaggedExpiredStocks,
+          totalExpiredCount,
         },
       },
     };

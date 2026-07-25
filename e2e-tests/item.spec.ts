@@ -245,7 +245,6 @@ test.describe("CRUD operations for Item", () => {
         description: "Updated description",
         categoryId: testCategoryId,
         sellingPrice: 200000,
-        costPrice: 100000,
       },
     });
 

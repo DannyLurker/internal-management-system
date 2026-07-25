@@ -137,6 +137,9 @@ const stockMovementsService = {
             quantity: {
               increment: payload.quantity,
             },
+            totalCost: {
+              increment: payload.totalCost ?? 0,
+            },
           },
           // Create
           {
@@ -190,16 +193,19 @@ const stockMovementsService = {
 
         await stockRepository.update(
           currentStock.id,
-          { quantity: { increment: payload.quantity } },
+          {
+            quantity: { increment: payload.quantity },
+            totalCost: { increment: payload.totalCost },
+          },
           tx,
         );
       }
 
-      // TRANSFER
+      // TRANSFER, in a regular transfer, current location is needed and the system takes it from retrieving stock data
       if (
         currentStock &&
         payload.stockMovementType === "TRANSFER" &&
-        !payload.isGlobalStock // In a regular transfer, current location is needed and the system takes it from retrieving stock data
+        !payload.isGlobalStock
       ) {
         if (payload.destinationLocationId === currentStock.locationId)
           throw badRequest(
@@ -209,28 +215,30 @@ const stockMovementsService = {
         if (currentStock.quantity < payload.quantity)
           throw badRequest("Insufficient stock quantity.");
 
+        // Calculate proportional transfer cost based on source unit cost
+        const unitCost =
+          currentStock.quantity > 0
+            ? (currentStock.totalCost ?? 0) / currentStock.quantity
+            : 0;
+        const transferCost = payload.quantity * unitCost;
+
         const destinationStock = await stockRepository.findOrUpdateOrCreate(
-          // Find
           {
             expiredAt: currentStock.expiredAt,
             locationId: destLoc?.id,
             itemId: currentStock.itemId,
             type: currentStock.type,
           },
-          // Update
           {
-            quantity: {
-              increment: payload.quantity,
-            },
+            quantity: { increment: payload.quantity },
+            totalCost: { increment: transferCost }, // Fixed
           },
-          // Create
           {
             item: { connect: { id: payload.itemId } },
             creator: { connect: { id: session.id } },
             quantity: payload.quantity,
-            location: {
-              connect: { id: payload.destinationLocationId },
-            },
+            totalCost: transferCost,
+            location: { connect: { id: payload.destinationLocationId } },
             expiredAt: currentStock.expiredAt,
             type: currentStock.type,
           },
@@ -240,9 +248,8 @@ const stockMovementsService = {
         await stockRepository.update(
           currentStock.id,
           {
-            quantity: {
-              decrement: payload.quantity,
-            },
+            quantity: { decrement: payload.quantity },
+            totalCost: { decrement: transferCost }, // Fixed
           },
           prisma,
         );
@@ -252,17 +259,7 @@ const stockMovementsService = {
             ...createdStockMovement,
             stockId: destinationStock.id,
             sourceLocationId: currentStock.locationId,
-            totalCost: null,
-          },
-          tx,
-        );
-        movement = await stockMovementsRepository.create(
-          {
-            ...createdStockMovement,
-            stockId: currentStock.id,
-            quantity: -payload.quantity,
-            sourceLocationId: currentStock.locationId,
-            totalCost: null,
+            totalCost: transferCost,
           },
           tx,
         );
@@ -275,18 +272,29 @@ const stockMovementsService = {
         if (calculatedQuantity < 0)
           throw badRequest("Insufficient stock quantity.");
 
+        // Calculate adjustment cost
+        const unitCost =
+          currentStock.quantity > 0
+            ? (currentStock.totalCost ?? 0) / currentStock.quantity
+            : 0;
+        const adjustmentCost = payload.totalCost ?? payload.quantity * unitCost;
+
         movement = await stockMovementsRepository.create(
           {
             ...createdStockMovement,
             sourceLocationId: currentStock.locationId,
             destinationLocationId: currentStock.locationId,
+            totalCost: adjustmentCost,
           },
           tx,
         );
 
         await stockRepository.update(
           currentStock.id,
-          { quantity: { increment: payload.quantity } },
+          {
+            quantity: { increment: payload.quantity },
+            totalCost: { increment: adjustmentCost }, // Fixed
+          },
           tx,
         );
       }
@@ -308,6 +316,7 @@ const stockMovementsService = {
           currentStock,
           targetType,
           payload.quantity,
+          payload.totalCost,
           session,
           createdStockMovement,
           tx,
@@ -338,14 +347,27 @@ const stockMovementsService = {
           throw badRequest("Insufficient stock quantity.");
         }
 
+        const unitCost =
+          currentStock.quantity > 0
+            ? (currentStock.totalCost ?? 0) / currentStock.quantity
+            : 0;
+        const costToDeduct = payload.totalCost ?? payload.quantity * unitCost;
+
         movement = await stockMovementsRepository.create(
-          { ...createdStockMovement, destinationLocationId: null },
+          {
+            ...createdStockMovement,
+            destinationLocationId: null,
+            totalCost: costToDeduct,
+          },
           tx,
         );
 
         await stockRepository.update(
           currentStock.id,
-          { quantity: { decrement: payload.quantity } },
+          {
+            quantity: { decrement: payload.quantity },
+            totalCost: { decrement: costToDeduct }, // Fixed
+          },
           tx,
         );
       }
