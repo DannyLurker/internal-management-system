@@ -23,7 +23,23 @@ export const stockMovementCreateSchema = z
   })
   .superRefine((val, ctx) => {
     const TYPES_REQUIRING_DESTINATION: MovementType[] = ["TRANSFER"];
+    const TYPES_UNNEEDED_TOTAL_COST: MovementType[] = [
+      "CONSUME",
+      "DISCARD",
+      "SALE",
+    ];
 
+    if (
+      !TYPES_UNNEEDED_TOTAL_COST.includes(val.stockMovementType) &&
+      !val.totalCost
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Total cost field must be filled or total cost must be greater than 0",
+        path: ["totalCost"],
+      });
+    }
     if (TYPES_REQUIRING_DESTINATION.includes(val.stockMovementType)) {
       if (!val.destinationLocationId) {
         ctx.addIssue({
@@ -46,11 +62,7 @@ export const stockMovementCreateSchema = z
       });
     }
 
-    if (
-      val.stockMovementType === "DISCARD" ||
-      val.stockMovementType === "SALE" ||
-      val.stockMovementType === "LAUNDRY_OUT"
-    ) {
+    if (val.stockMovementType === "LAUNDRY_OUT") {
       if (!val.totalCost || val.totalCost < 1) {
         ctx.addIssue({
           code: "custom",

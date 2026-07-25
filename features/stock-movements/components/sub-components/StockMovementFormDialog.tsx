@@ -29,7 +29,7 @@ import {
 import { stockGetManySchema } from "@/shared/lib/zods/stock.zod";
 import { useCreateStockMovement } from "../../stock-movements.hooks";
 import { stockMovementInputClass } from "../../stock-movements.style";
-import { StockType } from "@prisma/client";
+import { MovementType, StockType } from "@prisma/client";
 import { formatThousand, unformatThousand } from "@/shared/lib/formatter";
 
 type ItemOption = { id: string; name: string };
@@ -82,6 +82,16 @@ const totalCostRequiredTypes = new Set<MovementTypeOption>([
   "SALE",
   "LAUNDRY_OUT",
 ]);
+
+const AUTO_CALCULATED_MOVEMENTS: MovementType[] = [
+  "CONSUME",
+  "DISCARD",
+  "TRANSFER",
+  "MARK_AS_EXPIRED",
+  "MARK_AS_DAMAGED",
+  "MARK_AS_LOST",
+  "SALE",
+];
 
 function formatMovementLabel(value: string) {
   return value
@@ -470,39 +480,45 @@ export default function StockMovementFormDialog({
                 ) : null}
               </div>
 
-              {form.getValues("stockMovementType") === "TRANSFER" ? (
-                <div></div>
-              ) : (
-                <div>
-                  <Label className="font-ochre-ui text-sm">
-                    Total cost {requiresTotalCost ? "" : "(optional)"}
-                  </Label>
-                  <Controller
-                    control={form.control}
-                    name="totalCost"
-                    render={({ field }) => (
-                      <Input
-                        type="text"
-                        inputMode="numeric"
-                        className={cn("mt-1.5", stockMovementInputClass)}
-                        placeholder="10.000.000"
-                        value={formatThousand(field.value ?? "")}
-                        onChange={(e) => {
-                          const rawValue = e.target.value;
-                          const numericValue = unformatThousand(rawValue);
-                          field.onChange(
-                            numericValue === 0 ? undefined : numericValue,
-                          );
-                        }}
+              {!AUTO_CALCULATED_MOVEMENTS.includes(
+                form.getValues("stockMovementType"),
+              ) && (
+                <>
+                  {form.getValues("stockMovementType") === "TRANSFER" ? (
+                    <div></div>
+                  ) : (
+                    <div>
+                      <Label className="font-ochre-ui text-sm">
+                        Total cost {requiresTotalCost ? "" : "(optional)"}
+                      </Label>
+                      <Controller
+                        control={form.control}
+                        name="totalCost"
+                        render={({ field }) => (
+                          <Input
+                            type="text"
+                            inputMode="numeric"
+                            className={cn("mt-1.5", stockMovementInputClass)}
+                            placeholder="10.000.000"
+                            value={formatThousand(field.value ?? "")}
+                            onChange={(e) => {
+                              const rawValue = e.target.value;
+                              const numericValue = unformatThousand(rawValue);
+                              field.onChange(
+                                numericValue === 0 ? undefined : numericValue,
+                              );
+                            }}
+                          />
+                        )}
                       />
-                    )}
-                  />
-                  {form.formState.errors.totalCost ? (
-                    <p className="mt-1 font-ochre-ui text-xs text-red-600">
-                      {form.formState.errors.totalCost.message}
-                    </p>
-                  ) : null}
-                </div>
+                      {form.formState.errors.totalCost ? (
+                        <p className="mt-1 font-ochre-ui text-xs text-red-600">
+                          {form.formState.errors.totalCost.message}
+                        </p>
+                      ) : null}
+                    </div>
+                  )}
+                </>
               )}
             </div>
 

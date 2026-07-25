@@ -232,18 +232,17 @@ export const stockRepository = {
     return totalValue;
   },
 
-  countQuantity: async (
+  aggregate: async (
     where: Prisma.StockWhereInput,
+    sumField: Prisma.StockAvgAggregateInputType,
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
     const result = await tx.stock.aggregate({
       where,
-      _sum: {
-        quantity: true,
-      },
+      _sum: sumField,
     });
 
-    return result._sum.quantity;
+    return result._sum;
   },
   getGroupedStockQuantities: async (
     by: Prisma.StockGroupByArgs["by"],

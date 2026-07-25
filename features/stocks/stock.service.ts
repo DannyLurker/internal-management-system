@@ -158,6 +158,7 @@ const stockService = {
     const selectData = stockSelectData({
       id: true,
       quantity: true,
+      totalCost: true,
       type: true,
       expiredAt: true,
       itemId: true,

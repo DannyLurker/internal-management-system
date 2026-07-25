@@ -16,7 +16,10 @@ import { locationRepository } from "../locations/location.repository";
 import { stockRepository } from "../stocks/stock.repository";
 import orderRepository from "../orders/order-repository";
 import { TargetStockType } from "./stock-movements.types";
-import { markStockAs } from "./stock-movements.utils";
+import {
+  automaticTotalCostCalculationType,
+  markStockAs,
+} from "./stock-movements.utils";
 import { Session } from "next-auth";
 
 const stockMovementsService = {
@@ -316,7 +319,6 @@ const stockMovementsService = {
           currentStock,
           targetType,
           payload.quantity,
-          payload.totalCost,
           session,
           createdStockMovement,
           tx,
@@ -331,17 +333,9 @@ const stockMovementsService = {
         throw badRequest("Can't delete a lost item");
       }
 
-      const decreaseStockQuantityMovementType: MovementType[] = [
-        "DISCARD",
-        "LAUNDRY_OUT",
-        "CONSUME",
-        "SALE",
-      ];
-
-      // decreaseStockQuantityMovementType case
       if (
         currentStock &&
-        decreaseStockQuantityMovementType.includes(payload.stockMovementType)
+        automaticTotalCostCalculationType.includes(payload.stockMovementType)
       ) {
         if (currentStock.quantity < payload.quantity) {
           throw badRequest("Insufficient stock quantity.");
@@ -351,7 +345,34 @@ const stockMovementsService = {
           currentStock.quantity > 0
             ? (currentStock.totalCost ?? 0) / currentStock.quantity
             : 0;
-        const costToDeduct = payload.totalCost ?? payload.quantity * unitCost;
+        const costToDeduct = payload.quantity * unitCost;
+
+        movement = await stockMovementsRepository.create(
+          {
+            ...createdStockMovement,
+            destinationLocationId: null,
+            totalCost: costToDeduct,
+          },
+          tx,
+        );
+
+        await stockRepository.update(
+          currentStock.id,
+          {
+            quantity: { decrement: payload.quantity },
+            totalCost: { decrement: costToDeduct }, // Fixed
+          },
+          tx,
+        );
+      }
+
+      // decreaseStockQuantityMovementType case
+      if (currentStock && payload.stockMovementType === "LAUNDRY_OUT") {
+        if (currentStock.quantity < payload.quantity) {
+          throw badRequest("Insufficient stock quantity.");
+        }
+
+        const costToDeduct = payload.totalCost;
 
         movement = await stockMovementsRepository.create(
           {

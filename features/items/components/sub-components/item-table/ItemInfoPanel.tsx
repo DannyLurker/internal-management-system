@@ -95,6 +95,7 @@ export default function ItemInfoPanel({
   const totalDirtyStock = data?.data.totalDirtyStock ?? 0;
   const totalLostStock = data?.data.totalLostStock ?? 0;
   const itemStockCount = data?.data.itemStockCount ?? 0;
+  const totalItemValue = data?.data.totalItemValue ?? 0;
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) onClose();
@@ -216,6 +217,14 @@ export default function ItemInfoPanel({
                             </dt>
                             <dd className="font-semibold text-[#121c28]">
                               {itemData.costPrice ? itemData.costPrice : "—"}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3 border-b border-[#eef4ff] pb-2">
+                            <dt className="text-[#524439]/70 font-medium">
+                              Total Item Value
+                            </dt>
+                            <dd className="font-semibold text-[#121c28]">
+                              {formatPrice(totalItemValue)}
                             </dd>
                           </div>
 

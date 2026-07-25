@@ -106,7 +106,6 @@ const itemService = {
 
     const stockWhereClause = stockRepository.buildStockWhereClause(null, {
       sortBy: params.sortBy,
-      itemSearchQuery: null,
       stockStatusType: params.status,
     });
 
@@ -187,34 +186,51 @@ const itemService = {
       {} as Record<string, number>,
     );
 
-    const [totalReadyStock, totalUnlocatedItems, totalDiscardedItems] =
-      await Promise.all([
-        // Special condition for READY stock that checks expiration dates
-        stockRepository.countQuantity(
-          {
-            itemId: itemId,
-            type: "READY",
-            OR: [{ expiredAt: null }, { expiredAt: { gte: today } }],
-          },
-          prisma,
-        ),
+    const [
+      totalReadyStock,
+      totalUnlocatedItems,
+      totalDiscardedItems,
+      totalItemValue,
+    ] = await Promise.all([
+      // Special condition for READY stock that checks expiration dates
+      stockRepository.aggregate(
+        {
+          itemId: itemId,
+          type: "READY",
+          OR: [{ expiredAt: null }, { expiredAt: { gte: today } }],
+        },
+        {
+          quantity: true,
+        },
+        prisma,
+      ),
 
-        stockMovementsRepository.countQuantity(
-          {
-            stockId: null,
-            itemId: item?.id,
-            destinationLocationId: null,
-            sourceLocationId: null,
-          },
-          prisma,
-        ),
+      stockMovementsRepository.countQuantity(
+        {
+          stockId: null,
+          itemId: item?.id,
+          destinationLocationId: null,
+          sourceLocationId: null,
+        },
+        prisma,
+      ),
 
-        // Querying a specific movement type
-        stockMovementsRepository.countQuantity(
-          { type: "DISCARD", itemId: itemId },
-          prisma,
-        ),
-      ]);
+      // Querying a specific movement type
+      stockMovementsRepository.countQuantity(
+        { type: "DISCARD", itemId: itemId },
+        prisma,
+      ),
+
+      stockRepository.aggregate(
+        {
+          itemId: itemId,
+        },
+        {
+          totalCost: true,
+        },
+        prisma,
+      ),
+    ]);
 
     const unlocatedItem = await stockMovementsRepository.countQuantity(
       {
@@ -238,7 +254,9 @@ const itemService = {
       .reduce((sum, [_, quantity]) => sum + quantity, 0);
 
     const isStockLow =
-      item && totalReadyStock && totalReadyStock <= item?.minThreshold
+      item &&
+      totalReadyStock.quantity &&
+      totalReadyStock.quantity <= item?.minThreshold
         ? true
         : false;
 
@@ -259,11 +277,12 @@ const itemService = {
         totalUnlocatedItemQuantity: unlocatedItem ?? 0,
         totalDiscardedItems: totalDiscardedItems,
         totalDamagedStock,
-        totalReadyStock,
+        totalReadyStock: totalReadyStock.quantity,
         totalDirtyStock,
         totalExpiredStock,
         totalLostStock,
         itemStockCount,
+        totalItemValue: totalItemValue.totalCost,
       },
     };
   },

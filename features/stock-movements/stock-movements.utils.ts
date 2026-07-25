@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { MovementType, Prisma } from "@prisma/client";
 import {
   MOVEMENT_TYPE_BY_TARGET,
   Session,
@@ -8,6 +8,12 @@ import {
 import { badRequest } from "@/shared/lib/error-handlers";
 import { stockRepository } from "../stocks/stock.repository";
 import stockMovementsRepository from "./stock-movements.repository";
+
+export const automaticTotalCostCalculationType: MovementType[] = [
+  "DISCARD",
+  "SALE",
+  "CONSUME",
+];
 
 /**
  * Shared implementation for MARK_AS_DAMAGED / MARK_AS_DIRTY / MARK_AS_LOST /
@@ -20,11 +26,12 @@ import stockMovementsRepository from "./stock-movements.repository";
  *      source/destination location both forced to the current stock's
  *      location (this is an in-place reclassification, not a physical move).
  */
+
+// MARK_AS_DIRTY / DAMAGED / EXPIRED / LOST
 export async function markStockAs(
   currentStock: StockRecord,
   targetType: TargetStockType,
   quantity: number,
-  totalCost: number | undefined,
   session: Session,
   createdStockMovement: Prisma.StockMovementUncheckedCreateInput,
   tx: Prisma.TransactionClient,
@@ -36,7 +43,8 @@ export async function markStockAs(
   const currentTotalCost = currentStock.totalCost ?? 0;
   const unitCost =
     currentStock.quantity > 0 ? currentTotalCost / currentStock.quantity : 0;
-  const costToTransfer = totalCost ?? quantity * unitCost;
+  const costToTransfer =
+    createdStockMovement.type !== "MARK_AS_DIRTY" ? quantity * unitCost : 0;
 
   // 1. Decrement quantity AND totalCost from source stock
   await stockRepository.update(

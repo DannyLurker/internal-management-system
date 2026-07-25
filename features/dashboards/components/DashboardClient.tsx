@@ -4,7 +4,14 @@ import DashboardHeader from "./DashboardHeader";
 import KPICard from "./KPICard";
 import LowStockTable from "./LowStockTable";
 import FlaggedExpiredTable from "./FlaggedExpiredTable";
-import { Wallet, PackageMinus, TrendingDown } from "lucide-react";
+import {
+  Wallet,
+  TrendingDown,
+  PackageMinus,
+  ClipboardCheck,
+  ShoppingBag,
+  Shirt,
+} from "lucide-react";
 import { useManagerDashboard } from "../dashboard.hooks";
 import { formatPrice } from "@/shared/lib/formatter";
 
@@ -20,9 +27,12 @@ export default function DashboardClient() {
     flaggedExpiredStockDataPerPage: 10,
   });
 
-  const totalValue = data?.data?.data?.totalInventoryValue ?? 0;
-  const totalSpend = data?.data?.data?.totalSpend ?? 0;
-  const totalWastage = data?.data?.data?.totalStockWastageValue ?? 0;
+  const totalValue = data?.data?.totalInventoryValue ?? 0;
+  const totalSpend = data?.data?.totalSpend ?? 0;
+  const totalWastage = data?.data?.totalStockWastageValue ?? 0;
+  const totalConsume = data?.data?.totalConsume ?? 0;
+  const totalSale = data?.data?.totalSale ?? 0;
+  const totalLaundryOut = data?.data?.totalLaundryOut ?? 0;
 
   return (
     <div className={dashboardStyles.pageContainer}>
@@ -34,20 +44,38 @@ export default function DashboardClient() {
             <KPICard
               label="Total Inventory Value"
               value={formatPrice(totalValue)}
-              description="Active Stock with READY type and hasn't expired yet"
+              description="Monetary value of unexpired, ready-to-use stock"
               icon={<Wallet className="w-5 h-5" />}
             />
             <KPICard
               label="Total Spend"
               value={formatPrice(totalSpend)}
-              description="Receive stocks"
+              description="Total procurement expenses from received stock shipments"
               icon={<TrendingDown className="w-5 h-5" />}
             />
             <KPICard
               label="Total Stock Wastage"
-              description="Combination of mark as expired, lost, and damaged"
               value={formatPrice(totalWastage)}
+              description="Combined loss from expired, lost, or damaged items"
               icon={<PackageMinus className="w-5 h-5" />}
+            />
+            <KPICard
+              label="Total Consumed"
+              value={formatPrice(totalConsume)}
+              description="Items consumed for internal operations and housekeeping"
+              icon={<ClipboardCheck className="w-5 h-5" />}
+            />
+            <KPICard
+              label="Total Sales"
+              value={formatPrice(totalSale)}
+              description="Cost of goods sold (COGS) for direct customer sales"
+              icon={<ShoppingBag className="w-5 h-5" />}
+            />
+            <KPICard
+              label="Total Laundry Out"
+              value={formatPrice(totalLaundryOut)}
+              description="Linens and fabrics sent out to laundry facilities"
+              icon={<Shirt className="w-5 h-5" />}
             />
           </div>
 

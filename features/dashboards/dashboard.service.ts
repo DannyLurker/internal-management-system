@@ -50,10 +50,21 @@ const dashboardService = {
           },
         },
       ],
-
       quantity: {
         gte: 0,
       },
+    });
+
+    const totalConsumeWhereInput = createStockMovementWhereInput({
+      type: "CONSUME",
+    });
+
+    const totalSaleWhereInput = createStockMovementWhereInput({
+      type: "SALE",
+    });
+
+    const totalLaundryOutWhereInput = createStockMovementWhereInput({
+      type: "LAUNDRY_OUT",
     });
 
     const expiredStockWhere = stockWhereInput({
@@ -86,6 +97,9 @@ const dashboardService = {
       totalSpend,
       totalStockWastageValue,
       totalInventoryValue,
+      totalConsume,
+      totalSale,
+      totalLaundryOut,
       flaggedExpiredStocks,
       totalExpiredCount,
     ] = await Promise.all([
@@ -99,6 +113,18 @@ const dashboardService = {
       ),
       stockRepository.totalInventoryValue(
         totalInventoryValueWhereInput,
+        prisma,
+      ),
+      stockMovementsRepository.calculateInventoryValue(
+        totalConsumeWhereInput,
+        prisma,
+      ),
+      stockMovementsRepository.calculateInventoryValue(
+        totalSaleWhereInput,
+        prisma,
+      ),
+      stockMovementsRepository.calculateInventoryValue(
+        totalLaundryOutWhereInput,
         prisma,
       ),
       stockRepository.findMany(
@@ -135,6 +161,9 @@ const dashboardService = {
         totalSpend,
         totalInventoryValue,
         totalStockWastageValue,
+        totalLaundryOut,
+        totalConsume,
+        totalSale,
         lowStockData: lowStocks,
         totalLowStockCount: totalLowStockItems,
         flaggedExpiredStocks: {
