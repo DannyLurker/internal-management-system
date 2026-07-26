@@ -7,6 +7,7 @@ import {
   stockMovementTypeEnum,
 } from "./general.zod";
 import { MovementType } from "@prisma/client";
+import { AUTO_CALCULATED_MOVEMENTS } from "@/features/stock-movements/stock-movements.utils";
 
 export const stockMovementCreateSchema = z
   .object({
@@ -23,23 +24,32 @@ export const stockMovementCreateSchema = z
   })
   .superRefine((val, ctx) => {
     const TYPES_REQUIRING_DESTINATION: MovementType[] = ["TRANSFER"];
-    const TYPES_UNNEEDED_TOTAL_COST: MovementType[] = [
-      "CONSUME",
-      "DISCARD",
-      "SALE",
-    ];
 
-    if (
-      !TYPES_UNNEEDED_TOTAL_COST.includes(val.stockMovementType) &&
-      !val.totalCost
-    ) {
+    const isAutoCalculated = AUTO_CALCULATED_MOVEMENTS.includes(
+      val.stockMovementType as any,
+    );
+
+    console.log("test: " + isAutoCalculated);
+
+    if (!val.quantity) {
       ctx.addIssue({
         code: "custom",
-        message:
-          "Total cost field must be filled or total cost must be greater than 0",
-        path: ["totalCost"],
+        message: "Quantity is required and it must be positive",
+        path: ["quantity"],
       });
     }
+
+    if (!isAutoCalculated) {
+      if (!val.totalCost || val.totalCost <= 0) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            "Total cost field must be filled or total cost must be greater than 0",
+          path: ["totalCost"],
+        });
+      }
+    }
+
     if (TYPES_REQUIRING_DESTINATION.includes(val.stockMovementType)) {
       if (!val.destinationLocationId) {
         ctx.addIssue({
@@ -60,17 +70,6 @@ export const stockMovementCreateSchema = z
         message: "Quantity field must be greater than 0",
         path: ["quantity"],
       });
-    }
-
-    if (val.stockMovementType === "LAUNDRY_OUT") {
-      if (!val.totalCost || val.totalCost < 1) {
-        ctx.addIssue({
-          code: "custom",
-          message:
-            "Total cost field must be filled or total cost must be greater than 0",
-          path: ["totalCost"],
-        });
-      }
     }
   });
 

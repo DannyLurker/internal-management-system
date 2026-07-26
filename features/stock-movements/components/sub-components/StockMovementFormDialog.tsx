@@ -29,8 +29,9 @@ import {
 import { stockGetManySchema } from "@/shared/lib/zods/stock.zod";
 import { useCreateStockMovement } from "../../stock-movements.hooks";
 import { stockMovementInputClass } from "../../stock-movements.style";
-import { MovementType, StockType } from "@prisma/client";
+import { StockType } from "@prisma/client";
 import { formatThousand, unformatThousand } from "@/shared/lib/formatter";
+import { AUTO_CALCULATED_MOVEMENTS } from "../../stock-movements.utils";
 
 type ItemOption = { id: string; name: string };
 type LocationOption = { id: string; name: string };
@@ -82,16 +83,6 @@ const totalCostRequiredTypes = new Set<MovementTypeOption>([
   "SALE",
   "LAUNDRY_OUT",
 ]);
-
-const AUTO_CALCULATED_MOVEMENTS: MovementType[] = [
-  "CONSUME",
-  "DISCARD",
-  "TRANSFER",
-  "MARK_AS_EXPIRED",
-  "MARK_AS_DAMAGED",
-  "MARK_AS_LOST",
-  "SALE",
-];
 
 function formatMovementLabel(value: string) {
   return value

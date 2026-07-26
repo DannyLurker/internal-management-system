@@ -15,6 +15,19 @@ export const automaticTotalCostCalculationType: MovementType[] = [
   "CONSUME",
 ];
 
+export const AUTO_CALCULATED_MOVEMENTS: MovementType[] = [
+  "CONSUME",
+  "DISCARD",
+  "TRANSFER",
+  "MARK_AS_EXPIRED",
+  "MARK_AS_DAMAGED",
+  "MARK_AS_LOST",
+  "SALE",
+  "LAUNDRY_IN",
+  "LAUNDRY_OUT",
+  "MARK_AS_DIRTY",
+];
+
 /**
  * Shared implementation for MARK_AS_DAMAGED / MARK_AS_DIRTY / MARK_AS_LOST /
  * MARK_AS_EXPIRED. All four follow the same shape:
@@ -43,8 +56,7 @@ export async function markStockAs(
   const currentTotalCost = currentStock.totalCost ?? 0;
   const unitCost =
     currentStock.quantity > 0 ? currentTotalCost / currentStock.quantity : 0;
-  const costToTransfer =
-    createdStockMovement.type !== "MARK_AS_DIRTY" ? quantity * unitCost : 0;
+  const costToTransfer = quantity * unitCost;
 
   // 1. Decrement quantity AND totalCost from source stock
   await stockRepository.update(

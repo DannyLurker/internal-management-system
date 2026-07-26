@@ -67,11 +67,6 @@ const stockMovementsService = {
         );
       }
 
-      const increaseStockQuantityMovementType: MovementType[] = [
-        "RECEIVE",
-        "LAUNDRY_IN",
-      ];
-
       // Rule 2: LAUNDRY_IN can only target READY stocks
       if (
         payload.stockMovementType === "LAUNDRY_IN" &&
@@ -180,11 +175,8 @@ const stockMovementsService = {
         );
       }
 
-      // RECEIVE / LAUNDRY_IN against an existing stock row: increment in place.
-      if (
-        currentStock?.id &&
-        increaseStockQuantityMovementType.includes(payload.stockMovementType)
-      ) {
+      // RECEIVE
+      if (currentStock?.id && payload.stockMovementType === "RECEIVE") {
         movement = await stockMovementsRepository.create(
           {
             ...createdStockMovement,
@@ -366,13 +358,48 @@ const stockMovementsService = {
         );
       }
 
-      // decreaseStockQuantityMovementType case
+      // Laundry IN
+      if (currentStock && payload.stockMovementType === "LAUNDRY_IN") {
+        if (currentStock.quantity < payload.quantity) {
+          throw badRequest("Insufficient stock quantity.");
+        }
+
+        const unitCost =
+          currentStock.quantity > 0
+            ? (currentStock.totalCost ?? 0) / currentStock.quantity
+            : 0;
+        const costToAdd = payload.quantity * unitCost;
+
+        movement = await stockMovementsRepository.create(
+          {
+            ...createdStockMovement,
+            destinationLocationId: null,
+            totalCost: costToAdd,
+          },
+          tx,
+        );
+
+        await stockRepository.update(
+          currentStock.id,
+          {
+            quantity: { decrement: payload.quantity },
+            totalCost: { increment: costToAdd },
+          },
+          tx,
+        );
+      }
+
+      // Laundry Out
       if (currentStock && payload.stockMovementType === "LAUNDRY_OUT") {
         if (currentStock.quantity < payload.quantity) {
           throw badRequest("Insufficient stock quantity.");
         }
 
-        const costToDeduct = payload.totalCost;
+        const unitCost =
+          currentStock.quantity > 0
+            ? (currentStock.totalCost ?? 0) / currentStock.quantity
+            : 0;
+        const costToDeduct = unitCost * payload.quantity;
 
         movement = await stockMovementsRepository.create(
           {

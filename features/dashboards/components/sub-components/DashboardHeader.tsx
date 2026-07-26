@@ -1,6 +1,6 @@
 "use client";
 
-import { dashboardStyles } from "../dashboard.styles";
+import { dashboardStyles } from "../../dashboard.styles";
 
 export default function DashboardHeader() {
   return (

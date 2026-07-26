@@ -67,6 +67,10 @@ const dashboardService = {
       type: "LAUNDRY_OUT",
     });
 
+    const totalLaundryInWhereInput = createStockMovementWhereInput({
+      type: "LAUNDRY_OUT",
+    });
+
     const expiredStockWhere = stockWhereInput({
       type: "READY",
       expiredAt: {
@@ -99,7 +103,8 @@ const dashboardService = {
       totalInventoryValue,
       totalConsume,
       totalSale,
-      totalLaundryOut,
+      totalLaundryOutStock,
+      totalLaundryInStock,
       flaggedExpiredStocks,
       totalExpiredCount,
     ] = await Promise.all([
@@ -125,6 +130,10 @@ const dashboardService = {
       ),
       stockMovementsRepository.calculateInventoryValue(
         totalLaundryOutWhereInput,
+        prisma,
+      ),
+      stockMovementsRepository.calculateInventoryValue(
+        totalLaundryInWhereInput,
         prisma,
       ),
       stockRepository.findMany(
@@ -161,7 +170,8 @@ const dashboardService = {
         totalSpend,
         totalInventoryValue,
         totalStockWastageValue,
-        totalLaundryOut,
+        totalLaundryOutStock:
+          (totalLaundryOutStock ?? 0) - (totalLaundryInStock ?? 0),
         totalConsume,
         totalSale,
         lowStockData: lowStocks,

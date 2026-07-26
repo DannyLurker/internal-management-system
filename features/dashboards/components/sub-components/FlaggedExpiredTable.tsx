@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { dashboardStyles } from "../dashboard.styles";
-import { useManagerDashboard } from "../dashboard.hooks";
+import { dashboardStyles } from "../../dashboard.styles";
+import { useManagerDashboard } from "../../dashboard.hooks";
 import { Calendar } from "lucide-react";
 import { formatItemDate } from "@/shared/lib/formatter";
 import StockInfoPanel from "@/features/stocks/components/sub-components/stock-table/StockInfoPanel";
@@ -35,7 +35,9 @@ export default function FlaggedExpiredTable() {
       <div className={dashboardStyles.tableCard}>
         <div className={dashboardStyles.tableHeader}>
           <div className="flex gap-3 flex-col">
-            <h2 className={dashboardStyles.tableTitle}>Flagged Expired Stocks</h2>
+            <h2 className={dashboardStyles.tableTitle}>
+              Flagged Expired Stocks
+            </h2>
             <p>
               These stocks have reached their expiration date, but their status
               has not been updated yet.
@@ -121,7 +123,8 @@ export default function FlaggedExpiredTable() {
             <p>
               Showing{" "}
               <span className="font-semibold text-[#121c28]">{startCount}</span>{" "}
-              to <span className="font-semibold text-[#121c28]">{endCount}</span>{" "}
+              to{" "}
+              <span className="font-semibold text-[#121c28]">{endCount}</span>{" "}
               of{" "}
               <span className="font-semibold text-[#121c28]">{totalItems}</span>{" "}
               items

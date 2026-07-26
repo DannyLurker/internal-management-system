@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { dashboardStyles } from "../dashboard.styles";
+import { dashboardStyles } from "../../dashboard.styles";
 
 interface KPICardProps {
   label: string;

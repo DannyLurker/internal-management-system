@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { dashboardStyles } from "../dashboard.styles";
-import { useManagerDashboard } from "../dashboard.hooks";
+import { dashboardStyles } from "../../dashboard.styles";
+import { useManagerDashboard } from "../../dashboard.hooks";
 import { AlertCircle } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 
