@@ -16,9 +16,24 @@ const dashboardService = {
     params: ManagerDashboardParamSchema,
     prisma: Prisma.TransactionClient | PrismaClient,
   ) => {
+    // Build an optional createdAt date-range filter from the incoming params.
+    // When startDate / endDate are present we scope all stock-movement KPI
+    // aggregations to that window so the UI date-filter dropdown is reflected.
+    const dateRangeFilter =
+      params.startDate != null || params.endDate != null
+        ? {
+            createdAt: {
+              ...(params.startDate ? { gte: new Date(params.startDate) } : {}),
+              ...(params.endDate ? { lte: new Date(params.endDate) } : {}),
+            },
+          }
+        : {};
+
     const totalSpendWhereInput = createStockMovementWhereInput({
       OR: [{ type: "RECEIVE" }, { type: "ADJUSTMENT", totalCost: { gt: 0 } }],
+      ...dateRangeFilter,
     });
+
 
     const totalWastageValueWhereInput = createStockMovementWhereInput({
       OR: [
@@ -34,6 +49,7 @@ const dashboardService = {
         },
         { type: "ADJUSTMENT", totalCost: { lt: 0 } },
       ],
+      ...dateRangeFilter,
     });
 
     const totalInventoryValueWhereInput = stockWhereInput({
@@ -57,19 +73,24 @@ const dashboardService = {
 
     const totalConsumeWhereInput = createStockMovementWhereInput({
       type: "CONSUME",
+      ...dateRangeFilter,
     });
 
     const totalSaleWhereInput = createStockMovementWhereInput({
       type: "SALE",
+      ...dateRangeFilter,
     });
 
     const totalLaundryOutWhereInput = createStockMovementWhereInput({
       type: "LAUNDRY_OUT",
+      ...dateRangeFilter,
     });
 
     const totalLaundryInWhereInput = createStockMovementWhereInput({
       type: "LAUNDRY_OUT",
+      ...dateRangeFilter,
     });
+
 
     const expiredStockWhere = stockWhereInput({
       type: "READY",

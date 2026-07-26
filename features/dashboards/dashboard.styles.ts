@@ -45,4 +45,13 @@ export const dashboardStyles = {
     "rounded-md border border-[#d9e3f4] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[#565e74] hover:border-[#894d0d]/40 hover:text-[#894d0d] disabled:cursor-not-allowed disabled:opacity-40 bg-white",
   paginationActiveIndicator:
     "rounded-md bg-[#894d0d] px-3 py-1.5 text-xs font-semibold text-white",
+
+  // ── Date Filter Dropdown ─────────────────────────────────────────────────
+  dateFilterContainer: "flex items-center gap-3",
+  dateFilterLabel:
+    "font-ochre-ui text-xs font-semibold uppercase tracking-widest text-[#524439]/80 hidden sm:block",
+  dateFilterTrigger:
+    "flex items-center gap-2 rounded-lg border border-[#d9e3f4] bg-white px-3 py-1.5 font-ochre-ui text-sm text-[#524439] shadow-sm hover:border-[#894d0d]/50 hover:text-[#894d0d] transition-colors cursor-pointer min-w-[11rem]",
+  dateFilterActiveBadge:
+    "ml-auto rounded-sm bg-[#894d0d]/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-[#894d0d]",
 };

@@ -1,11 +1,15 @@
 "use client";
 import { formatPrice } from "@/shared/lib/formatter";
 
+import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { useManagerDashboard } from "../../dashboard.hooks";
-import DashboardHeader from "./DashboardHeader";
-import { dashboardStyles } from "../../dashboard.styles";
-import KPICard from "./KPICard";
+
+import { resolveDateRange } from "./sub-components/DateFilterDropdown";
+import { DateFilterOption, DateFilterRange } from "../dashboard.types";
+import { useManagerDashboard } from "../dashboard.hooks";
+import { dashboardStyles } from "../dashboard.styles";
+import DashboardHeader from "./sub-components/DashboardHeader";
+import KPICard from "./sub-components/KPICard";
 import {
   ClipboardCheck,
   PackageMinus,
@@ -14,17 +18,39 @@ import {
   TrendingDown,
   Wallet,
 } from "lucide-react";
-import LowStockTable from "./LowStockTable";
-import FlaggedExpiredTable from "./FlaggedExpiredTable";
+import LowStockTable from "./sub-components/LowStockTable";
+import FlaggedExpiredTable from "./sub-components/FlaggedExpiredTable";
+
+// ── Default filter: last 7 days ───────────────────────────────────────────────
+const DEFAULT_FILTER: DateFilterOption = "last7";
+const DEFAULT_RANGE: DateFilterRange = resolveDateRange(DEFAULT_FILTER);
 
 export default function DashboardManager() {
   const { data: session } = useSession();
 
+  // ── Date filter state ────────────────────────────────────────────────────
+  const [filterOption, setFilterOption] =
+    useState<DateFilterOption>(DEFAULT_FILTER);
+  const [dateRange, setDateRange] = useState<DateFilterRange>(DEFAULT_RANGE);
+
+  const handleFilterChange = (
+    option: DateFilterOption,
+    range: DateFilterRange,
+  ) => {
+    setFilterOption(option);
+    setDateRange(range);
+  };
+
+  // ── Data fetching ────────────────────────────────────────────────────────
+  // startDate / endDate are passed as ISO strings; the Zod schema on the API
+  // route coerces them back to validated date strings before reaching the service.
   const { data } = useManagerDashboard({
     lowStockAlertPage: 1,
     lowStockAlertDataPerPage: 10,
     flaggedExpiredStockPage: 1,
     flaggedExpiredStockDataPerPage: 10,
+    startDate: dateRange.startDate.toISOString(),
+    endDate: dateRange.endDate.toISOString(),
   });
 
   const totalValue = data?.data?.totalInventoryValue ?? 0;
@@ -44,7 +70,12 @@ export default function DashboardManager() {
 
   return (
     <div className={dashboardStyles.pageContainer}>
-      <DashboardHeader />
+      {/* DashboardHeader now owns the date-filter dropdown */}
+      <DashboardHeader
+        filterOption={filterOption}
+        onFilterChange={handleFilterChange}
+      />
+
       <div>
         <div className={dashboardStyles.kpiGrid}>
           <KPICard

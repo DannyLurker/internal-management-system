@@ -6,6 +6,10 @@ export const managerDashboardParamSchema = z.object({
   lowStockAlertDataPerPage: dataPerPage,
   flaggedExpiredStockPage: page,
   flaggedExpiredStockDataPerPage: dataPerPage,
+  /** ISO 8601 date string – inclusive lower bound for KPI date-range filters */
+  startDate: z.string().datetime({ offset: true }).optional(),
+  /** ISO 8601 date string – inclusive upper bound for KPI date-range filters */
+  endDate: z.string().datetime({ offset: true }).optional(),
 });
 
 export type ManagerDashboardParamSchema = z.infer<

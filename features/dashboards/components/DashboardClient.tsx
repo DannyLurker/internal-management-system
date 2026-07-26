@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import DashboardManager from "./sub-components/DashboardManager";
+import DashboardManager from "./DashboardManager";
 import { useGlobalLoading } from "@/shared/lib/context/LoadingContext";
 
 const DashboardClient = () => {

@@ -173,3 +173,36 @@
 - Stock movement feature does not have delete functionality
 - Integration testing is still not really important for now
 - Item delete feature is turned off
+
+## Dashboard Feature
+
+### Dashboard Date Filter Development
+
+- Extended Zod schema at `shared/lib/zods/dashboard.zod.ts`
+  - Added optional `startDate` and `endDate` fields (ISO 8601 datetime strings with offset) to `managerDashboardParamSchema`
+  - Both fields are optional so existing callers without date params remain backward-compatible
+- Updated service layer at `features/dashboards/dashboard.service.ts`
+  - Derives a `dateRangeFilter` object from `params.startDate` / `params.endDate` when either is present
+  - Spreads `dateRangeFilter` (containing a Prisma `createdAt` range clause) into every `createStockMovementWhereInput` call, scoping all KPI aggregations (spend, wastage, consume, sale, laundry in/out) to the selected window
+  - Inventory value snapshot (`totalInventoryValue`) intentionally excluded – it reflects the current live state regardless of the period
+- Added type definitions to `features/dashboards/dashboard.types.ts`
+  - `DateFilterOption` – union discriminant type covering six rolling presets (`last7` … `last365`) and template-literal month keys (`month-0` … `month-11`)
+  - `DateFilterRange` – `{ startDate: Date; endDate: Date }` resolved shape
+- Added style tokens to `features/dashboards/dashboard.styles.ts`
+  - `dateFilterContainer`, `dateFilterLabel`, `dateFilterTrigger`, `dateFilterActiveBadge` – all aligned to the existing ochre brand palette and shadow conventions
+- Created new sub-component `features/dashboards/components/sub-components/DateFilterDropdown.tsx`
+  - Built with the project's existing shadcn/ui `Select` family (`Select`, `SelectTrigger`, `SelectContent`, `SelectGroup`, `SelectLabel`, `SelectItem`, `SelectSeparator`)
+  - Exposes `resolveDateRange(option)` as a named export so DashboardManager can seed the initial state
+  - Preset options: Last 7 Days (default), 14, 30, 90, 180, 365 Days
+  - Month options: January – December of the current calendar year, generated dynamically from `new Date().getFullYear()`
+  - Rolling presets compute `startDate` as `today - (N-1) days` at `00:00:00` and `endDate` as today at `23:59:59`
+  - Month presets span from the first to the last millisecond of the target calendar month
+  - Renders a `Month` badge on the trigger when a specific-month option is active
+- Updated `features/dashboards/components/sub-components/DashboardHeader.tsx`
+  - Now accepts `filterOption: DateFilterOption` and `onFilterChange` props
+  - Renders `DateFilterDropdown` inside the `headerActions` flex container (right-hand side of the header row)
+- Updated `features/dashboards/components/DashboardManager.tsx`
+  - Owns `filterOption` and `dateRange` state, initialised to `last7` / its resolved range
+  - Passes `startDate` and `endDate` ISO strings to `useManagerDashboard` so TanStack Query re-fetches whenever the period changes (cache key includes the full params object)
+  - Forwards `filterOption` and `onFilterChange` down to `DashboardHeader`
+
