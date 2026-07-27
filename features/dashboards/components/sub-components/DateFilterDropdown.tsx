@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { CalendarDays, ChevronDown } from "lucide-react";
+import { useMemo } from "react";
+import { CalendarDays } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -48,16 +48,12 @@ const PRESET_OPTIONS: PresetOption[] = [
 
 // ── Date computation helper ──────────────────────────────────────────────────
 
-/**
- * Derives an absolute { startDate, endDate } window from a DateFilterOption.
- * For month presets the window spans from the first to the last millisecond of
- * that calendar month in the **current** year.
- */
 export function resolveDateRange(option: DateFilterOption): DateFilterRange {
   const now = new Date();
 
   if (option.startsWith("month-")) {
-    const monthIndex = parseInt(option.replace("month-", ""), 10);
+    // 💡 PERBAIKAN 1: Dikurangi 1 agar sesuai dengan index 0-11 JavaScript
+    const monthIndex = parseInt(option.replace("month-", ""), 10) - 1;
     const year = now.getFullYear();
     const startDate = new Date(year, monthIndex, 1, 0, 0, 0, 0);
     const endDate = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
@@ -85,10 +81,12 @@ export function resolveDateRange(option: DateFilterOption): DateFilterRange {
 
 // ── Label helper ─────────────────────────────────────────────────────────────
 
-function getOptionLabel(option: DateFilterOption): string {
+function getOptionLabel(option: DateFilterOption, currentYear: number): string {
   if (option.startsWith("month-")) {
-    const monthIndex = parseInt(option.replace("month-", ""), 10);
-    return MONTH_NAMES[monthIndex] ?? option;
+    // 💡 PERBAIKAN 2: Dikurangi 1 agar mengambil nama bulan yang pas
+    const monthIndex = parseInt(option.replace("month-", ""), 10) - 1;
+    const monthName = MONTH_NAMES[monthIndex];
+    return monthName ? `${monthName} ${currentYear}` : option;
   }
   return PRESET_OPTIONS.find((o) => o.value === option)?.label ?? option;
 }
@@ -111,19 +109,25 @@ export default function DateFilterDropdown({
   const monthOptions: PresetOption[] = useMemo(
     () =>
       MONTH_NAMES.map((name, i) => ({
-        value: `month-${i}` as DateFilterOption,
+        value: `month-${i + 1}` as DateFilterOption,
         label: `${name} ${currentYear}`,
       })),
     [currentYear],
   );
 
-  const handleChange = (next: string) => {
+  const handleChange = (next: string | null) => {
+    // Jika next bernilai null, jangan eksekusi atau berikan default
+    if (!next) return;
+
     const option = next as DateFilterOption;
     const range = resolveDateRange(option);
     onFilterChange(option, range);
   };
 
   const isMonthActive = value.startsWith("month-");
+
+  // 💡 PERBAIKAN 3: Dapatkan label tampilan yang rapi untuk Trigger
+  const selectedLabel = getOptionLabel(value, currentYear);
 
   return (
     <div className={dashboardStyles.dateFilterContainer}>
@@ -136,11 +140,10 @@ export default function DateFilterDropdown({
           id="dashboard-date-filter"
         >
           <CalendarDays className="w-4 h-4 shrink-0 text-[#894d0d]" />
-          <SelectValue placeholder="Select period" />
+          {/* Tampilkan label terpilih agar di trigger tampil rapi (contoh: "Last 7 Days" bukan "last7") */}
+          <SelectValue placeholder="Select period">{selectedLabel}</SelectValue>
           {isMonthActive && (
-            <span className={dashboardStyles.dateFilterActiveBadge}>
-              Month
-            </span>
+            <span className={dashboardStyles.dateFilterActiveBadge}>Month</span>
           )}
         </SelectTrigger>
 

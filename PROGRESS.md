@@ -168,12 +168,6 @@
 - Test coverage: Create (RECEIVE), Get list, Get by ID, Update, and error cases
 - Note: Delete functionality not implemented
 
-## Notes
-
-- Stock movement feature does not have delete functionality
-- Integration testing is still not really important for now
-- Item delete feature is turned off
-
 ## Dashboard Feature
 
 ### Dashboard Date Filter Development
@@ -206,3 +200,8 @@
   - Passes `startDate` and `endDate` ISO strings to `useManagerDashboard` so TanStack Query re-fetches whenever the period changes (cache key includes the full params object)
   - Forwards `filterOption` and `onFilterChange` down to `DashboardHeader`
 
+## Notes
+
+- Stock movement feature does not have delete functionality
+- Integration testing is still not really important for now
+- Item delete feature is turned off
