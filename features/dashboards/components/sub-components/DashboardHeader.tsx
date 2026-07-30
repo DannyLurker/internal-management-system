@@ -1,20 +1,8 @@
 "use client";
 
 import { dashboardStyles } from "../../dashboard.styles";
-import DateFilterDropdown from "./DateFilterDropdown";
-import { DateFilterOption, DateFilterRange } from "../../dashboard.types";
 
-interface DashboardHeaderProps {
-  /** Active filter selection passed down from DashboardManager */
-  filterOption: DateFilterOption;
-  /** Callback to bubble the chosen option + resolved date range up */
-  onFilterChange: (option: DateFilterOption, range: DateFilterRange) => void;
-}
-
-export default function DashboardHeader({
-  filterOption,
-  onFilterChange,
-}: DashboardHeaderProps) {
+export default function DashboardHeader({}) {
   return (
     <header className={dashboardStyles.headerContainer}>
       <div className="max-w-2xl">
@@ -23,14 +11,6 @@ export default function DashboardHeader({
           Monitor key performance indicators and critical stock alerts across
           your luxury properties.
         </p>
-      </div>
-
-      {/* Date filter control lives in the header actions area */}
-      <div className={dashboardStyles.headerActions}>
-        <DateFilterDropdown
-          value={filterOption}
-          onFilterChange={onFilterChange}
-        />
       </div>
     </header>
   );

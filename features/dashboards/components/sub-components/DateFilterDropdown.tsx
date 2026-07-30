@@ -116,7 +116,6 @@ export default function DateFilterDropdown({
   );
 
   const handleChange = (next: string | null) => {
-    // Jika next bernilai null, jangan eksekusi atau berikan default
     if (!next) return;
 
     const option = next as DateFilterOption;
@@ -126,7 +125,6 @@ export default function DateFilterDropdown({
 
   const isMonthActive = value.startsWith("month-");
 
-  // 💡 PERBAIKAN 3: Dapatkan label tampilan yang rapi untuk Trigger
   const selectedLabel = getOptionLabel(value, currentYear);
 
   return (
