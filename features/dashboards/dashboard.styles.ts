@@ -4,7 +4,7 @@ export const dashboardStyles = {
     "flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between mb-8",
   headerTitle:
     "font-ochre-brand text-3xl font-medium text-[#894d0d] md:text-4xl",
-  headerActions: "flex items-center gap-6",
+  headerActions: "flex items-center gap-6 right-10 top-10 absolute",
 
   kpiGrid: "grid grid-cols-1 md:grid-cols-3 gap-6 mb-8",
   // Replace kpiCard, kpiLabelContainer, and kpiDetail with these styles:

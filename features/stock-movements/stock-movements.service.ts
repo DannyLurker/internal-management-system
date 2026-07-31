@@ -13,7 +13,7 @@ import auditLogsRepository from "../audit-logs/audit-log.repository";
 import { MovementType, Prisma, PrismaClient } from "@prisma/client";
 import itemRepository from "../items/item.repository";
 import { locationRepository } from "../locations/location.repository";
-import { stockRepository } from "../stocks/stock.repository";
+import { stockRepository, stockWhereInput } from "../stocks/stock.repository";
 import orderRepository from "../orders/order-repository";
 import { TargetStockType } from "./stock-movements.types";
 import {
@@ -21,6 +21,7 @@ import {
   markStockAs,
 } from "./stock-movements.utils";
 import { Session } from "next-auth";
+import { connect } from "http2";
 
 const stockMovementsService = {
   create: async (
@@ -117,7 +118,7 @@ const stockMovementsService = {
             tx,
           );
 
-        if (!globalStockQuantity) throw badRequest("Global stock not foudn");
+        if (!globalStockQuantity) throw badRequest("Global stock not found");
 
         if (globalStockQuantity < payload.quantity)
           throw badRequest("Insufficient stock quantity.");
@@ -360,9 +361,12 @@ const stockMovementsService = {
 
       // Laundry IN
       if (currentStock && payload.stockMovementType === "LAUNDRY_IN") {
-        if (currentStock.quantity < payload.quantity) {
-          throw badRequest("Insufficient stock quantity.");
-        }
+        // const laundryOutStockWhereQuery = stockWhereInput({
+        //   id: currentStock.id,
+        //   type: "EXPIRED"
+        // });
+
+        // const laundryOutStocks = stockRepository.getMany();
 
         const unitCost =
           currentStock.quantity > 0
@@ -395,6 +399,39 @@ const stockMovementsService = {
           throw badRequest("Insufficient stock quantity.");
         }
 
+        const destinationStockWhereInput = stockWhereInput({
+          locationId: payload.destinationLocationId,
+          itemId: currentStock.itemId,
+          expiredAt: currentStock.expiredAt,
+          type: currentStock.type,
+        });
+
+        const createDestinationStock: Prisma.StockCreateInput = {
+          location: {
+            connect: { id: payload.destinationLocationId },
+          },
+          quantity: payload.quantity,
+          item: { connect: { id: currentStock.itemId } },
+          expiredAt: currentStock.expiredAt,
+          type: currentStock.type,
+          creator: {
+            connect: {
+              id: session.id,
+            },
+          },
+        };
+
+        const destinationStock = await stockRepository.findOrUpdateOrCreate(
+          destinationStockWhereInput,
+          {
+            quantity: {
+              increment: payload.quantity,
+            },
+          },
+          createDestinationStock,
+          tx,
+        );
+
         const unitCost =
           currentStock.quantity > 0
             ? (currentStock.totalCost ?? 0) / currentStock.quantity
@@ -404,7 +441,8 @@ const stockMovementsService = {
         movement = await stockMovementsRepository.create(
           {
             ...createdStockMovement,
-            destinationLocationId: null,
+            stockId: destinationStock.id,
+            destinationLocationId: destinationStock.locationId,
             totalCost: costToDeduct,
           },
           tx,

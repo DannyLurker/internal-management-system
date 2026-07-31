@@ -23,13 +23,15 @@ export const stockMovementCreateSchema = z
     expiredAt: z.coerce.date().optional(),
   })
   .superRefine((val, ctx) => {
-    const TYPES_REQUIRING_DESTINATION: MovementType[] = ["TRANSFER"];
+    const TYPES_REQUIRING_DESTINATION: MovementType[] = [
+      "TRANSFER",
+      "LAUNDRY_IN",
+      "LAUNDRY_OUT",
+    ];
 
     const isAutoCalculated = AUTO_CALCULATED_MOVEMENTS.includes(
       val.stockMovementType as any,
     );
-
-    console.log("test: " + isAutoCalculated);
 
     if (!val.quantity) {
       ctx.addIssue({

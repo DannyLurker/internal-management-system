@@ -34,7 +34,6 @@ const dashboardService = {
       ...dateRangeFilter,
     });
 
-
     const totalWastageValueWhereInput = createStockMovementWhereInput({
       OR: [
         {
@@ -64,7 +63,7 @@ const dashboardService = {
           expiredAt: {
             equals: null,
           },
-        },
+        } ,
       ],
       quantity: {
         gte: 0,
@@ -87,10 +86,9 @@ const dashboardService = {
     });
 
     const totalLaundryInWhereInput = createStockMovementWhereInput({
-      type: "LAUNDRY_OUT",
+      type: "LAUNDRY_IN",
       ...dateRangeFilter,
     });
-
 
     const expiredStockWhere = stockWhereInput({
       type: "READY",
@@ -149,14 +147,8 @@ const dashboardService = {
         totalSaleWhereInput,
         prisma,
       ),
-      stockMovementsRepository.calculateInventoryValue(
-        totalLaundryOutWhereInput,
-        prisma,
-      ),
-      stockMovementsRepository.calculateInventoryValue(
-        totalLaundryInWhereInput,
-        prisma,
-      ),
+      stockMovementsRepository.countQuantity(totalLaundryOutWhereInput, prisma),
+      stockMovementsRepository.countQuantity(totalLaundryInWhereInput, prisma),
       stockRepository.findMany(
         expiredStockWhere,
         expiredStockSelectData,
