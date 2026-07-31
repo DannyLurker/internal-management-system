@@ -17,8 +17,6 @@ import DateFilterDropdown, { resolveDateRange } from "./DateFilterDropdown";
 import { useManagerDashboard } from "../../dashboard.hooks";
 import { dashboardStyles } from "../../dashboard.styles";
 import KPICard from "./KPICard";
-import LowStockTable from "./LowStockTable";
-import FlaggedExpiredTable from "./FlaggedExpiredTable";
 
 // ── Default filter: last 7 days ───────────────────────────────────────────────
 const DEFAULT_FILTER: DateFilterOption = "last7";

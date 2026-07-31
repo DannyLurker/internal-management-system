@@ -63,7 +63,7 @@ const dashboardService = {
           expiredAt: {
             equals: null,
           },
-        },
+        } ,
       ],
       quantity: {
         gte: 0,
@@ -163,8 +163,6 @@ const dashboardService = {
       ),
       stockRepository.countRows(expiredStockWhere, prisma),
     ]);
-
-    console.log("HAHA:", totalLaundryInStock, totalLaundryOutStock);
 
     const lowStockAlertOffset =
       (params.lowStockAlertPage - 1) * params.lowStockAlertDataPerPage;
