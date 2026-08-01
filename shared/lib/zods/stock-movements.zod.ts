@@ -17,6 +17,7 @@ export const stockMovementCreateSchema = z
     stockMovementType: stockMovementTypeEnum,
     quantity: z.number().int(),
     totalCost: z.number().int().optional(),
+    laundryTotalCost: z.number().int().optional(),
     reason: z.string().trim().min(10),
     destinationLocationId: z.string().trim().min(1).optional(),
     orderId: z.string().trim().min(1).optional(),
@@ -25,13 +26,23 @@ export const stockMovementCreateSchema = z
   .superRefine((val, ctx) => {
     const TYPES_REQUIRING_DESTINATION: MovementType[] = [
       "TRANSFER",
-      "LAUNDRY_IN",
-      "LAUNDRY_OUT",
+      // "LAUNDRY_IN",
+      // "LAUNDRY_OUT",
     ];
 
     const isAutoCalculated = AUTO_CALCULATED_MOVEMENTS.includes(
       val.stockMovementType as any,
     );
+
+    if (val.stockMovementType === "LAUNDRY_OUT") {
+      if (!val.laundryTotalCost) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Laundry total cost is required and it must be positive",
+          path: ["laundryTotalCost"],
+        });
+      }
+    }
 
     if (!val.quantity) {
       ctx.addIssue({
@@ -42,7 +53,10 @@ export const stockMovementCreateSchema = z
     }
 
     if (!isAutoCalculated) {
-      if (!val.totalCost || val.totalCost <= 0) {
+      if (
+        !val.totalCost ||
+        (val.totalCost <= 0 && val.stockMovementType !== "LAUNDRY_OUT") //For laundry out, the system doesn't need totalCost
+      ) {
         ctx.addIssue({
           code: "custom",
           message:

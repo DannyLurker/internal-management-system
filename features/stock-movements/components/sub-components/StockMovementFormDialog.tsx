@@ -61,10 +61,8 @@ const stockRequiredTypes = new Set<MovementTypeOption>([
   "CONSUME",
   "SALE",
   "LAUNDRY_OUT",
-  "LAUNDRY_IN",
   "DISCARD",
   "RECEIVE",
-  "LAUNDRY_IN",
 ]);
 
 const typeShowReadyStocks = new Set<MovementTypeOption>(["CONSUME", "SALE"]);

@@ -8,6 +8,7 @@ export const LOCATION_TYPE_OPTIONS: {
   { value: LocationType.FRONT_OFFICE, label: "Front Office" },
   { value: LocationType.OPERATIONAL, label: "Operational" },
   { value: LocationType.FLOOR_LOCKER, label: "Floor Locker" },
+  { value: LocationType.VENDOR_LAUNDRY, label: "Vendor Laundry" },
 ];
 
 const LOCATION_TYPE_BADGE_LABELS: Record<LocationType, string> = {

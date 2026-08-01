@@ -21,7 +21,7 @@ import {
   markStockAs,
 } from "./stock-movements.utils";
 import { Session } from "next-auth";
-import { connect } from "http2";
+import { laundryRepository } from "../laundries/laundry.repository";
 
 const stockMovementsService = {
   create: async (
@@ -386,7 +386,7 @@ const stockMovementsService = {
         await stockRepository.update(
           currentStock.id,
           {
-            quantity: { decrement: payload.quantity },
+            quantity: { increment: payload.quantity },
             totalCost: { increment: costToAdd },
           },
           tx,
@@ -429,6 +429,34 @@ const stockMovementsService = {
             },
           },
           createDestinationStock,
+          tx,
+        );
+
+        const location = await locationRepository.findById(
+          destinationStock.locationId,
+          tx,
+        );
+
+        if (location && location.type !== "VENDOR_LAUNDRY") {
+          throw badRequest(
+            "When perform a 'Laundry Out' the destination location must b 'Vendor Laundry' type ",
+          );
+        }
+
+        await laundryRepository.create(
+          {
+            item: {
+              connect: { id: currentStock.itemId },
+            },
+            quantity: payload.quantity,
+            totalCost: payload.laundryTotalCost,
+            status: "SENT",
+            sourceLocation: { connect: { id: currentStock.locationId } },
+            destinationLocation: {
+              connect: { id: destinationStock.locationId },
+            },
+            reason: payload.reason,
+          },
           tx,
         );
 

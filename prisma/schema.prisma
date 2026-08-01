@@ -52,6 +52,12 @@ enum MovementType {
   MARK_AS_LOST
 }
 
+enum LaundryStatus {
+  SENT
+  RETURNED
+  CANCELLED
+}
+
 enum UserAction {
   CREATE
   UPDATE
@@ -70,6 +76,7 @@ enum Entity {
   STOCK_MOVEMENT
   ORDER
   ORDER_ITEM
+  LAUNDRY
 }
 
 // Acount creation
@@ -169,6 +176,9 @@ model Location {
   incomingMovements StockMovement[] @relation("Destination")
   outgoingMovements StockMovement[] @relation("Source")
 
+  outGoinglaundries Laundry[] @relation("LaundrySource")
+  inComingLaundries Laundry[] @relation("LaundryDestination")
+
   createdBy     String
   userCreatedBy User    @relation("LocationCreator", fields: [createdBy], references: [id])
   updatedBy     String?
@@ -215,8 +225,9 @@ model Item {
   stocks     Stock[]
   orderItems OrderItem[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  laundries Laundry[]
 }
 
 model Stock {
@@ -270,6 +281,40 @@ model StockMovement {
   user      User   @relation(fields: [createdBy], references: [id])
 
   createdAt DateTime @default(now())
+}
+
+model Laundry {
+  id String @id @default(cuid())
+
+  // Quantities & Cost
+  quantity  Int
+  totalCost Int?
+
+  // Status & Reason
+  status LaundryStatus @default(SENT)
+  reason String?
+
+  // Tracking Dates
+  sentAt     DateTime  @default(now())
+  returnedAt DateTime?
+
+  // Relations: Item
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  // Relations: Locations
+  sourceLocationId String?
+  sourceLocation   Location? @relation("LaundrySource", fields: [sourceLocationId], references: [id])
+
+  destinationLocationId String?
+  destinationLocation   Location? @relation("LaundryDestination", fields: [destinationLocationId], references: [id])
+
+  // Timestamps Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([itemId])
+  @@index([status])
 }
 
 // Internal Transaction / Extra Orders (later to work)

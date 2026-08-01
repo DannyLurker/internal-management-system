@@ -1,6 +1,6 @@
-import { MovementType } from "@prisma/client";
 import StockMovementManagement from "@/features/stock-movements/components/StockMovementManagement";
 import prisma from "@/shared/db/prisma";
+import { MovementType } from "@prisma/client";
 
 export default async function StockMovementsPage() {
   const [items, locations] = await Promise.all([
@@ -19,7 +19,10 @@ export default async function StockMovementsPage() {
     <StockMovementManagement
       items={items}
       locations={locations}
-      movementTypes={Object.values(MovementType)}
+      // Removing LAUNDRY_IN from list
+      movementTypes={Object.values(MovementType).filter(
+        (val) => val !== "LAUNDRY_IN",
+      )}
     />
   );
 }
