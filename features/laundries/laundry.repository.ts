@@ -15,12 +15,40 @@ export const createLaundryWhereUniqueInput = <
 ): T => select;
 
 export const laundryRepository = {
+  findById: async (id: string, tx: PrismaClient | Prisma.TransactionClient) => {
+    return await tx.laundry.findUnique({
+      where: {
+        id: id,
+      },
+      include: {
+        item: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+  },
+
   create: async (
     data: Prisma.LaundryCreateInput,
     tx: PrismaClient | Prisma.TransactionClient,
   ) => {
     return await tx.laundry.create({
       data,
+    });
+  },
+
+  update: async (
+    id: string,
+    data: Prisma.LaundryUpdateInput,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    return await tx.laundry.update({
+      where: {
+        id,
+      },
+      data: data,
     });
   },
 };

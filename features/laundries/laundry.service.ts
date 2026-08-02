@@ -1,0 +1,108 @@
+import { LaundryCreateSchema } from "@/shared/lib/zods/laundry.zod";
+import { Prisma, PrismaClient } from "@prisma/client";
+import { Session } from "next-auth";
+import { laundryRepository } from "./laundry.repository";
+import { notFound } from "@/shared/lib/error-handlers";
+import { stockRepository } from "../stocks/stock.repository";
+import stockMovementsRepository from "../stock-movements/stock-movements.repository";
+
+export const laundryService = {
+  create: async (
+    session: Session["user"],
+    data: LaundryCreateSchema,
+    prisma: Prisma.TransactionClient | PrismaClient,
+  ) => {
+    const result = await prisma.$transaction(async (tx) => {
+      const laundry = await laundryRepository.findById(data.laundryId, tx);
+
+      if (!laundry) {
+        throw notFound("Laundry data not found");
+      }
+
+      const vendorLaundryStock = await stockRepository.findById(
+        laundry.vendorLaundryStockId,
+        tx,
+      );
+
+      if (!vendorLaundryStock) throw notFound("Vendor laundry not found");
+
+      const destinationStock = await stockRepository.findFirst(
+        {
+          locationId: data.destinationLocationId,
+          type: vendorLaundryStock?.type,
+          expiredAt: vendorLaundryStock?.expiredAt,
+          itemId: vendorLaundryStock?.itemId,
+        },
+        prisma,
+      );
+
+      if (!destinationStock?.id)
+        throw notFound("Destination location not found");
+
+      if (data.actionType === "RETURNED") {
+        const unitCost =
+          vendorLaundryStock?.quantity > 0
+            ? (vendorLaundryStock.totalCost ?? 0) / vendorLaundryStock.quantity
+            : 0;
+        const totalCost = laundry.quantity * unitCost;
+
+        await stockMovementsRepository.create(
+          {
+            itemId: laundry.itemId,
+            stockId: destinationStock.id,
+            itemName: laundry.item.name,
+            createdBy: session.id,
+            quantity: laundry.quantity,
+            reason: `${laundry.item.name} has laundered out`,
+            type: "LAUNDRY_IN",
+            sourceLocationId: vendorLaundryStock.locationId,
+            destinationLocationId: data.destinationLocationId,
+            totalCost: totalCost,
+          },
+          tx,
+        );
+
+        await stockRepository.update(
+          destinationStock?.id,
+          {
+            quantity: {
+              increment: laundry.quantity,
+            },
+            totalCost: {
+              increment: totalCost,
+            },
+          },
+          tx,
+        );
+
+        await stockRepository.update(
+          vendorLaundryStock.id,
+          {
+            quantity: {
+              decrement: laundry.quantity,
+            },
+            totalCost: {
+              decrement: totalCost,
+            },
+          },
+          tx,
+        );
+
+        await laundryRepository.update(
+          laundry.id,
+          {
+            status: "RETURNED",
+          },
+          tx,
+        );
+      }
+
+      return laundry;
+    });
+
+    return {
+      message: `${result.item.name} ${data.actionType.toLowerCase()} successfully`,
+      id: result.id,
+    };
+  },
+};
