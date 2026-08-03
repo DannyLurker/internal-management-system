@@ -26,18 +26,35 @@ export const laundryService = {
 
       if (!vendorLaundryStock) throw notFound("Vendor laundry not found");
 
-      const destinationStock = await stockRepository.findFirst(
+      const destinationStock = await stockRepository.findOrUpdateOrCreate(
         {
           locationId: data.destinationLocationId,
           type: vendorLaundryStock?.type,
           expiredAt: vendorLaundryStock?.expiredAt,
           itemId: vendorLaundryStock?.itemId,
         },
+        {},
+        {
+          location: {
+            connect: {
+              id: data.destinationLocationId,
+            },
+          },
+          type: vendorLaundryStock?.type,
+          expiredAt: vendorLaundryStock?.expiredAt,
+          item: {
+            connect: {
+              id: vendorLaundryStock?.itemId,
+            },
+          },
+          creator: {
+            connect: {
+              id: session.id,
+            },
+          },
+        },
         prisma,
       );
-
-      if (!destinationStock?.id)
-        throw notFound("Destination location not found");
 
       if (data.actionType === "RETURNED") {
         const unitCost =
@@ -97,12 +114,16 @@ export const laundryService = {
         );
       }
 
-      return laundry;
+      if (data.actionType === "CANCEL") {
+      }
+
+      return { laundry: laundry, destinationStock: destinationStock };
     });
 
     return {
-      message: `${result.item.name} ${data.actionType.toLowerCase()} successfully`,
-      id: result.id,
+      message: `${result.laundry.item.name} ${data.actionType.toLowerCase()} successfully`,
+      laundryId: result.laundry.id,
+      destinationStockId: result.destinationStock.id,
     };
   },
 };

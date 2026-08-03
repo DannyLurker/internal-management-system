@@ -26,8 +26,8 @@ export const stockMovementCreateSchema = z
   .superRefine((val, ctx) => {
     const TYPES_REQUIRING_DESTINATION: MovementType[] = [
       "TRANSFER",
-      // "LAUNDRY_IN",
-      // "LAUNDRY_OUT",
+      "LAUNDRY_IN",
+      "LAUNDRY_OUT",
     ];
 
     const isAutoCalculated = AUTO_CALCULATED_MOVEMENTS.includes(

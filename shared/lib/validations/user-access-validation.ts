@@ -6,6 +6,7 @@ const PERMISSIONS = {
   MANAGE_ITEM: ["HOTEL_MANAGER", "SUPERVISOR"] as Roles[],
   MANAGE_STOCK: ["HOTEL_MANAGER", "SUPERVISOR"] as Roles[],
   MANAGE_STOCK_MOVEMENT: ["HOTEL_MANAGER", "SUPERVISOR"] as Roles[],
+  MANAGER_LAUNDRY: ["HOTEL_MANAGER", "SUPERVISOR"] as Roles[],
   ACCESS_MANAGER_DASHBOARD: "HOTEL_MANAGER" as Roles,
 };
 
@@ -51,4 +52,8 @@ export const canDeleteStockMovement = (role: Roles) => {
 
 export const canAccessManagerDashboard = (role: Roles) => {
   return role === PERMISSIONS.ACCESS_MANAGER_DASHBOARD;
+};
+
+export const canManageLaundry = (role: Roles) => {
+  return PERMISSIONS.MANAGER_LAUNDRY.includes(role);
 };

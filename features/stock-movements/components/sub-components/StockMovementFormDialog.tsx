@@ -74,7 +74,10 @@ const markAsTypes = new Set<MovementTypeOption>([
   "MARK_AS_LOST",
 ]);
 
-const destinationRequiredTypes = new Set<MovementTypeOption>(["TRANSFER"]);
+const destinationRequiredTypes = new Set<MovementTypeOption>([
+  "TRANSFER",
+  "LAUNDRY_OUT",
+]);
 
 const totalCostRequiredTypes = new Set<MovementTypeOption>([
   "DISCARD",
@@ -118,6 +121,7 @@ export default function StockMovementFormDialog({
       stockId: undefined,
       isGlobalStock: isGlobalStock ?? undefined,
       stockMovementType: defaultType,
+      laundryTotalCost: undefined,
       quantity: undefined,
       totalCost: undefined,
       reason: "",
@@ -125,6 +129,8 @@ export default function StockMovementFormDialog({
       orderId: undefined,
     },
   });
+
+  console.log(form.formState.errors);
 
   const selectedItemId = form.watch("itemId");
   const selectedStockId = form.watch("stockId");
@@ -186,6 +192,7 @@ export default function StockMovementFormDialog({
       stockId: defaultStockId ?? undefined,
       stockMovementType: defaultType,
       isGlobalStock: isGlobalStock ?? undefined,
+      laundryTotalCost: undefined,
       quantity: undefined,
       totalCost: undefined,
       reason: "",
@@ -468,6 +475,40 @@ export default function StockMovementFormDialog({
                   </p>
                 ) : null}
               </div>
+
+              {selectedMovementType == "LAUNDRY_OUT" && (
+                <div>
+                  <Label className="font-ochre-ui text-sm">
+                    Total Laundry Cost
+                  </Label>
+                  <Controller
+                    control={form.control}
+                    name="laundryTotalCost"
+                    render={({ field }) => (
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        className={cn("mt-1.5", stockMovementInputClass)}
+                        placeholder="1.000"
+                        value={formatThousand(field.value ?? "")}
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+                          const numericValue = unformatThousand(rawValue);
+                          // Directly updates the numerical form state without DOM interference
+                          field.onChange(
+                            numericValue === 0 ? undefined : numericValue,
+                          );
+                        }}
+                      />
+                    )}
+                  />
+                  {form.formState.errors.laundryTotalCost ? (
+                    <p className="mt-1 font-ochre-ui text-xs text-red-600">
+                      {form.formState.errors.laundryTotalCost.message}
+                    </p>
+                  ) : null}
+                </div>
+              )}
 
               {!AUTO_CALCULATED_MOVEMENTS.includes(
                 form.getValues("stockMovementType"),

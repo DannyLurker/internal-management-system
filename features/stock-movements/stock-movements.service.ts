@@ -399,6 +399,12 @@ const stockMovementsService = {
           throw badRequest("Insufficient stock quantity.");
         }
 
+        const unitCost =
+          currentStock.quantity > 0
+            ? (currentStock.totalCost ?? 0) / currentStock.quantity
+            : 0;
+        const costToDeduct = unitCost * payload.quantity;
+
         const destinationStockWhereInput = stockWhereInput({
           locationId: payload.destinationLocationId,
           itemId: currentStock.itemId,
@@ -412,6 +418,7 @@ const stockMovementsService = {
           },
           quantity: payload.quantity,
           item: { connect: { id: currentStock.itemId } },
+          totalCost: costToDeduct, //It's for the destination stock initial total cost. So It doesn't for deducting
           expiredAt: currentStock.expiredAt,
           type: currentStock.type,
           creator: {
@@ -439,7 +446,7 @@ const stockMovementsService = {
 
         if (location && location.type !== "VENDOR_LAUNDRY") {
           throw badRequest(
-            "When perform a 'Laundry Out' the destination location must b 'Vendor Laundry' type ",
+            "When perform a 'Laundry Out' the destination location must be 'Vendor Laundry' type ",
           );
         }
 
@@ -448,8 +455,11 @@ const stockMovementsService = {
             item: {
               connect: { id: currentStock.itemId },
             },
+            vendorLaundryStock: {
+              connect: { id: destinationStock.id },
+            },
             quantity: payload.quantity,
-            totalCost: payload.laundryTotalCost,
+            totalLaundryPrice: payload.laundryTotalCost,
             status: "SENT",
             sourceLocation: { connect: { id: currentStock.locationId } },
             destinationLocation: {
@@ -459,12 +469,6 @@ const stockMovementsService = {
           },
           tx,
         );
-
-        const unitCost =
-          currentStock.quantity > 0
-            ? (currentStock.totalCost ?? 0) / currentStock.quantity
-            : 0;
-        const costToDeduct = unitCost * payload.quantity;
 
         movement = await stockMovementsRepository.create(
           {

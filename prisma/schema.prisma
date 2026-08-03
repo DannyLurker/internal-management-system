@@ -249,8 +249,9 @@ model Stock {
 
   movements StockMovement[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  laundries Laundry[] @relation("VendorLaundryStock")
 
   @@index([itemId, locationId, type, expiredAt])
 }
@@ -286,30 +287,26 @@ model StockMovement {
 model Laundry {
   id String @id @default(cuid())
 
-  // Quantities & Cost
-  quantity  Int
-  totalCost Int?
+  quantity          Int
+  totalLaundryPrice Int?
+  status            LaundryStatus @default(SENT)
+  reason            String?
 
-  // Status & Reason
-  status LaundryStatus @default(SENT)
-  reason String?
-
-  // Tracking Dates
   sentAt     DateTime  @default(now())
   returnedAt DateTime?
 
-  // Relations: Item
   itemId String
   item   Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
-  // Relations: Locations
   sourceLocationId String?
   sourceLocation   Location? @relation("LaundrySource", fields: [sourceLocationId], references: [id])
 
   destinationLocationId String?
   destinationLocation   Location? @relation("LaundryDestination", fields: [destinationLocationId], references: [id])
 
-  // Timestamps Audit
+  vendorLaundryStockId String
+  vendorLaundryStock   Stock  @relation("VendorLaundryStock", fields: [vendorLaundryStockId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
