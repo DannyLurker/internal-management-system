@@ -72,6 +72,7 @@ const itemRepository = {
           locationId: data.locationId,
           expiredAt: data.stock?.expiredAt ? data.stock.expiredAt : undefined,
           itemId: item.id,
+          totalCost: data.stock.totalCost,
         },
       });
 

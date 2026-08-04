@@ -403,7 +403,7 @@ const stockMovementsService = {
           currentStock.quantity > 0
             ? (currentStock.totalCost ?? 0) / currentStock.quantity
             : 0;
-        const costToDeduct = unitCost * payload.quantity;
+        const totalCost = unitCost * payload.quantity;
 
         const destinationStockWhereInput = stockWhereInput({
           locationId: payload.destinationLocationId,
@@ -418,7 +418,7 @@ const stockMovementsService = {
           },
           quantity: payload.quantity,
           item: { connect: { id: currentStock.itemId } },
-          totalCost: costToDeduct, //It's for the destination stock initial total cost. So It doesn't for deducting
+          totalCost: totalCost,
           expiredAt: currentStock.expiredAt,
           type: currentStock.type,
           creator: {
@@ -433,6 +433,9 @@ const stockMovementsService = {
           {
             quantity: {
               increment: payload.quantity,
+            },
+            totalCost: {
+              increment: totalCost,
             },
           },
           createDestinationStock,
@@ -475,7 +478,7 @@ const stockMovementsService = {
             ...createdStockMovement,
             stockId: destinationStock.id,
             destinationLocationId: destinationStock.locationId,
-            totalCost: costToDeduct,
+            totalCost: totalCost,
           },
           tx,
         );
@@ -484,7 +487,7 @@ const stockMovementsService = {
           currentStock.id,
           {
             quantity: { decrement: payload.quantity },
-            totalCost: { decrement: costToDeduct }, // Fixed
+            totalCost: { decrement: totalCost },
           },
           tx,
         );
