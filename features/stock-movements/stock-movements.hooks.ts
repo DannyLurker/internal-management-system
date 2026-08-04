@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import STOCK_KEYS from "../stocks/stock.keys";
 import ITEM_KEYS from "../items/item.keys";
 import { dashboardKeys } from "../dashboards/dashboard.keys";
+import { laundryKeys } from "../laundries/laundry.keys";
 
 export const useStockMovementsHooks = (
   params: StockMovementGetManySchema,
@@ -70,6 +71,12 @@ export const useCreateStockMovement = () => {
           itemId: data.data.itemId || undefined,
         }),
       });
+
+      if (data.data.stockMovementType === "LAUNDRY_OUT") {
+        queryClient.invalidateQueries({
+          queryKey: laundryKeys.lists(),
+        });
+      }
 
       queryClient.invalidateQueries({
         queryKey: dashboardKeys.manager(),

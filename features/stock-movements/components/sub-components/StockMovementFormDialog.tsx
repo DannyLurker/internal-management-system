@@ -29,12 +29,12 @@ import {
 import { stockGetManySchema } from "@/shared/lib/zods/stock.zod";
 import { useCreateStockMovement } from "../../stock-movements.hooks";
 import { stockMovementInputClass } from "../../stock-movements.style";
-import { StockType } from "@prisma/client";
+import { LocationType, StockType } from "@prisma/client";
 import { formatThousand, unformatThousand } from "@/shared/lib/formatter";
 import { AUTO_CALCULATED_MOVEMENTS } from "../../stock-movements.utils";
 
 type ItemOption = { id: string; name: string };
-type LocationOption = { id: string; name: string };
+type LocationOption = { id: string; name: string; type: LocationType };
 type MovementTypeOption = StockMovementCreateSchema["stockMovementType"];
 
 type StockMovementFormDialogProps = {
@@ -130,8 +130,9 @@ export default function StockMovementFormDialog({
     },
   });
 
-  console.log(form.formState.errors);
-
+  const filteredLocationForLaundryOut = locations.filter(
+    (location) => location.type === "VENDOR_LAUNDRY",
+  );
   const selectedItemId = form.watch("itemId");
   const selectedStockId = form.watch("stockId");
   const selectedMovementType = form.watch("stockMovementType");
@@ -196,7 +197,7 @@ export default function StockMovementFormDialog({
       quantity: undefined,
       totalCost: undefined,
       reason: "",
-      destinationLocationId: locations[0]?.id,
+      destinationLocationId: undefined,
       orderId: undefined,
     });
   }, [
@@ -423,11 +424,18 @@ export default function StockMovementFormDialog({
                         : "Select destination"}
                     </SelectTrigger>
                     <SelectContent>
-                      {locations.map((location) => (
-                        <SelectItem key={location.id} value={location.id}>
-                          {location.name}
-                        </SelectItem>
-                      ))}
+                      {selectedMovementType === "LAUNDRY_OUT" &&
+                        filteredLocationForLaundryOut.map((location) => (
+                          <SelectItem key={location.id} value={location.id}>
+                            {location.name}
+                          </SelectItem>
+                        ))}
+                      {selectedMovementType !== "LAUNDRY_OUT" &&
+                        locations.map((location) => (
+                          <SelectItem key={location.id} value={location.id}>
+                            {location.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                   {form.formState.errors.destinationLocationId ? (

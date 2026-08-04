@@ -10,7 +10,7 @@ export default async function StockMovementsPage() {
       orderBy: { name: "asc" },
     }),
     prisma.location.findMany({
-      select: { id: true, name: true },
+      select: { id: true, name: true, type: true },
       orderBy: { name: "asc" },
     }),
   ]);

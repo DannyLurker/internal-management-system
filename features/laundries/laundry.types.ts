@@ -1,6 +1,25 @@
 import { ApiResponse } from "@/shared/lib/api-client";
+import { Return } from "@prisma/client/runtime/client";
+import { laundryService } from "./laundry.service";
 
-// Create-Update-Delete
+export type LaundryGetManyService = Awaited<
+  Return<typeof laundryService.getMany>
+>;
+export type LaundryGetByIdService = Awaited<
+  Return<typeof laundryService.getById>
+>;
+
+// Response APIs
 export type LaundryCUDApiResponse = ApiResponse<{
   id: string;
 }>;
+
+export type LaundryGetManyApiResponse = ApiResponse<LaundryGetManyService>;
+export type LaundryGetByIdApiResponse = ApiResponse<
+  LaundryGetByIdService["laundry"]
+>;
+
+export type LocationOption = {
+  id: string;
+  name: string;
+};

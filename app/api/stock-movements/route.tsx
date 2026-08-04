@@ -58,6 +58,7 @@ export async function POST(req: Request) {
       message: result.message,
       data: {
         stockMovementId: result.stockMovementId,
+        stockMovementType: result.stockmovementType,
         stockId: result.stockId,
         itemId: result.itemId,
       },

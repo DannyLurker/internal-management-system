@@ -49,6 +49,13 @@ export const stockMovementSortByEnum = z.enum([
   "destinationLocation",
 ]);
 
+export const laundryStatusEnum = z
+  .enum(["SENT", "RETURNED", "CANCELLED", "ALL"])
+  .default("ALL");
+export const laundrySortByEnum = z
+  .enum(["sentAt", "quantity", "totalLaundryPrice", "status", "returnedAt"])
+  .default("sentAt");
+
 export const generateReadableError = (issue: z.core.$ZodIssue): string => {
   const fieldName = issue.path.join(".");
 

@@ -1,12 +1,66 @@
-import { LaundryCreateSchema } from "@/shared/lib/zods/laundry.zod";
+import {
+  LaundryCreateSchema,
+  LaundryGetManySchema,
+} from "@/shared/lib/zods/laundry.zod";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { Session } from "next-auth";
 import { laundryRepository } from "./laundry.repository";
-import { notFound } from "@/shared/lib/error-handlers";
+import { forbidden, notFound } from "@/shared/lib/error-handlers";
 import { stockRepository } from "../stocks/stock.repository";
 import stockMovementsRepository from "../stock-movements/stock-movements.repository";
+import { canManageLaundry } from "@/shared/lib/validations/user-access-validation";
 
 export const laundryService = {
+  getMany: async (
+    session: Session["user"],
+    params: LaundryGetManySchema,
+    prisma: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    if (!canManageLaundry(session.role)) {
+      throw forbidden("You're not allowed to access laundry records.");
+    }
+
+    const whereClause = laundryRepository.buildWhereClause(params);
+
+    const [laundries, totalLaundries] = await Promise.all([
+      laundryRepository.getMany(
+        whereClause,
+        params.page,
+        params.dataPerPage,
+        params.sortBy,
+        params.sortOrder,
+        prisma,
+      ),
+      laundryRepository.countRows(whereClause, prisma),
+    ]);
+
+    return {
+      laundries,
+      totalLaundries,
+      page: params.page,
+      dataPerPage: params.dataPerPage,
+    };
+  },
+
+  getById: async (
+    session: Session["user"],
+    id: string,
+    prisma: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    if (!canManageLaundry(session.role)) {
+      throw forbidden("You're not allowed to access laundry records.");
+    }
+
+    const laundry = await laundryRepository.getById(id, prisma);
+    if (!laundry) {
+      throw notFound("Laundry movement record not found");
+    }
+
+    return {
+      laundry: laundry,
+    };
+  },
+
   create: async (
     session: Session["user"],
     data: LaundryCreateSchema,
@@ -110,6 +164,7 @@ export const laundryService = {
         await laundryRepository.update(
           laundry.id,
           {
+            returnedAt: new Date(),
             status: "RETURNED",
           },
           tx,
@@ -198,6 +253,7 @@ export const laundryService = {
         await laundryRepository.update(
           laundry.id,
           {
+            returnedAt: new Date(),
             status: "CANCELLED",
           },
           tx,

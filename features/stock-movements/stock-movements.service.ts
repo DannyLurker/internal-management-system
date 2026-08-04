@@ -526,6 +526,7 @@ const stockMovementsService = {
     return {
       message: "Stock movement created successfully",
       stockMovementId: result.id,
+      stockmovementType: result.type,
       stockId: result.stockId,
       itemId: result.itemId,
     };

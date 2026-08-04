@@ -95,6 +95,11 @@ export default function SidebarInventory({
                   label="Stock Movements"
                   active={pathname === paths.stock_movements}
                 />
+                <InventorySubLink
+                  href={paths.laundries}
+                  label="Laundry"
+                  active={pathname === paths.laundries}
+                />
               </div>
             </div>
           </div>
@@ -172,6 +177,11 @@ export default function SidebarInventory({
                 href={paths.stock_movements}
                 label="Stock Movements"
                 active={pathname === paths.stock_movements}
+              />
+              <CollapsedFlyoutLink
+                href={paths.laundries}
+                label="Laundry"
+                active={pathname === paths.laundries}
               />
             </div>
           </motion.div>
