@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
     const response: LaundryCUDApiResponse = {
       data: {
-        id: result.id,
+        id: result.laundryId,
       },
       message: result.message,
       status: 201,

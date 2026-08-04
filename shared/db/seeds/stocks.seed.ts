@@ -293,6 +293,10 @@ export async function createStocksSeed(
         where: { id: existingStock.id },
         data: {
           quantity: existingStock.quantity + stockEntry.quantity,
+          totalCost:  
+            existingStock.totalCost +
+            stockEntry.quantity * Math.floor(Math.random() * 10001) +
+            100000,
         },
       });
     } else {
@@ -303,6 +307,8 @@ export async function createStocksSeed(
           locationId: location.id,
           type: stockEntry.type,
           quantity: stockEntry.quantity,
+          totalCost:
+            stockEntry.quantity * Math.floor(Math.random() * 10001) + 100000,
           expiredAt: stockEntry.expiredAt
             ? new Date(stockEntry.expiredAt)
             : null,

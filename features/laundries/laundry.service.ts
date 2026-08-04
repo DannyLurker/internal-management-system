@@ -26,37 +26,39 @@ export const laundryService = {
 
       if (!vendorLaundryStock) throw notFound("Vendor laundry not found");
 
-      const destinationStock = await stockRepository.findOrUpdateOrCreate(
-        {
-          locationId: data.destinationLocationId,
-          type: vendorLaundryStock?.type,
-          expiredAt: vendorLaundryStock?.expiredAt,
-          itemId: vendorLaundryStock?.itemId,
-        },
-        {},
-        {
-          location: {
-            connect: {
-              id: data.destinationLocationId,
-            },
-          },
-          type: vendorLaundryStock?.type,
-          expiredAt: vendorLaundryStock?.expiredAt,
-          item: {
-            connect: {
-              id: vendorLaundryStock?.itemId,
-            },
-          },
-          creator: {
-            connect: {
-              id: session.id,
-            },
-          },
-        },
-        prisma,
-      );
+      let destinationStock;
 
       if (data.actionType === "RETURNED") {
+        destinationStock = await stockRepository.findOrUpdateOrCreate(
+          {
+            locationId: data.destinationLocationId,
+            type: vendorLaundryStock?.type,
+            expiredAt: vendorLaundryStock?.expiredAt,
+            itemId: vendorLaundryStock?.itemId,
+          },
+          {},
+          {
+            location: {
+              connect: {
+                id: data.destinationLocationId,
+              },
+            },
+            type: vendorLaundryStock?.type,
+            expiredAt: vendorLaundryStock?.expiredAt,
+            item: {
+              connect: {
+                id: vendorLaundryStock?.itemId,
+              },
+            },
+            creator: {
+              connect: {
+                id: session.id,
+              },
+            },
+          },
+          prisma,
+        );
+
         const unitCost =
           vendorLaundryStock?.quantity > 0
             ? (vendorLaundryStock.totalCost ?? 0) / vendorLaundryStock.quantity
@@ -114,7 +116,92 @@ export const laundryService = {
         );
       }
 
-      if (data.actionType === "CANCEL") {
+      if (data.actionType === "CANCELLED") {
+        destinationStock = await stockRepository.findOrUpdateOrCreate(
+          {
+            locationId: data.destinationLocationId,
+            type: "DIRTY",
+            expiredAt: vendorLaundryStock?.expiredAt,
+            itemId: vendorLaundryStock?.itemId,
+          },
+          {},
+          {
+            location: {
+              connect: {
+                id: data.destinationLocationId,
+              },
+            },
+            type: "DIRTY",
+            expiredAt: vendorLaundryStock?.expiredAt,
+            item: {
+              connect: {
+                id: vendorLaundryStock?.itemId,
+              },
+            },
+            creator: {
+              connect: {
+                id: session.id,
+              },
+            },
+          },
+          prisma,
+        );
+
+        const unitCost =
+          vendorLaundryStock?.quantity > 0
+            ? (vendorLaundryStock.totalCost ?? 0) / vendorLaundryStock.quantity
+            : 0;
+        const totalCost = laundry.quantity * unitCost;
+
+        await stockMovementsRepository.create(
+          {
+            itemId: laundry.itemId,
+            stockId: destinationStock.id,
+            itemName: laundry.item.name,
+            createdBy: session.id,
+            quantity: laundry.quantity,
+            reason: `${laundry.item.name} has laundered out`,
+            type: "MARK_AS_EXPIRED",
+            sourceLocationId: vendorLaundryStock.locationId,
+            destinationLocationId: data.destinationLocationId,
+            totalCost: totalCost,
+          },
+          tx,
+        );
+
+        await stockRepository.update(
+          destinationStock?.id,
+          {
+            quantity: {
+              increment: laundry.quantity,
+            },
+            totalCost: {
+              increment: totalCost,
+            },
+          },
+          tx,
+        );
+
+        await stockRepository.update(
+          vendorLaundryStock.id,
+          {
+            quantity: {
+              decrement: laundry.quantity,
+            },
+            totalCost: {
+              decrement: totalCost,
+            },
+          },
+          tx,
+        );
+
+        await laundryRepository.update(
+          laundry.id,
+          {
+            status: "CANCELLED",
+          },
+          tx,
+        );
       }
 
       return { laundry: laundry, destinationStock: destinationStock };
@@ -123,7 +210,7 @@ export const laundryService = {
     return {
       message: `${result.laundry.item.name} ${data.actionType.toLowerCase()} successfully`,
       laundryId: result.laundry.id,
-      destinationStockId: result.destinationStock.id,
+      destinationStockId: result.destinationStock?.id,
     };
   },
 };
