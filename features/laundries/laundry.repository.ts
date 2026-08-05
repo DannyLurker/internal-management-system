@@ -1,5 +1,5 @@
 import { LaundryGetManySchema } from "@/shared/lib/zods/laundry.zod";
-import { Prisma, PrismaClient } from "@prisma/client";
+import { LaundryStatus, Prisma, PrismaClient } from "@prisma/client";
 
 export const createLaundrySelectData = <T extends Prisma.LaundrySelect>(
   select: T,

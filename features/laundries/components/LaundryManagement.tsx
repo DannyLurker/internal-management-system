@@ -69,7 +69,7 @@ export default function LaundryManagement({
       dataPerPage,
       sortBy,
       sortOrder,
-      searchQuery: search.length >= 2 ? search : undefined,
+      searchQuery: search.length >= 3 ? search : undefined,
       status: filters.status !== "ALL" ? filters.status : undefined,
       sourceLocationId:
         filters.sourceLocationId !== "ALL" &&

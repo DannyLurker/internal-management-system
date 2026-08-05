@@ -48,7 +48,7 @@ export default function LaundryActionModal({
 
   const isReturned = actionType === "RETURNED";
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!destinationLocationId) return;
 
