@@ -18,14 +18,18 @@ export const stockSelectData = <T extends Prisma.StockSelect>(select: T): T =>
   select;
 
 export const stockRepository = {
-  getInitialData: async (tx: PrismaClient | Prisma.TransactionClient) => {
-    
-  },
-
   // Prisma based method, for easier testing rather than keep mocking prisma
   findById: async (id: string, tx: PrismaClient | Prisma.TransactionClient) => {
     return await tx.stock.findUnique({
       where: { id },
+      include: {
+        location: {
+          select: {
+            type: true,
+            name: true,
+          },
+        },
+      },
     });
   },
 

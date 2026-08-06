@@ -395,6 +395,12 @@ const stockMovementsService = {
 
       // Laundry Out
       if (currentStock && payload.stockMovementType === "LAUNDRY_OUT") {
+        if (currentStock.location?.type === "VENDOR_LAUNDRY") {
+          throw badRequest(
+            "Can't make a movement from location with 'Vendor Laundry' type.",
+          );
+        }
+
         if (currentStock.quantity < payload.quantity) {
           throw badRequest("Insufficient stock quantity.");
         }

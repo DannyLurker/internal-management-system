@@ -9,6 +9,10 @@ import {
   stockSelectData,
   stockWhereInput,
 } from "../stocks/stock.repository";
+import {
+  createLaundryWhereInput,
+  laundryRepository,
+} from "../laundries/laundry.repository";
 
 const dashboardService = {
   getFinancialSummary: async (
@@ -63,7 +67,7 @@ const dashboardService = {
           expiredAt: {
             equals: null,
           },
-        } ,
+        },
       ],
       quantity: {
         gte: 0,
@@ -80,13 +84,8 @@ const dashboardService = {
       ...dateRangeFilter,
     });
 
-    const totalLaundryOutWhereInput = createStockMovementWhereInput({
-      type: "LAUNDRY_OUT",
-      ...dateRangeFilter,
-    });
-
-    const totalLaundryInWhereInput = createStockMovementWhereInput({
-      type: "LAUNDRY_IN",
+    const totalLaundryOutStockWhereInput = createLaundryWhereInput({
+      status: "SENT",
       ...dateRangeFilter,
     });
 
@@ -123,7 +122,6 @@ const dashboardService = {
       totalConsume,
       totalSale,
       totalLaundryOutStock,
-      totalLaundryInStock,
       flaggedExpiredStocks,
       totalExpiredCount,
     ] = await Promise.all([
@@ -147,8 +145,7 @@ const dashboardService = {
         totalSaleWhereInput,
         prisma,
       ),
-      stockMovementsRepository.countQuantity(totalLaundryOutWhereInput, prisma),
-      stockMovementsRepository.countQuantity(totalLaundryInWhereInput, prisma),
+      laundryRepository.aggregate(totalLaundryOutStockWhereInput, prisma),
       stockRepository.findMany(
         expiredStockWhere,
         expiredStockSelectData,
@@ -183,8 +180,7 @@ const dashboardService = {
         totalSpend,
         totalInventoryValue,
         totalStockWastageValue,
-        totalLaundryOutStock:
-          (totalLaundryOutStock ?? 0) - (totalLaundryInStock ?? 0),
+        totalLaundryOutStock: totalLaundryOutStock,
         totalConsume,
         totalSale,
         lowStockData: lowStocks,

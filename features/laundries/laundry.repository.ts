@@ -154,4 +154,18 @@ export const laundryRepository = {
       data: data,
     });
   },
+
+  aggregate: async (
+    where: Prisma.LaundryWhereInput,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    const { _sum } = await tx.laundry.aggregate({
+      where,
+      _sum: {
+        quantity: true,
+      },
+    });
+
+    return _sum.quantity;
+  },
 };

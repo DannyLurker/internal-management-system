@@ -226,7 +226,7 @@ export default function StockMovementFormDialog({
     if (requiresDestination) {
       form.setValue(
         "destinationLocationId",
-        form.getValues("destinationLocationId") ?? locations[0]?.id,
+        form.getValues("destinationLocationId") ?? undefined,
         { shouldValidate: true },
       );
     } else {
