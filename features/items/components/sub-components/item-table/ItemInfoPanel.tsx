@@ -21,10 +21,8 @@ import {
   StockSortOrder,
 } from "@/features/stocks/stock.types";
 import { itemGetByIdSchema } from "@/shared/lib/zods/item.zod";
-import {
-  ItemOption,
-  StockMovementFormOpenType,
-} from "@/features/stock-movements/stock-movements.types";
+import { StockMovementFormOpenType } from "@/features/stock-movements/stock-movements.types";
+import { ItemOption } from "@/features/items/item.types";
 
 type ItemInfoPanelProps = {
   open: boolean;

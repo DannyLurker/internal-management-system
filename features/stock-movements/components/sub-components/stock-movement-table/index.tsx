@@ -10,14 +10,12 @@ import {
 } from "@/shared/components/ui/select";
 import { Input } from "@/shared/components/ui/input";
 import { cn } from "@/shared/lib/utils";
-import type {
-  LocationOption,
-  StockMovementGetManyApiResponse,
-} from "@/features/stock-movements/stock-movements.types";
+import type { StockMovementGetManyApiResponse } from "@/features/stock-movements/stock-movements.types";
 import type { StockMovementGetManySchema } from "@/shared/lib/zods/stock-movements.zod";
 import { stockMovementPanelClass } from "@/features/stock-movements/stock-movements.style";
 import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
+import { LocationOption } from "@/features/locations/location.types";
 
 type StockMovementRow =
   StockMovementGetManyApiResponse["data"]["movements"][number];

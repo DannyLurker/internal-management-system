@@ -115,7 +115,7 @@ const locationService = {
       params.itemSearchQuery,
     );
 
-    const totalStocksCount = await stockRepository.countQuantity(
+    const totalStocksCount = await stockRepository.countRows(
       {
         ...stockCountWhereClause,
       },

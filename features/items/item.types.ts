@@ -38,3 +38,6 @@ export type DeleteOrActivateStatus = "DELETE" | "INACTIVE" | "ACTIVE";
 
 // Item filtering parameters. For building where clause
 export type filterItemBy = z.infer<typeof filterItemByEnum> | null;
+
+// frontend use case
+export type ItemOption = { id: string; name: string };

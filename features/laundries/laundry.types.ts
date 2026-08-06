@@ -21,9 +21,4 @@ export type LaundryGetByIdApiResponse = ApiResponse<
   LaundryGetByIdService["laundry"]
 >;
 
-export type LocationOption = {
-  id: string;
-  name: string;
-};
-
 export type LaundryFilterStatus = "ALL" | "SENT" | "RETURNED" | "CANCELLED";

@@ -13,11 +13,9 @@ import StockMovementInfoDialog from "./sub-components/StockMovementInfoDialog";
 import StockMovementTable, {
   type StockMovementTableFilters,
 } from "./sub-components/stock-movement-table";
-import {
-  ItemOption,
-  LocationOption,
-  MovementTypeOption,
-} from "../stock-movements.types";
+import { MovementTypeOption } from "../stock-movements.types";
+import { LocationOption } from "@/features/locations/location.types";
+import { ItemOption } from "@/features/items/item.types";
 
 type StockMovementManagementProps = {
   items: ItemOption[];
@@ -59,8 +57,6 @@ export default function StockMovementManagement({
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, filters.type, sortBy, sortOrder, dataPerPage]);
-
-  console.log(filters);
 
   const params = useMemo(() => {
     const search = debouncedSearch.trim();

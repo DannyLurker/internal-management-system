@@ -1,5 +1,6 @@
 import { ApiResponse } from "@/shared/lib/api-client";
 import locationService from "./location.service";
+import { LocationType } from "@prisma/client";
 
 type LocationServiceGetMany = Awaited<
   ReturnType<typeof locationService.getMany>
@@ -27,3 +28,9 @@ export type LocationGetByIdApiResponse = ApiResponse<LocationDetail>;
 export type LocationCUDApiResponse = ApiResponse<{
   id: string;
 }>;
+
+export type LocationOption = {
+  id: string;
+  name: string;
+  type: LocationType;
+};

@@ -133,6 +133,7 @@ export default function StockInfoPanel({
     locationsResponse?.data.locations.map((location) => ({
       id: location.id,
       name: location.name,
+      type: location.type,
     })) ?? [];
   const movementItemOptions = useMemo(() => {
     if (!stockData?.item) return [];

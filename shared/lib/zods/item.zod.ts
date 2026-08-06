@@ -89,6 +89,7 @@ export const itemUpdateSchema = z.object({
   description: z.string().trim().min(1),
   image: z.string().optional(),
   sellingPrice: z.number().min(1).optional(),
+  costPrice: z.number().min(1).optional(),
   attributes: z.record(z.any(), z.any()).optional().default({}),
   minThreshold: z.number().optional(),
   isActive: z.boolean().default(true),

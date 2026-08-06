@@ -24,7 +24,7 @@ export async function GET(
     const result = await laundryService.getById(session, id, prisma);
 
     const response: LaundryGetByIdApiResponse = {
-      data: result,
+      data: result.laundry,
       message: "Laundry details fetched successfully",
       status: 200,
     };

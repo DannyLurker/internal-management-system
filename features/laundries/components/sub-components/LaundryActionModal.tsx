@@ -1,10 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  LaundryGetByIdService,
-  LocationOption,
-} from "@/features/laundries/laundry.types";
+import { Laundry } from "@/features/laundries/laundry.types";
 import { useLaundryAction } from "@/features/laundries/laundry.hooks";
 import {
   Dialog,
@@ -23,10 +20,11 @@ import {
 } from "@/shared/components/ui/select";
 import { Button } from "@/shared/components/ui/button";
 import { RotateCcw, XCircle, Loader2 } from "lucide-react";
+import { LocationOption } from "@/features/locations/location.types";
 
 type LaundryActionModalProps = {
   open: boolean;
-  laundry: LaundryGetByIdService["laundry"] | null;
+  laundry: Laundry | null;
   actionType: "RETURNED" | "CANCELLED" | null;
   locations: LocationOption[];
   onClose: () => void;

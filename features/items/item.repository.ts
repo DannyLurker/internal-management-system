@@ -19,6 +19,14 @@ export const createItemWhereInput = <T extends Prisma.ItemWhereInput>(
 ): T => select;
 
 const itemRepository = {
+  getInitialData: async (tx: Prisma.TransactionClient | PrismaClient) => {
+    return await tx.item.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    });
+  },
+
   // it's still for search query
   buildWhereClause: (
     filterBy: filterItemBy,

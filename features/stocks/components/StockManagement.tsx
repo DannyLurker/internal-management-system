@@ -14,8 +14,8 @@ import StockDeleteModal from "./sub-components/StockDeleteModal";
 import { StockGetManySchema } from "@/shared/lib/zods/stock.zod";
 import StockTable, { StockTableFilters } from "./sub-components/stock-table";
 import StockInfoPanel from "./sub-components/stock-table/StockInfoPanel";
+import { LocationOption } from "@/features/locations/location.types";
 
-type LocationOption = { id: string; name: string };
 type ItemOption = { id: string; name: string };
 
 type StockManagementProps = {

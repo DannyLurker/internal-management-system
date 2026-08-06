@@ -13,6 +13,13 @@ export const locationSelectData = <T extends Prisma.LocationSelect>(
 ): T => select;
 
 export const locationRepository = {
+  getInitialData: async (tx: Prisma.TransactionClient | PrismaClient) => {
+    return await tx.location.findMany({
+      select: { id: true, name: true, type: true },
+      orderBy: { name: "asc" },
+    });
+  },
+
   buildLocationWhereClause: (
     params: LocationGetManySchema,
   ): Prisma.LocationWhereInput => {
