@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useItems } from "@/features/items/item.hooks";
-import type { Item } from "@/features/items/item.types";
+import type { Item, ItemOption } from "@/features/items/item.types";
 import { useCategories } from "@/features/categories/category.hooks";
 import ItemFormDialog from "./sub-components/ItemFormDialog";
 import ItemDeleteModal from "./sub-components/ItemDeleteModal";
@@ -21,12 +21,8 @@ import { useLocations } from "@/features/locations/location.hooks";
 import { categoryGetManySchema } from "@/shared/lib/zods/category.zod";
 import ItemTable, { ItemTableFilters } from "./sub-components/item-table";
 import StockMovementFormDialog from "@/features/stock-movements/components/sub-components/StockMovementFormDialog";
-import {
-  ItemOption,
-  StockMovementFormOpenType,
-} from "@/features/stock-movements/stock-movements.types";
-
-type LocationOption = { id: string; name: string };
+import { StockMovementFormOpenType } from "@/features/stock-movements/stock-movements.types";
+import { LocationOption } from "@/features/locations/location.types";
 
 type ItemManagementProps = {
   locations: LocationOption[];
@@ -223,6 +219,7 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
   const transformLocations = locationData.map((location) => ({
     id: location.id,
     name: location.name,
+    type: location.type,
   }));
 
   // Stock Modal state and handler
@@ -373,7 +370,7 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
       <StockMovementFormDialog
         items={selectedGlobalItemStock}
         locations={
-          stockMovementFormOpenType === "GLOBAL_STOCK" ? [] : locations
+          stockMovementFormOpenType === "GLOBAL_STOCK" ? [] : transformLocations
         }
         isGlobalStock={true}
         movementTypes={

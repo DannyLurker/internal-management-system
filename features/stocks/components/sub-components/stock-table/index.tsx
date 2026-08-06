@@ -14,6 +14,7 @@ import { cn } from "@/shared/lib/utils";
 import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
 import { StockGetManySchema } from "@/shared/lib/zods/stock.zod";
+import { LocationOption } from "@/features/locations/location.types";
 
 export type StockTableFilters = {
   search: string;
@@ -37,7 +38,7 @@ type StockTableProps = {
   onDataPerPageChange: (size: number) => void;
   page: number;
   onPageChange: (page: number) => void;
-  locationOptions: { id: string; name: string }[];
+  locationOptions: LocationOption[];
   itemOptions: { id: string; name: string }[];
   onEdit: (stock: Stock) => void;
   onDelete: (stock: StockDelete) => void;

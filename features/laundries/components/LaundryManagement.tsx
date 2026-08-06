@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Laundry, LocationOption } from "@/features/laundries/laundry.types";
+import { Laundry } from "@/features/laundries/laundry.types";
 import { useLaundries } from "@/features/laundries/laundry.hooks";
 import {
   laundryGetManySchema,
@@ -14,6 +14,7 @@ import LaundryDetailDialog from "./sub-components/LaundryDetailDialog";
 import LaundryActionModal from "./sub-components/LaundryActionModal";
 import { laundryStyles } from "../laundry.style";
 import { Shirt } from "lucide-react";
+import { LocationOption } from "@/features/locations/location.types";
 
 type LaundryManagementProps = {
   locations: LocationOption[];
@@ -69,7 +70,7 @@ export default function LaundryManagement({
       dataPerPage,
       sortBy,
       sortOrder,
-      searchQuery: search.length >= 2 ? search : undefined,
+      searchQuery: search.length >= 3 ? search : undefined,
       status: filters.status !== "ALL" ? filters.status : undefined,
       sourceLocationId:
         filters.sourceLocationId !== "ALL" &&

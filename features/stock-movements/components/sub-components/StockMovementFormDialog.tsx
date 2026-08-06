@@ -29,12 +29,12 @@ import {
 import { stockGetManySchema } from "@/shared/lib/zods/stock.zod";
 import { useCreateStockMovement } from "../../stock-movements.hooks";
 import { stockMovementInputClass } from "../../stock-movements.style";
-import { LocationType, StockType } from "@prisma/client";
+import { StockType } from "@prisma/client";
 import { formatThousand, unformatThousand } from "@/shared/lib/formatter";
 import { AUTO_CALCULATED_MOVEMENTS } from "../../stock-movements.utils";
+import { LocationOption } from "@/features/locations/location.types";
 
 type ItemOption = { id: string; name: string };
-type LocationOption = { id: string; name: string; type: LocationType };
 type MovementTypeOption = StockMovementCreateSchema["stockMovementType"];
 
 type StockMovementFormDialogProps = {

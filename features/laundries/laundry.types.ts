@@ -14,12 +14,11 @@ export type LaundryCUDApiResponse = ApiResponse<{
   id: string;
 }>;
 
+export type Laundry = LaundryGetByIdService["laundry"];
+
 export type LaundryGetManyApiResponse = ApiResponse<LaundryGetManyService>;
 export type LaundryGetByIdApiResponse = ApiResponse<
   LaundryGetByIdService["laundry"]
 >;
 
-export type LocationOption = {
-  id: string;
-  name: string;
-};
+export type LaundryFilterStatus = "ALL" | "SENT" | "RETURNED" | "CANCELLED";

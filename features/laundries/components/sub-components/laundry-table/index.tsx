@@ -1,7 +1,10 @@
 "use client";
 
 import { Search, ChevronsLeft, ChevronsRight } from "lucide-react";
-import { Laundry } from "@/features/laundries/laundry.types";
+import {
+  Laundry,
+  LaundryFilterStatus,
+} from "@/features/laundries/laundry.types";
 import { Input } from "@/shared/components/ui/input";
 import {
   Select,
@@ -16,7 +19,7 @@ import { LaundryGetManySchema } from "@/shared/lib/zods/laundry.zod";
 
 export type LaundryTableFilters = {
   searchQuery: string;
-  status: "ALL" | "SENT" | "RETURNED" | "CANCELLED";
+  status: LaundryFilterStatus;
   sourceLocationId: string;
 };
 

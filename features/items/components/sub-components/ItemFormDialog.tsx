@@ -34,8 +34,8 @@ import { attributesToRecord, parseAttributes } from "../../item.utils";
 import { inputClass } from "../../item.style";
 import { toast } from "sonner";
 import { formatThousand, unformatThousand } from "@/shared/lib/formatter";
+import { LocationOption } from "@/features/locations/location.types";
 
-type LocationOption = { id: string; name: string };
 type CategoryOption = { id: string; name: string };
 
 type ItemFormDialogProps = {

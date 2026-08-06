@@ -32,8 +32,8 @@ import { cn } from "@/shared/lib/utils";
 import { inputClass } from "../../stock.style";
 import { toast } from "sonner";
 import { formatThousand, unformatThousand } from "@/shared/lib/formatter";
+import { LocationOption } from "@/features/locations/location.types";
 
-type LocationOption = { id: string; name: string };
 type ItemOption = { id: string; name: string };
 
 type StockFormDialogProps = {
