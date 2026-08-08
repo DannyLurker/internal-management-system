@@ -8,6 +8,7 @@ const PERMISSIONS = {
   MANAGE_STOCK_MOVEMENT: ["HOTEL_MANAGER", "SUPERVISOR"] as Roles[],
   MANAGER_LAUNDRY: ["HOTEL_MANAGER", "SUPERVISOR"] as Roles[],
   ACCESS_MANAGER_DASHBOARD: "HOTEL_MANAGER" as Roles,
+  PRINT_REPORT: ["HOTEL_MANAGER", "ACCOUNTANT"] as Roles[],
 };
 
 export const canManageLocation = (role: Roles) => {
@@ -56,4 +57,8 @@ export const canAccessManagerDashboard = (role: Roles) => {
 
 export const canManageLaundry = (role: Roles) => {
   return PERMISSIONS.MANAGER_LAUNDRY.includes(role);
+};
+
+export const canPrintReport = (role: Roles) => {
+  return PERMISSIONS.PRINT_REPORT.includes(role);
 };

@@ -1,4 +1,5 @@
 import { itemStockStatusArray } from "@/features/items/item.utils";
+import { reportTypes } from "@/features/reports/report.types";
 import { Entity, LocationType, MovementType, StockType } from "@prisma/client";
 import z from "zod";
 
@@ -55,6 +56,8 @@ export const laundryStatusEnum = z
 export const laundrySortByEnum = z
   .enum(["sentAt", "quantity", "totalLaundryPrice", "status", "returnedAt"])
   .default("sentAt");
+
+export const reportTypeEnum = z.enum(reportTypes);
 
 export const generateReadableError = (issue: z.core.$ZodIssue): string => {
   const fieldName = issue.path.join(".");
