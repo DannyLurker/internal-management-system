@@ -8,7 +8,7 @@ import {
 } from "@/shared/lib/error-handlers/handleError";
 import { canAccessManagerDashboard } from "@/shared/lib/validations/user-access-validation";
 import sessionValidation from "@/shared/lib/validations/user-session-validation";
-import { managerDashboardParamSchema } from "@/shared/lib/zods/dashboard.zod";
+import { financialSummaryParamSchema } from "@/shared/lib/zods/dashboard.zod";
 
 export async function GET(req: Request) {
   try {
@@ -21,7 +21,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
 
     const rawParamsSchema = Object.fromEntries(searchParams.entries());
-    const params = managerDashboardParamSchema.parse(rawParamsSchema);
+    const params = financialSummaryParamSchema.parse(rawParamsSchema);
 
     let response: GetDashboardApiResponse;
 

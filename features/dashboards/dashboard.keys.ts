@@ -1,9 +1,9 @@
-import { ManagerDashboardParamSchema } from "@/shared/lib/zods/dashboard.zod";
+import { FinancialSummaryParamSchema } from "@/shared/lib/zods/dashboard.zod";
 
 export const dashboardKeys = {
-  manager: (params?: ManagerDashboardParamSchema) => [
+  financialSummary: (params?: FinancialSummaryParamSchema) => [
     "dashboard",
-    "manager",
+    "financialSummary",
     ...(params ? [{ params }] : []),
   ],
 };

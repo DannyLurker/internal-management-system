@@ -200,8 +200,32 @@
   - Passes `startDate` and `endDate` ISO strings to `useManagerDashboard` so TanStack Query re-fetches whenever the period changes (cache key includes the full params object)
   - Forwards `filterOption` and `onFilterChange` down to `DashboardHeader`
 
+## Report Generation & Async PDF Pipeline
+
+### Report Generation Feature Development
+
+- Created REST API route at `app/api/reports/route.ts`
+  - Protected with role permission check (`canPrintReport`) for hotel management staff
+  - Validates request payload (`recipientEmail`, `dateFrom`, `dateTo`) via `reportGenerateSchema` (`shared/lib/zods/report.zod.ts`)
+  - Fetches financial summary stock movements for the requested date window using `dashboardService.getFinancialSummary`
+  - Dispatches an asynchronous `report/generate` background event via Inngest client
+- Created Inngest event handler at `shared/inngest/functions/generate-report.ts`
+  - `generate-report` multi-step durable background job with 3 automated retries
+  - Step 1 (`generate-pdf`): Renders PDF binary buffer via `@react-pdf/renderer` (`renderReportPdf`) and encodes to base64 string for step state persistence
+  - Step 2 (`upload-supabase`): Decodes base64 buffer and uploads PDF artifact to Supabase Storage bucket (`reports/`)
+  - Step 3 (`sign-url`): Generates a secure, 7-day signed download URL
+  - Step 4 (`send-email`): Sends automated notification email with direct report download link via Resend API (`resend.emails.send`)
+- Refactored PDF Document UI at `shared/lib/pdf/RenderReport.tsx` (`ReportDocument`)
+  - Aligned PDF template with Ochre Harbor design system (`DESIGN.MD`) and visual language of `DashboardManager.tsx`
+  - Added top Ochre brand accent band (`#894d0d`) and styled header layout with elegant typography hierarchy
+  - Created styled period badge box (`REPORT PERIOD: dateFrom — dateTo`) with border `#d9e3f4` and surface `#f8f9ff`
+  - Added top KPI metric summary cards ("Total Movement Records" and "Total Quantity Transferred") mirroring `FinancialSummary` cards
+  - Structured stock movement table card with title bar ("Stock Movement Ledger"), uppercase styled column headers, alternating row striping (`#ffffff` / `#f8f9ff`), bold item names (`#121c28`), movement route arrows (`➔` in `#565e74`), and highlighted quantities (`#894d0d`)
+  - Added persistent page footer (`fixed`) displaying confidential operations audit notice and dynamic page numbering (`Page X of Y`)
+
 ## Notes
 
 - Stock movement feature does not have delete functionality
 - Integration testing is still not really important for now
 - Item delete feature is turned off
+

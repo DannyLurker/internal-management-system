@@ -14,9 +14,9 @@ import {
 } from "lucide-react";
 import { DateFilterOption, DateFilterRange } from "../../dashboard.types";
 import DateFilterDropdown, { resolveDateRange } from "./DateFilterDropdown";
-import { useManagerDashboard } from "../../dashboard.hooks";
 import { dashboardStyles } from "../../dashboard.styles";
 import KPICard from "./KPICard";
+import { useFinancialSummary } from "../../dashboard.hooks";
 
 // ── Default filter: last 7 days ───────────────────────────────────────────────
 const DEFAULT_FILTER: DateFilterOption = "last7";
@@ -41,7 +41,7 @@ export default function FinancialSummary() {
   // ── Data fetching ────────────────────────────────────────────────────────
   // startDate / endDate are passed as ISO strings; the Zod schema on the API
   // route coerces them back to validated date strings before reaching the service.
-  const { data } = useManagerDashboard({
+  const { data } = useFinancialSummary({
     lowStockAlertPage: 1,
     lowStockAlertDataPerPage: 10,
     flaggedExpiredStockPage: 1,

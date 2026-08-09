@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev ",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "inngest:dev": "npx inngest-cli@latest dev",
     "prisma:migrate-dev": "npm exec prisma migrate dev",
     "prisma:migrate-dev:test": "dotenv -e .env.test npx prisma migrate dev",
     "prisma:generate": "npm exec prisma generate",
@@ -42,6 +43,7 @@
     "pg": "^8.20.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-email": "^6.9.2",
     "react-hook-form": "^7.75.0",
     "resend": "^6.18.1",
     "shadcn": "^4.7.0",
@@ -52,6 +54,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
+    "@react-email/ui": "^6.9.2",
     "@tailwindcss/postcss": "^4",
     "@types/bcrypt": "^6.0.0",
     "@types/jest": "^30.0.0",

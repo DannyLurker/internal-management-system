@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import { dashboardStyles } from "../../dashboard.styles";
-import { useManagerDashboard } from "../../dashboard.hooks";
 import { AlertCircle } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { useFinancialSummary } from "../../dashboard.hooks";
 
 export default function LowStockTable() {
   const [page, setPage] = useState(1);
   const dataPerPage = 10;
 
-  const { data, isLoading } = useManagerDashboard({
+  const { data, isLoading } = useFinancialSummary({
     lowStockAlertPage: page,
     lowStockAlertDataPerPage: dataPerPage,
     flaggedExpiredStockPage: 1,

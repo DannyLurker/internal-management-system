@@ -1,12 +1,15 @@
 import { api } from "@/shared/lib/api-client";
-import { GetDashboardApiResponse } from "./dashboard.types";
-import { ManagerDashboardParamSchema } from "@/shared/lib/zods/dashboard.zod";
+import { GetFinancialSummaryApiResponse } from "./dashboard.types";
+import { FinancialSummaryParamSchema } from "@/shared/lib/zods/dashboard.zod";
 
 const dashboardApi = {
-  getManagerDashboard: async (params: ManagerDashboardParamSchema) => {
-    const result = await api.get<GetDashboardApiResponse>("/dashboards/", {
-      params,
-    });
+  financialSummary: async (params: FinancialSummaryParamSchema) => {
+    const result = await api.get<GetFinancialSummaryApiResponse>(
+      "/dashboards/",
+      {
+        params,
+      },
+    );
 
     return result.data;
   },

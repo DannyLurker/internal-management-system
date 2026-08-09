@@ -1,3 +1,5 @@
+import dashboardService from "@/features/dashboards/dashboard.service";
+import prisma from "@/shared/db/prisma";
 import { forbidden } from "@/shared/lib/error-handlers";
 import {
   handleError,
@@ -19,10 +21,23 @@ export async function POST(req: Request) {
     const body = await req.json();
     const data = reportGenerateSchema.parse(body);
 
+    const financialSummary = await dashboardService.getFinancialSummary(
+      session,
+      {
+        flaggedExpiredStockDataPerPage: 100,
+        flaggedExpiredStockPage: 1,
+        lowStockAlertDataPerPage: 100,
+        lowStockAlertPage: 1,
+        startDate: data.dateFrom,
+        endDate: data.dateTo,
+      },
+      prisma,
+    );
+
     await inngest.send({
       name: "report/generate",
       data: {
-        reportType: data.reportType,
+        data: financialSummary,
         requestedById: session.id,
         recipientEmail: data.recipientEmail,
         dateFrom: data.dateFrom,

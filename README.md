@@ -9,8 +9,9 @@ An internal hotel management system designed to empower hotel staff with precise
 - **Database:** PostgreSQL with Prisma ORM
 - **Styling:** Tailwind CSS + shadcn/ui
 - **State Management:** React Server Components (RSC), TanStack Query
+- **Async & PDF Exports:** Inngest, `@react-pdf/renderer`, Supabase Storage, Resend API
 - **Validation:** Zod schemas
-- **Testing:** Playwright (E2E)
+- **Testing:** Playwright (E2E) & Jest (Unit/Integration)
 
 ## Developed Features
 
@@ -22,6 +23,8 @@ The following features have been implemented and tested:
 - **Items** - Manage inventory items with attributes, pricing, and stock tracking (CRUD operations)
 - **Stock** - Track stock quantities, movements, and costs with location-based management (CRUD operations)
 - **Stock Movement** - Serves a purpose as a ledger / history of stock movements between storage (CRUD operations)
+- **Reports & Async Export** - Asynchronous PDF report generation using `@react-pdf/renderer` with Ochre Harbor brand design system, durable background processing with Inngest, Supabase Storage hosting with secure signed download links, and automated Resend email delivery
+
 
 ## Getting Started
 

@@ -1,7 +1,7 @@
 import z from "zod";
 import { dataPerPage, page } from "./general.zod";
 
-export const managerDashboardParamSchema = z.object({
+export const financialSummaryParamSchema = z.object({
   lowStockAlertPage: page,
   lowStockAlertDataPerPage: dataPerPage,
   flaggedExpiredStockPage: page,
@@ -12,6 +12,6 @@ export const managerDashboardParamSchema = z.object({
   endDate: z.string().datetime({ offset: true }).optional(),
 });
 
-export type ManagerDashboardParamSchema = z.infer<
-  typeof managerDashboardParamSchema
+export type FinancialSummaryParamSchema = z.infer<
+  typeof financialSummaryParamSchema
 >;

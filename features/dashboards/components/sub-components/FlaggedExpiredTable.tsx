@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { dashboardStyles } from "../../dashboard.styles";
-import { useManagerDashboard } from "../../dashboard.hooks";
 import { Calendar } from "lucide-react";
 import { formatItemDate } from "@/shared/lib/formatter";
 import StockInfoPanel from "@/features/stocks/components/sub-components/stock-table/StockInfoPanel";
+import { useFinancialSummary } from "../../dashboard.hooks";
 
 export default function FlaggedExpiredTable() {
   const [page, setPage] = useState(1);
@@ -13,7 +13,7 @@ export default function FlaggedExpiredTable() {
   const [selectedStockId, setSelectedStockId] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
 
-  const { data, isLoading } = useManagerDashboard({
+  const { data, isLoading } = useFinancialSummary({
     lowStockAlertPage: 1,
     lowStockAlertDataPerPage: 10,
     flaggedExpiredStockPage: page,
