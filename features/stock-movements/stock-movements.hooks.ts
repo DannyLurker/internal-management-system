@@ -79,7 +79,7 @@ export const useCreateStockMovement = () => {
       }
 
       queryClient.invalidateQueries({
-        queryKey: dashboardKeys.manager(),
+        queryKey: dashboardKeys.financialSummary(),
       });
 
       toast.success(data.message);

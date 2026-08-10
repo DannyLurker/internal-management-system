@@ -1,4 +1,3 @@
-import { ManagerDashboardParamSchema } from "@/shared/lib/zods/dashboard.zod";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { Session } from "next-auth";
 import stockMovementsRepository, {
@@ -13,25 +12,23 @@ import {
   createLaundryWhereInput,
   laundryRepository,
 } from "../laundries/laundry.repository";
+import { FinancialSummaryParamSchema } from "@/shared/lib/zods/dashboard.zod";
+import { buildDateRangeFilter } from "./dashboard.util";
 
 const dashboardService = {
   getFinancialSummary: async (
     session: Session["user"],
-    params: ManagerDashboardParamSchema,
+    params: FinancialSummaryParamSchema,
     prisma: Prisma.TransactionClient | PrismaClient,
   ) => {
     // Build an optional createdAt date-range filter from the incoming params.
     // When startDate / endDate are present we scope all stock-movement KPI
     // aggregations to that window so the UI date-filter dropdown is reflected.
-    const dateRangeFilter =
-      params.startDate != null || params.endDate != null
-        ? {
-            createdAt: {
-              ...(params.startDate ? { gte: new Date(params.startDate) } : {}),
-              ...(params.endDate ? { lte: new Date(params.endDate) } : {}),
-            },
-          }
-        : {};
+
+    const dateRangeFilter = buildDateRangeFilter(
+      params.startDate,
+      params.endDate,
+    );
 
     const totalSpendWhereInput = createStockMovementWhereInput({
       OR: [{ type: "RECEIVE" }, { type: "ADJUSTMENT", totalCost: { gt: 0 } }],

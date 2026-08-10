@@ -50,12 +50,12 @@ export default function FinancialSummary() {
     endDate: dateRange.endDate.toISOString(),
   });
 
-  const totalValue = data?.data?.totalInventoryValue ?? 0;
-  const totalSpend = data?.data?.totalSpend ?? 0;
-  const totalWastage = data?.data?.totalStockWastageValue ?? 0;
-  const totalConsume = data?.data?.totalConsume ?? 0;
-  const totalSale = data?.data?.totalSale ?? 0;
-  const totalLaundryOut = data?.data?.totalLaundryOutStock ?? 0;
+  const totalValue = data?.totalInventoryValue ?? 0;
+  const totalSpend = data?.totalSpend ?? 0;
+  const totalWastage = data?.totalStockWastageValue ?? 0;
+  const totalConsume = data?.totalConsume ?? 0;
+  const totalSale = data?.totalSale ?? 0;
+  const totalLaundryOut = data?.totalLaundryOutStock ?? 0;
 
   if (session?.user.role !== "HOTEL_MANAGER") {
     return (

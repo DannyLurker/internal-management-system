@@ -6,6 +6,7 @@ import { Calendar } from "lucide-react";
 import { formatItemDate } from "@/shared/lib/formatter";
 import StockInfoPanel from "@/features/stocks/components/sub-components/stock-table/StockInfoPanel";
 import { useFinancialSummary } from "../../dashboard.hooks";
+import { FlaggedExpiredStockItem } from "../../dashboard.types";
 
 export default function FlaggedExpiredTable() {
   const [page, setPage] = useState(1);
@@ -21,8 +22,8 @@ export default function FlaggedExpiredTable() {
   });
 
   const expiredStocks =
-    data?.data?.flaggedExpiredStocks?.flaggedExpiredStockData || [];
-  const totalItems = data?.data?.flaggedExpiredStocks?.totalExpiredCount || 0;
+    data?.flaggedExpiredStocks?.flaggedExpiredStockData || [];
+  const totalItems = data?.flaggedExpiredStocks?.totalExpiredCount || 0;
   const totalPages = Math.ceil(totalItems / dataPerPage) || 1;
   const hasPrevPage = page > 1;
   const hasNextPage = page < totalPages;
@@ -86,32 +87,34 @@ export default function FlaggedExpiredTable() {
                   </td>
                 </tr>
               ) : (
-                expiredStocks.map((item, i) => (
-                  <tr
-                    key={item.id + i}
-                    className="border-b border-[#eef4ff] hover:bg-[#f8f9ff]/50 bg-white transition-colors"
-                  >
-                    <td className="px-6 py-4 font-medium text-[#121c28]">
-                      {item.item?.name}
-                    </td>
-                    <td className="px-6 py-4">{item.location?.name}</td>
-                    <td className="px-6 py-4">
-                      {item.expiredAt ? formatItemDate(item.expiredAt) : "-"}
-                    </td>
-                    <td className="px-6 py-4">{item.quantity}</td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        className={dashboardStyles.actionText}
-                        onClick={() => {
-                          setSelectedStockId(item.id);
-                          setPanelOpen(true);
-                        }}
-                      >
-                        View Details
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                expiredStocks.map(
+                  (item: FlaggedExpiredStockItem, i: number) => (
+                    <tr
+                      key={item.id + i}
+                      className="border-b border-[#eef4ff] hover:bg-[#f8f9ff]/50 bg-white transition-colors"
+                    >
+                      <td className="px-6 py-4 font-medium text-[#121c28]">
+                        {item.item?.name}
+                      </td>
+                      <td className="px-6 py-4">{item.location?.name}</td>
+                      <td className="px-6 py-4">
+                        {item.expiredAt ? formatItemDate(item.expiredAt) : "-"}
+                      </td>
+                      <td className="px-6 py-4">{item.quantity}</td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          className={dashboardStyles.actionText}
+                          onClick={() => {
+                            setSelectedStockId(item.id);
+                            setPanelOpen(true);
+                          }}
+                        >
+                          View Details
+                        </button>
+                      </td>
+                    </tr>
+                  ),
+                )
               )}
             </tbody>
           </table>

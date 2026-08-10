@@ -5,6 +5,7 @@ import { dashboardStyles } from "../../dashboard.styles";
 import { AlertCircle } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useFinancialSummary } from "../../dashboard.hooks";
+import { LowStockItem } from "../../dashboard.types";
 
 export default function LowStockTable() {
   const [page, setPage] = useState(1);
@@ -17,7 +18,7 @@ export default function LowStockTable() {
     flaggedExpiredStockDataPerPage: 10,
   });
 
-  const lowStocks = data?.data?.lowStockData || [];
+  const lowStocks = data?.lowStockData || [];
 
   return (
     <div className={dashboardStyles.tableCard}>
@@ -61,7 +62,7 @@ export default function LowStockTable() {
                 </td>
               </tr>
             ) : (
-              lowStocks.map((item) => (
+              lowStocks.map((item: LowStockItem) => (
                 <tr
                   key={item.id}
                   className="border-b border-[#eef4ff] hover:bg-[#f8f9ff]/50 bg-white transition-colors"

@@ -5,9 +5,15 @@ export type GetFinancialSummaryServiceResult = Awaited<
   ReturnType<typeof dashboardService.getFinancialSummary>
 >;
 
-export type GetDashboardApiResponse = ApiResponse<
-  GetFinancialSummaryServiceResult["data"]
->;
+export type GetDashboardApiResponse = ApiResponse<{
+  financialSummary?: GetFinancialSummaryServiceResult["data"];
+}>;
+
+export type FlaggedExpiredStockItem =
+  GetFinancialSummaryServiceResult["data"]["flaggedExpiredStocks"]["flaggedExpiredStockData"][number];
+
+export type LowStockItem =
+  GetFinancialSummaryServiceResult["data"]["lowStockData"][number];
 
 /**
  * Identifies a specific preset timeframe or a particular calendar month.

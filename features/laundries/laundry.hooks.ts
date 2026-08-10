@@ -56,7 +56,9 @@ export const useLaundryAction = () => {
       queryClient.invalidateQueries({
         queryKey: STOCK_MOVEMENT_KEYS.lists(),
       });
-      queryClient.invalidateQueries({ queryKey: dashboardKeys.manager() });
+      queryClient.invalidateQueries({
+        queryKey: dashboardKeys.financialSummary(),
+      });
       toast.success(data.message || "Action processed successfully");
     },
     onError: (error: Error) => {

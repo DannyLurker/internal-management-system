@@ -35,7 +35,9 @@ export async function GET(req: Request) {
 
         response = {
           message: managerDashboardData.message,
-          data: managerDashboardData.data,
+          data: {
+            financialSummary: managerDashboardData.data,
+          },
           status: 200,
         };
         break;
@@ -46,7 +48,9 @@ export async function GET(req: Request) {
 
         response = {
           message: accountantDashboardData.message,
-          data: accountantDashboardData.data,
+          data: {
+            financialSummary: accountantDashboardData.data,
+          },
           status: 200,
         };
         break;
