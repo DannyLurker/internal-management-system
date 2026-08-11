@@ -38,9 +38,6 @@ export default function FinancialSummary() {
     setDateRange(range);
   };
 
-  // ── Data fetching ────────────────────────────────────────────────────────
-  // startDate / endDate are passed as ISO strings; the Zod schema on the API
-  // route coerces them back to validated date strings before reaching the service.
   const { data } = useFinancialSummary({
     lowStockAlertPage: 1,
     lowStockAlertDataPerPage: 10,

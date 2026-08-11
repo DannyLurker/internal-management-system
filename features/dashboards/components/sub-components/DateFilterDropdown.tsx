@@ -47,16 +47,18 @@ const PRESET_OPTIONS: PresetOption[] = [
 ];
 
 // ── Date computation helper ──────────────────────────────────────────────────
-
 export function resolveDateRange(option: DateFilterOption): DateFilterRange {
   const now = new Date();
 
   if (option.startsWith("month-")) {
-    // 💡 PERBAIKAN 1: Dikurangi 1 agar sesuai dengan index 0-11 JavaScript
     const monthIndex = parseInt(option.replace("month-", ""), 10) - 1;
+
     const year = now.getFullYear();
+
     const startDate = new Date(year, monthIndex, 1, 0, 0, 0, 0);
-    const endDate = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
+
+    const endDate = new Date(year, monthIndex + 1, 1, 0, 0, 0, 0);
+
     return { startDate, endDate };
   }
 
@@ -70,11 +72,14 @@ export function resolveDateRange(option: DateFilterOption): DateFilterRange {
   };
 
   const days = daysMap[option] ?? 7;
-  const endDate = new Date(now);
-  endDate.setHours(23, 59, 59, 999);
+
   const startDate = new Date(now);
   startDate.setDate(startDate.getDate() - (days - 1));
   startDate.setHours(0, 0, 0, 0);
+
+  const endDate = new Date(now);
+  endDate.setDate(endDate.getDate() + 1);
+  endDate.setHours(0, 0, 0, 0);
 
   return { startDate, endDate };
 }
