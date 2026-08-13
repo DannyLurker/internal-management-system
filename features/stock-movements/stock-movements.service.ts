@@ -359,39 +359,7 @@ const stockMovementsService = {
         );
       }
 
-      // Laundry IN
-      if (currentStock && payload.stockMovementType === "LAUNDRY_IN") {
-        // const laundryOutStockWhereQuery = stockWhereInput({
-        //   id: currentStock.id,
-        //   type: "EXPIRED"
-        // });
-
-        // const laundryOutStocks = stockRepository.getMany();
-
-        const unitCost =
-          currentStock.quantity > 0
-            ? (currentStock.totalCost ?? 0) / currentStock.quantity
-            : 0;
-        const costToAdd = payload.quantity * unitCost;
-
-        movement = await stockMovementsRepository.create(
-          {
-            ...createdStockMovement,
-            destinationLocationId: null,
-            totalCost: costToAdd,
-          },
-          tx,
-        );
-
-        await stockRepository.update(
-          currentStock.id,
-          {
-            quantity: { increment: payload.quantity },
-            totalCost: { increment: costToAdd },
-          },
-          tx,
-        );
-      }
+      // Laundry IN (at laundry.service.ts)
 
       // Laundry Out
       if (currentStock && payload.stockMovementType === "LAUNDRY_OUT") {

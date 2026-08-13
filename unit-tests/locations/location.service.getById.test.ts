@@ -39,7 +39,7 @@ describe("locationService.getById", () => {
     mockedStockRepository.buildStockCountWhereClause.mockImplementation(
       (base) => base,
     );
-    mockedStockRepository.countQuantity.mockResolvedValue(42);
+    mockedStockRepository.countRows.mockResolvedValue(42);
   });
 
   it("throws notFound and never calls stockRepository.countQuantity when the location doesn't exist", async () => {
@@ -54,7 +54,7 @@ describe("locationService.getById", () => {
       ),
     ).rejects.toEqual(notFound("Location not found"));
 
-    expect(mockedStockRepository.countQuantity).not.toHaveBeenCalled();
+    expect(mockedStockRepository.countRows).not.toHaveBeenCalled();
   });
 
   it("returns the location together with the total stock count", async () => {
@@ -78,7 +78,7 @@ describe("locationService.getById", () => {
       expect.anything(),
       fakePrisma,
     );
-    expect(mockedStockRepository.countQuantity).toHaveBeenCalled();
+    expect(mockedStockRepository.countRows).toHaveBeenCalled();
     expect(result).toEqual({
       message: "Location retrieved successfully",
       data: {

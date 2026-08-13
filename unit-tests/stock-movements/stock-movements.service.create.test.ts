@@ -225,72 +225,8 @@ describe("stockMovementsService.create", () => {
     expect(result).toEqual({
       message: "Stock movement created successfully",
       stockMovementId: "movement-1",
+      stockmovementType: "RECEIVE",
       stockId: null,
-      itemId: "item-1",
-    });
-  });
-
-  it("updates stock quantity and records RECEIVE/LAUNDRY_IN when stock exists", async () => {
-    mockedItemRepository.findById.mockResolvedValue({ id: "item-1" } as any);
-    mockedStockRepository.findById.mockResolvedValue({
-      id: "stock-1",
-      locationId: "loc-1",
-      type: "READY" as StockType,
-    } as any);
-
-    const mockMovement = {
-      id: "movement-1",
-      itemId: "item-1",
-      stockId: "stock-1",
-      type: "LAUNDRY_IN",
-      quantity: 5,
-      totalCost: 0,
-      reason: "Laundry incoming ready description",
-      createdBy: "user-1",
-      sourceLocationId: null,
-      destinationLocationId: "loc-1",
-      orderId: null,
-    };
-    mockedStockMovementsRepository.create.mockResolvedValue(
-      mockMovement as any,
-    );
-
-    const payload = {
-      itemId: "item-1",
-      stockId: "stock-1",
-      stockMovementType: "LAUNDRY_IN" as MovementType,
-      quantity: 5,
-      reason: "Laundry incoming ready description",
-    };
-
-    const result = await stockMovementsService.create(
-      fakeSession,
-      payload,
-      prismaMock,
-    );
-
-    expect(mockedStockMovementsRepository.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        itemId: "item-1",
-        stockId: "stock-1",
-        type: "LAUNDRY_IN",
-        quantity: 5,
-        sourceLocationId: null,
-        destinationLocationId: "loc-1",
-      }),
-      prismaMock,
-    );
-
-    expect(mockedStockRepository.update).toHaveBeenCalledWith(
-      "stock-1",
-      { quantity: { increment: 5 } },
-      prismaMock,
-    );
-
-    expect(result).toEqual({
-      message: "Stock movement created successfully",
-      stockMovementId: "movement-1",
-      stockId: "stock-1",
       itemId: "item-1",
     });
   });
@@ -395,6 +331,7 @@ describe("stockMovementsService.create", () => {
       },
       {
         quantity: { increment: 5 },
+        totalCost: { increment: 0 },
       },
       expect.objectContaining({
         quantity: 5,
@@ -405,7 +342,7 @@ describe("stockMovementsService.create", () => {
 
     expect(mockedStockRepository.update).toHaveBeenCalledWith(
       "stock-1",
-      { quantity: { decrement: 5 } },
+      { quantity: { decrement: 5 }, totalCost: { decrement: 0 } }, // total cost value is 0 because it's only for test
       prismaMock,
     );
 
@@ -413,7 +350,7 @@ describe("stockMovementsService.create", () => {
       expect.objectContaining({
         stockId: "stock-dest",
         type: "TRANSFER",
-        totalCost: null,
+        totalCost: 0,
       }),
       prismaMock,
     );
@@ -421,6 +358,7 @@ describe("stockMovementsService.create", () => {
     expect(result).toEqual({
       message: "Stock movement created successfully",
       stockMovementId: "movement-1",
+      stockmovementType: "TRANSFER",
       stockId: "stock-dest",
       itemId: "item-1",
     });
@@ -493,13 +431,14 @@ describe("stockMovementsService.create", () => {
 
     expect(mockedStockRepository.update).toHaveBeenCalledWith(
       "stock-1",
-      { quantity: { increment: 5 } },
+      { quantity: { increment: 5 }, totalCost: { increment: 0 } },
       prismaMock,
     );
 
     expect(result).toEqual({
       message: "Stock movement created successfully",
       stockMovementId: "movement-1",
+      stockmovementType: "ADJUSTMENT",
       stockId: "stock-1",
       itemId: "item-1",
     });
@@ -568,7 +507,7 @@ describe("stockMovementsService.create", () => {
 
     expect(mockedStockRepository.update).toHaveBeenCalledWith(
       "stock-1",
-      { quantity: { decrement: 3 } },
+      { quantity: { decrement: 3 }, totalCost: { decrement: 0 } }, // total cost value is 0 because it's only for test
       prismaMock,
     );
 
@@ -579,7 +518,7 @@ describe("stockMovementsService.create", () => {
         type: "DAMAGED",
         expiredAt: null,
       },
-      { quantity: { increment: 3 } },
+      { quantity: { increment: 3 }, totalCost: { increment: 0 } }, // total cost value is 0 because it's only for test
       expect.objectContaining({
         quantity: 3,
         type: "DAMAGED",
@@ -600,6 +539,7 @@ describe("stockMovementsService.create", () => {
     expect(result).toEqual({
       message: "Stock movement created successfully",
       stockMovementId: "movement-1",
+      stockmovementType: "MARK_AS_DAMAGED",
       stockId: "stock-damaged",
       itemId: "item-1",
     });
@@ -683,7 +623,7 @@ describe("stockMovementsService.create", () => {
 
     expect(mockedStockRepository.update).toHaveBeenCalledWith(
       "stock-1",
-      { quantity: { decrement: 5 } },
+      { quantity: { decrement: 5 }, totalCost: { decrement: 0 } }, // total cost value is 0 because it's only for test
       prismaMock,
     );
 
@@ -700,6 +640,7 @@ describe("stockMovementsService.create", () => {
     expect(result).toEqual({
       message: "Stock movement created successfully",
       stockMovementId: "movement-1",
+      stockmovementType: "CONSUME",
       stockId: "stock-1",
       itemId: "item-1",
     });
