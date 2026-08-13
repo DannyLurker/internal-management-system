@@ -1,3 +1,4 @@
+import { GetFinancialSummaryServiceResult } from "@/features/dashboards/dashboard.types";
 import ReportEmail from "@/shared/emails/ReportEmail";
 import { inngest } from "@/shared/lib/inngest";
 import { renderReportPdf } from "@/shared/lib/pdf/RenderReport";
@@ -14,10 +15,15 @@ export const generateReportFunction = inngest.createFunction(
     event,
     step,
   }: {
-    event: { data: ReportGenerateSchema };
+    event: {
+      data: ReportGenerateSchema & {
+        data: GetFinancialSummaryServiceResult;
+        recipientEmail: string;
+      };
+    };
     step: any;
   }) => {
-    const { recipientEmail, dateFrom, dateTo, data } = event.data;
+    const { recipientEmail, data, dateFrom, dateTo } = event.data;
 
     const pdfBase64 = await step.run("generate-pdf", async () => {
       // Turn the pdf into buffer because it will be more effiecient rather than handle data byte by byte, and buffer functions as temporary storage
@@ -61,10 +67,10 @@ export const generateReportFunction = inngest.createFunction(
       await resend.emails.send({
         from: "onboarding@resend.dev",
         to: recipientEmail,
-        subject: `Your report (${dateFrom} – ${dateTo})`,
+        subject: `Your report (${dateFrom.split("T")[0]} – ${dateTo.split("T")[0]})`,
         react: ReportEmail({
-          dateFrom,
-          dateTo,
+          dateFrom: dateFrom.split("T")[0],
+          dateTo: dateTo.split("T")[0],
           downloadUrl,
         }),
       });

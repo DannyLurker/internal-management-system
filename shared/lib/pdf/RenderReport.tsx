@@ -269,7 +269,7 @@ function ReportDocument({
           <View style={styles.periodBadge}>
             <Text style={styles.periodLabel}>Report Period</Text>
             <Text style={styles.periodText}>
-              {dateFrom} — {dateTo}
+              {dateFrom.split("T")[0]} — {dateTo.split("T")[0]}
             </Text>
           </View>
         </View>
