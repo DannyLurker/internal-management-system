@@ -12,7 +12,7 @@ import { defineConfig, devices } from "@playwright/test";
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  testDir: "./tests",
+  testDir: "./e2e-tests",
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -39,15 +39,15 @@ export default defineConfig({
       testMatch: /.*\.setup\.ts/,
     },
 
-    // {
-    //   name: "chromium CRUD location tests (Manager)",
-    //   use: {
-    //     ...devices["Desktop Chrome"],
-    //     storageState: "playwright/.auth/manager.json",
-    //   },
-    //   dependencies: ["setup"],
-    //   testMatch: "**/location.spec.ts",
-    // },
+    {
+      name: "chromium CRUD location tests (Manager)",
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: "playwright/.auth/manager.json",
+      },
+      dependencies: ["setup"],
+      testMatch: "**/location.spec.ts",
+    },
 
     // {
     //   name: "chromium CRUD category tests (Manager)",
@@ -79,15 +79,15 @@ export default defineConfig({
     //   testMatch: "**/stock.spec.ts",
     // },
 
-    {
-      name: "chromium CRUD stock movement tests (Manager)",
-      use: {
-        ...devices["Desktop Chrome"],
-        storageState: "playwright/.auth/manager.json",
-      },
-      dependencies: ["setup"],
-      testMatch: "**/stock-movement.spec.ts",
-    },
+    // {
+    //   name: "chromium CRUD stock movement tests (Manager)",
+    //   use: {
+    //     ...devices["Desktop Chrome"],
+    //     storageState: "playwright/.auth/manager.json",
+    //   },
+    //   dependencies: ["setup"],
+    //   testMatch: "**/stock-movement.spec.ts",
+    // },
   ],
 
   /* Run your local dev server before starting the tests */

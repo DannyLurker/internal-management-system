@@ -39,7 +39,7 @@ export async function POST(req: Request) {
       data: {
         data: financialSummary,
         requestedById: session.id,
-        recipientEmail: data.recipientEmail,
+        recipientEmail: session.email,
         dateFrom: data.dateFrom,
         dateTo: data.dateTo,
       },

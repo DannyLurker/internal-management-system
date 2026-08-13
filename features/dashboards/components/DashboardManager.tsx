@@ -1,17 +1,38 @@
 "use client";
+
+import { useState } from "react";
 import { useSession } from "next-auth/react";
+
 import { dashboardStyles } from "../dashboard.styles";
-import DashboardHeader from "./sub-components/DashboardHeader";
 import LowStockTable from "./sub-components/LowStockTable";
 import FlaggedExpiredTable from "./sub-components/FlaggedExpiredTable";
-import FinancialSummary from "./sub-components/FinancialSummary";
+import { DateFilterOption, DateFilterRange } from "../dashboard.types";
+import { resolveDateRange } from "./sub-components/DateFilterDropdown";
+import FinancialSummaryHeader from "./sub-components/FinancialSummaryHeader";
+import FinancialSummaryBody from "./sub-components/FinancialSummaryBody";
+
+const DEFAULT_FILTER: DateFilterOption = "last7";
+const DEFAULT_RANGE: DateFilterRange = resolveDateRange(DEFAULT_FILTER);
 
 export default function DashboardManager() {
   const { data: session } = useSession();
 
+  const [filterOption, setFilterOption] =
+    useState<DateFilterOption>(DEFAULT_FILTER);
+
+  const [dateRange, setDateRange] = useState<DateFilterRange>(DEFAULT_RANGE);
+
+  const handleFilterChange = (
+    option: DateFilterOption,
+    range: DateFilterRange,
+  ) => {
+    setFilterOption(option);
+    setDateRange(range);
+  };
+
   if (session?.user.role !== "HOTEL_MANAGER") {
     return (
-      <div className="w-full h-full flex items-center justify-center">
+      <div className="flex h-full w-full items-center justify-center">
         <h1 className={dashboardStyles.headerTitle}>You can't access this</h1>
       </div>
     );
@@ -19,10 +40,13 @@ export default function DashboardManager() {
 
   return (
     <div className={dashboardStyles.pageContainer}>
-      {/* DashboardHeader now owns the date-filter dropdown */}
-      <DashboardHeader />
+      <FinancialSummaryHeader
+        dateRange={dateRange}
+        filterOption={filterOption}
+        onFilterChange={handleFilterChange}
+      />
 
-      <FinancialSummary />
+      <FinancialSummaryBody dateRange={dateRange} />
 
       <LowStockTable />
 

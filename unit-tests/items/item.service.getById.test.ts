@@ -62,7 +62,8 @@ describe("itemService.getById", () => {
       { type: "DIRTY", _sum: { quantity: 2 } },
     ] as any);
 
-    mockedStockRepository.countQuantity.mockResolvedValue(4);
+    mockedStockRepository.countRows.mockResolvedValue(4);
+    mockedStockRepository.aggregate.mockResolvedValue({ quantity: 4, totalCost: 100 } as any);
 
     mockedStockMovementsRepository.countQuantity.mockImplementation(
       async (where) => {
@@ -95,7 +96,6 @@ describe("itemService.getById", () => {
       null,
       {
         sortBy: "createdAt",
-        itemSearchQuery: null,
         stockStatusType: "ALL",
       },
     );
@@ -122,7 +122,7 @@ describe("itemService.getById", () => {
     expect(result.data.totalDamagedStock).toBe(1);
     expect(result.data.totalLostStock).toBe(3);
     expect(result.data.totalDirtyStock).toBe(2);
-    expect(result.data.itemStockCount).toBe(1);
+    expect(result.data.itemStockCount).toBe(4);
 
     // Since minThreshold is 5 and totalReadyStock is 4, isStockLow should be "Low in stock"
     expect(result.data.item.isStockLow).toBe("Low in stock");
@@ -143,7 +143,8 @@ describe("itemService.getById", () => {
     mockedItemRepository.getById.mockResolvedValue(itemMock as any);
     mockedStockRepository.countRows.mockResolvedValue(0);
     mockedStockRepository.getGroupedStockQuantities.mockResolvedValue([]);
-    mockedStockRepository.countQuantity.mockResolvedValue(10); // ready stock = 10 > minThreshold 5
+    mockedStockRepository.countRows.mockResolvedValue(10); // ready stock = 10 > minThreshold 5
+    mockedStockRepository.aggregate.mockResolvedValue({ quantity: 10, totalCost: 0 } as any);
     mockedStockMovementsRepository.countQuantity.mockResolvedValue(0);
 
     const params = {

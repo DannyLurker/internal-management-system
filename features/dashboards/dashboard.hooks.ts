@@ -8,5 +8,6 @@ export const useFinancialSummary = (params: FinancialSummaryParamSchema) => {
     queryKey: dashboardKeys.financialSummary(params),
     queryFn: () => dashboardApi.financialSummary(params),
     staleTime: 5 * 60 * 1000,
+    enabled: !!params.endDate && !!params.startDate,
   });
 };

@@ -1,10 +1,24 @@
 export const dashboardStyles = {
   pageContainer: "min-h-0 flex-1 bg-[#f8f9ff] px-4 py-8 md:px-10",
-  headerContainer:
-    "flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between mb-8",
+
+  headerContainer: "mb-8",
+
+  headerContent:
+    "flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between",
+
+  headerText: "w-full",
+
   headerTitle:
     "font-ochre-brand text-3xl font-medium text-[#894d0d] md:text-4xl",
-  headerActions: "flex items-center gap-6 right-10 top-10 absolute",
+
+  headerDescription:
+    "mt-2 w-2/3 font-ochre-brand text-sm italic leading-relaxed text-[#524439] md:w-auto md:text-base",
+
+  headerActions:
+    "flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center",
+
+  exportButton:
+    "h-9 w-full gap-2 rounded-lg border-[#d9e3f4] bg-white px-3 font-ochre-ui text-sm font-semibold text-[#524439] shadow-sm transition-colors hover:border-[#894d0d]/50 hover:bg-[#894d0d]/5 hover:text-[#894d0d] sm:w-auto",
 
   kpiGrid: "grid grid-cols-1 md:grid-cols-3 gap-6 mb-8",
   // Replace kpiCard, kpiLabelContainer, and kpiDetail with these styles:
