@@ -140,9 +140,8 @@ test.describe("CRUD operations for Item", () => {
   test("Update an item", async ({ request }) => {
     const updatedSellingPrice = 499000;
 
-    const response = await request.patch("/api/items", {
+    const response = await request.patch(`/api/items/${createdItemId}`, {
       data: {
-        itemId: createdItemId,
         name: `${TEST_PREFIX}Luxury King Pillow - Firm`,
         description: "Updated firm edition of premium goose down pillow",
         categoryId: testCategoryId,
@@ -179,10 +178,9 @@ test.describe("CRUD operations for Item", () => {
   });
 
   test("Delete an item", async ({ request }) => {
-    await request.patch(`/api/items`, {
+    await request.patch(`/api/items/${createdItemId}`, {
       data: {
         name: `${TEST_PREFIX}Luxury King Pillow - Firm`,
-        itemId: createdItemId,
         isActive: false,
         description: "TEST_PREFIX",
       },
@@ -238,9 +236,8 @@ test.describe("CRUD operations for Item", () => {
   });
 
   test("Error: Update non-existent item", async ({ request }) => {
-    const response = await request.patch("/api/items", {
+    const response = await request.patch("/api/items/non-existent-id-12345", {
       data: {
-        itemId: "non-existent-id-12345",
         name: `${TEST_PREFIX}UpdatedHotelItem`,
         description: "Updated description",
         categoryId: testCategoryId,
