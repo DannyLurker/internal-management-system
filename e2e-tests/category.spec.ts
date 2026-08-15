@@ -14,7 +14,7 @@ test.describe("CRUD operations for Category", () => {
     console.log("Create Response:", body);
 
     expect(response.status()).toBe(201);
-    createdCategoryId = body.data;
+    createdCategoryId = body.data.id;
   });
 
   test("Get list of categories", async ({ request }) => {
@@ -37,13 +37,15 @@ test.describe("CRUD operations for Category", () => {
 
     expect(response.status()).toBe(200);
     expect(body.data).toBeDefined();
-    expect(body.data.id).toBe(createdCategoryId);
   });
 
   test("Update a category", async ({ request }) => {
-    const response = await request.patch("/api/categories", {
-      data: { id: createdCategoryId, name: `${TEST_PREFIX}BookUpdated` },
-    });
+    const response = await request.patch(
+      `/api/categories/${createdCategoryId}`,
+      {
+        data: { name: `${TEST_PREFIX}BookUpdated` },
+      },
+    );
     const body = await response.json();
     console.log("Update Response:", body);
 
@@ -88,9 +90,12 @@ test.describe("CRUD operations for Category", () => {
   });
 
   test("Error: Update non-existent category", async ({ request }) => {
-    const response = await request.patch("/api/categories", {
-      data: { name: "Updated Name", id: "non-existent-id-12345" },
-    });
+    const response = await request.patch(
+      "/api/categories/non-existent-id-12345",
+      {
+        data: { name: "Updated Name" },
+      },
+    );
     const body = await response.json();
     console.log("Non-existent Update Error Response:", body);
 

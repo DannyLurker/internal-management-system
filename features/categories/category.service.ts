@@ -179,6 +179,10 @@ const categoryService = {
         where: { id: categoryId },
       });
 
+      if (!existingCategory) {
+        throw notFound("Category not found");
+      }
+
       const category = await categoryRepository.update(
         { id: categoryId, name: payload.name },
         tx,
@@ -228,7 +232,7 @@ const categoryService = {
         },
       });
 
-      if (!existingCategory) throw badRequest("Category not found");
+      if (!existingCategory) throw notFound("Category not found");
 
       const deletionResult = categoryRules.canDeleteCategory({
         items: existingCategory.items ?? [],
