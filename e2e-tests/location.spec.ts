@@ -11,18 +11,23 @@ test.describe("CRUD operations for Location", () => {
   const createdLocationName = `${TEST_PREFIX}North Wing Cellar`;
   const updatedLocationName = `${TEST_PREFIX}North Wing Cellar Updated`;
 
-  test("Create a new location", async ({ request }) => {
+  test("Create a new location", async ({ page }) => {
     // Prepared a location to delete in order to test the deletion of a location with no items
-    await request.post("/api/locations", {
-      data: {
-        name: "TEST_LOCATION_TO_DELETE",
-        type: LocationType.MAIN_WAREHOUSE,
-        description: "Test storage location for automated CRUD checks",
+    const locationToBeDeletedResponse = await page.request.post(
+      "/api/locations",
+      {
+        data: {
+          name: `${TEST_PREFIX}TEST_LOCATION_TO_DELETE`,
+          type: LocationType.MAIN_WAREHOUSE,
+          description: "Test storage location for automated CRUD checks",
+        },
       },
-    });
+    );
+
+    const locationToBeDeletedBody = await locationToBeDeletedResponse.json();
 
     // Create the main test location
-    const response = await request.post("/api/locations", {
+    const createdLocationResponse = await page.request.post("/api/locations", {
       data: {
         name: createdLocationName,
         type: LocationType.MAIN_WAREHOUSE,
@@ -30,33 +35,23 @@ test.describe("CRUD operations for Location", () => {
       },
     });
 
-    const locationBody = await response.json();
-    console.log("Create Response:", locationBody);
+    const createdLocationBody = await createdLocationResponse.json();
+    console.log("Create Response:", createdLocationBody);
 
-    expect(response.status()).toBe(201);
-    expect(locationBody.message).toContain(createdLocationName);
+    expect(createdLocationResponse.status()).toBe(201);
+    expect(createdLocationBody.message).toContain(createdLocationName);
 
-    const listResponse = await request.get(
-      "/api/locations?sortOrderEnum=asc&sortBy=name&page=1&dataPerPage=100",
-    );
-    const listBody = await listResponse.json();
-    const location = listBody.data.locations.find(
-      (loc: { name: string }) => loc.name === createdLocationName,
-    );
+    console.log("Location to be deleted body: ", locationToBeDeletedBody);
 
-    const locationToDelete = listBody.data.locations.find(
-      (loc: { name: string }) => loc.name === "TEST_LOCATION_TO_DELETE",
-    );
+    expect(createdLocationBody.data.id).toBeDefined();
+    createdLocationId = createdLocationBody.data.id;
+    locationIdToDelete = locationToBeDeletedBody.data.id;
 
-    expect(location).toBeDefined();
-    createdLocationId = location.id;
-    locationIdToDelete = locationToDelete.id;
-
-    await request.post("/api/categories", {
+    await page.request.post("/api/categories", {
       data: { name: `${TEST_PREFIX}Book` },
     });
 
-    const categoryDataResponse = await request.get(
+    const categoryDataResponse = await page.request.get(
       "/api/categories?sortOrder=asc&sortBy=name&page=1&dataPerPage=100",
     );
     const categoryBody = await categoryDataResponse.json();
@@ -68,13 +63,14 @@ test.describe("CRUD operations for Location", () => {
 
     const testCategoryId = category.id;
 
-    const createItemResponse = await request.post("/api/items", {
+    const createItemResponse = await page.request.post("/api/items", {
       data: {
         name: `${TEST_PREFIX}Luxury King Pillow - Firm`,
         description: "Premium goose down pillow for guest rooms",
         categoryId: testCategoryId,
-        locationId: location.id,
+        locationId: createdLocationBody.data.id,
         sellingPrice: 450000,
+        costPrice: 420000,
         image: "https://example.com/luxury-king-pillow.jpg",
         stock: {
           quantity: 50,
@@ -89,24 +85,16 @@ test.describe("CRUD operations for Location", () => {
       },
     });
 
-    console.log(await createItemResponse.json());
+    console.log("create item response: ", await createItemResponse.json());
     expect(createItemResponse.status()).toBe(201);
 
-    const itemDataResponse = await request.get(
-      "/api/items?page=1&dataPerPage=100&sortBy=name&orderBy=asc",
-    );
+    const createdItemBody = await createItemResponse.json();
 
-    const itemDataBody = await itemDataResponse.json();
+    console.log("Created Item:", createdItemBody);
 
-    const createdItem = itemDataBody.data.items.find(
-      (item: { name: string; id: string }) =>
-        item.name === `${TEST_PREFIX}Luxury King Pillow - Firm`,
-    );
-    console.log("Created Item:", itemDataBody.data.items);
-
-    await request.post("/api/stocks", {
+    await page.request.post("/api/stocks", {
       data: {
-        itemId: createdItem.id,
+        itemId: createdItemBody.data.id,
         locationId: createdLocationId,
         quantity: 20,
         totalCost: 600000,
@@ -164,14 +152,16 @@ test.describe("CRUD operations for Location", () => {
   });
 
   test("Update a location", async ({ request }) => {
-    const response = await request.patch("/api/locations", {
-      data: {
-        locationId: createdLocationId,
-        name: updatedLocationName,
-        description: "Updated test storage location",
-        type: LocationType.OPERATIONAL,
+    const response = await request.patch(
+      `/api/locations/${createdLocationId}`,
+      {
+        data: {
+          name: updatedLocationName,
+          description: "Updated test storage location",
+          type: LocationType.OPERATIONAL,
+        },
       },
-    });
+    );
     const body = await response.json();
     console.log("Update Response:", body);
 
@@ -251,12 +241,14 @@ test.describe("CRUD operations for Location", () => {
   });
 
   test("Error: Update non-existent location", async ({ request }) => {
-    const response = await request.patch("/api/locations", {
-      data: {
-        locationId: "non-existent-id-12345",
-        name: `${TEST_PREFIX}Missing Location`,
+    const response = await request.patch(
+      `/api/locations/${"non-existent-id-12345"}`,
+      {
+        data: {
+          name: `${TEST_PREFIX}Missing Location`,
+        },
       },
-    });
+    );
     const body = await response.json();
     console.log("Non-existent Update Error Response:", body);
 
