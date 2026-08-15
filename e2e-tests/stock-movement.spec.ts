@@ -49,6 +49,7 @@ test.describe("CRUD operations for Stock Movements", () => {
           categoryId: testCategoryId,
           locationId: testLocationId,
           sellingPrice: 100000,
+          costPrice: 90000,
         },
       });
       expect(itemResponse.status()).toBe(201);
@@ -95,7 +96,7 @@ test.describe("CRUD operations for Stock Movements", () => {
       data: {
         itemId: testItemId,
         stockId: testStockId,
-        type: "RECEIVE",
+        stockMovementType: "RECEIVE",
         quantity: 25,
         totalCost: 750000,
         reason: "Initial movement test stock receive",
@@ -108,9 +109,9 @@ test.describe("CRUD operations for Stock Movements", () => {
 
     expect(response.status()).toBe(200);
     expect(body.message).toContain("Stock movement created successfully");
-    expect(body.data.id).toBeDefined();
+    expect(body.data.stockMovementId).toBeDefined();
 
-    createdStockMovementId = body.data.id;
+    createdStockMovementId = body.data.stockMovementId;
   });
 
   test("Get list of stock movements", async ({ request }) => {
@@ -161,7 +162,7 @@ test.describe("CRUD operations for Stock Movements", () => {
     const response = await request.post("/api/stock-movements", {
       data: {
         itemId: "non-existent-item-id",
-        type: "RECEIVE",
+        stockMovementType: "RECEIVE",
         quantity: 25,
         totalCost: 750000,
         reason: "Invalid item movement test",
@@ -182,7 +183,7 @@ test.describe("CRUD operations for Stock Movements", () => {
       data: {
         itemId: testItemId,
         stockId: "non-existent-stock-id",
-        type: "RECEIVE",
+        stockMovementType: "RECEIVE",
         quantity: 25,
         totalCost: 750000,
         reason: "Invalid stock movement test",
@@ -202,11 +203,11 @@ test.describe("CRUD operations for Stock Movements", () => {
     const response = await request.post("/api/stock-movements", {
       data: {
         itemId: testItemId,
-        type: "RECEIVE",
+        stockMovementType: "RECEIVE",
         quantity: 25,
         totalCost: 750000,
         reason: "Invalid location movement test",
-        destinationLocationid: "non-existent-location-id",
+        destinationLocationId: "non-existent-location-id12345",
       },
     });
     const body = await response.json();
@@ -222,7 +223,7 @@ test.describe("CRUD operations for Stock Movements", () => {
     const response = await request.post("/api/stock-movements", {
       data: {
         itemId: testItemId,
-        type: "RECEIVE",
+        stockMovementType: "RECEIVE",
         quantity: 0,
         totalCost: 750000,
         reason: "Zero quantity movement test",
@@ -242,7 +243,7 @@ test.describe("CRUD operations for Stock Movements", () => {
     const response = await request.post("/api/stock-movements", {
       data: {
         itemId: testItemId,
-        type: "RECEIVE",
+        stockMovementType: "RECEIVE",
         quantity: 25,
         totalCost: 750000,
         reason: "short",
@@ -263,7 +264,7 @@ test.describe("CRUD operations for Stock Movements", () => {
       data: {
         itemId: testItemId,
         stockId: testStockId,
-        type: "TRANSFER",
+        stockMovementType: "TRANSFER",
         quantity: 10,
         reason: "Transfer without locations test",
       },
@@ -279,7 +280,7 @@ test.describe("CRUD operations for Stock Movements", () => {
     const response = await request.post("/api/stock-movements", {
       data: {
         itemId: testItemId,
-        type: "RECEIVE",
+        stockMovementType: "RECEIVE",
         quantity: 10,
         reason: "Receive without destination test",
       },

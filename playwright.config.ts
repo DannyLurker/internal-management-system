@@ -39,35 +39,35 @@ export default defineConfig({
       testMatch: /.*\.setup\.ts/,
     },
 
-    // {
-    //   name: "chromium CRUD location tests (Manager)",
-    //   use: {
-    //     ...devices["Desktop Chrome"],
-    //     storageState: "playwright/.auth/manager.json",
-    //   },
-    //   dependencies: ["setup"],
-    //   testMatch: "**/location.spec.ts",
-    // },
+    {
+      name: "chromium CRUD location tests (Manager)",
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: "playwright/.auth/manager.json",
+      },
+      dependencies: ["setup"],
+      testMatch: "**/location.spec.ts",
+    },
 
-    // {
-    //   name: "chromium CRUD category tests (Manager)",
-    //   use: {
-    //     ...devices["Desktop Chrome"],
-    //     storageState: "playwright/.auth/manager.json",
-    //   },
-    //   dependencies: ["setup"],
-    //   testMatch: "**/category.spec.ts",
-    // },
+    {
+      name: "chromium CRUD category tests (Manager)",
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: "playwright/.auth/manager.json",
+      },
+      dependencies: ["setup"],
+      testMatch: "**/category.spec.ts",
+    },
 
-    // {
-    //   name: "chromium CRUD item tests (Manager)",
-    //   use: {
-    //     ...devices["Desktop Chrome"],
-    //     storageState: "playwright/.auth/manager.json",
-    //   },
-    //   dependencies: ["setup"],
-    //   testMatch: "**/item.spec.ts",
-    // },
+    {
+      name: "chromium CRUD item tests (Manager)",
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: "playwright/.auth/manager.json",
+      },
+      dependencies: ["setup"],
+      testMatch: "**/item.spec.ts",
+    },
 
     {
       name: "chromium CRUD stock tests (Manager)",
@@ -79,15 +79,15 @@ export default defineConfig({
       testMatch: "**/stock.spec.ts",
     },
 
-    // {
-    //   name: "chromium CRUD stock movement tests (Manager)",
-    //   use: {
-    //     ...devices["Desktop Chrome"],
-    //     storageState: "playwright/.auth/manager.json",
-    //   },
-    //   dependencies: ["setup"],
-    //   testMatch: "**/stock-movement.spec.ts",
-    // },
+    {
+      name: "chromium CRUD stock movement tests (Manager)",
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: "playwright/.auth/manager.json",
+      },
+      dependencies: ["setup"],
+      testMatch: "**/stock-movement.spec.ts",
+    },
   ],
 
   /* Run your local dev server before starting the tests */
