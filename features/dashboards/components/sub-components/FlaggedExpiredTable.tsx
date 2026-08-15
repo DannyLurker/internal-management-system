@@ -7,6 +7,7 @@ import { formatItemDate } from "@/shared/lib/formatter";
 import StockInfoPanel from "@/features/stocks/components/sub-components/stock-table/StockInfoPanel";
 import { useFinancialSummary } from "../../dashboard.hooks";
 import { FlaggedExpiredStockItem } from "../../dashboard.types";
+import { resolveDateRange } from "./DateFilterDropdown";
 
 export default function FlaggedExpiredTable() {
   const [page, setPage] = useState(1);
@@ -14,11 +15,15 @@ export default function FlaggedExpiredTable() {
   const [selectedStockId, setSelectedStockId] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
 
+  const dateRange = resolveDateRange("last7");
+
   const { data, isLoading } = useFinancialSummary({
     lowStockAlertPage: 1,
     lowStockAlertDataPerPage: 10,
     flaggedExpiredStockPage: page,
     flaggedExpiredStockDataPerPage: dataPerPage,
+    endDate: dateRange.endDate.toISOString(),
+    startDate: dateRange.startDate.toISOString(),
   });
 
   const expiredStocks =

@@ -14,26 +14,18 @@ test.describe("CRUD operations for Stock", () => {
   test.beforeAll(
     "Setup: Create test item and resolve location",
     async ({ request }) => {
-      // 1. Create category
       const categoryResponse = await request.post("/api/categories", {
         data: { name: `${TEST_PREFIX}Stock Test Category` },
       });
-      expect(categoryResponse.status()).toBe(201);
 
-      const categoryListResponse = await request.get(
-        "/api/categories?sortOrder=asc&sortBy=name&page=1&dataPerPage=100",
-      );
-      const categoryListBody = await categoryListResponse.json();
-      const categories = categoryListBody.data.categories;
+      const categoryBody = await categoryResponse.json();
+      console.log("Category body: ", categoryBody);
 
-      const category = categories.find(
-        (c: any) => c.name === `${TEST_PREFIX}Stock Test Category`,
-      );
+      expect(categoryBody.status).toBe(201);
 
-      expect(category).toBeDefined();
-      testCategoryId = category.id;
+      expect(categoryBody.data).toBeDefined();
+      testCategoryId = categoryBody.data.id;
 
-      // 2. Get location
       const locationResponse = await request.get(
         "/api/locations?page=1&dataPerPage=10",
       );
@@ -41,7 +33,6 @@ test.describe("CRUD operations for Stock", () => {
       expect(locationResponse.status()).toBe(200);
       testLocationId = locationBody.data.locations[0].id;
 
-      // 3. Create item with valid location
       const itemResponse = await request.post("/api/items", {
         data: {
           name: `${TEST_PREFIX}Test Stock Item`,
@@ -49,11 +40,15 @@ test.describe("CRUD operations for Stock", () => {
           categoryId: testCategoryId,
           locationId: testLocationId,
           sellingPrice: 100000,
+          costPrice: 90000,
         },
       });
-      expect(itemResponse.status()).toBe(201);
 
-      // 4. Get the created item
+      const itemReponseBody = await itemResponse.json();
+      console.log("Item reponse body: ", itemReponseBody);
+
+      expect(itemReponseBody.status).toBe(201);
+
       const listResponse = await request.get(
         "/api/items?page=1&dataPerPage=100&sortBy=name&orderBy=asc",
       );
@@ -130,7 +125,7 @@ test.describe("CRUD operations for Stock", () => {
 
     expect(response.status()).toBe(200);
     expect(body.data).toBeDefined();
-    expect(body.data.id).toBe(createdStockId);
+    expect(body.data.stock.id).toBe(createdStockId);
   });
 
   test("Get stocks by item", async ({ request }) => {
@@ -149,11 +144,11 @@ test.describe("CRUD operations for Stock", () => {
   });
 
   test("Update a stock", async ({ request }) => {
-    const response = await request.patch("/api/stocks", {
+    const response = await request.patch(`/api/stocks/${createdStockId}`, {
       data: {
-        stockId: createdStockId,
-        type: "DAMAGED",
+        type: "DIRTY",
         locationId: testLocationId,
+        expiredAt: new Date(),
       },
     });
 
@@ -185,7 +180,7 @@ test.describe("CRUD operations for Stock", () => {
   });
 
   test("Error: Create stock with invalid location", async ({ request }) => {
-    const response = await request.post("/api/stocks", {
+    const response = await request.post(`/api/stocks`, {
       data: {
         itemId: testItemId,
         quantity: 50,
@@ -204,7 +199,7 @@ test.describe("CRUD operations for Stock", () => {
   });
 
   test("Error: Create stock with zero quantity", async ({ request }) => {
-    const response = await request.post("/api/stocks", {
+    const response = await request.post(`/api/stocks`, {
       data: {
         itemId: testItemId,
         quantity: 0,
@@ -223,7 +218,7 @@ test.describe("CRUD operations for Stock", () => {
   });
 
   test("Error: Create stock with empty reason", async ({ request }) => {
-    const response = await request.post("/api/stocks", {
+    const response = await request.post(`/api/stocks`, {
       data: {
         itemId: testItemId,
         quantity: 50,
@@ -242,13 +237,15 @@ test.describe("CRUD operations for Stock", () => {
   });
 
   test("Error: Update non-existent stock", async ({ request }) => {
-    const response = await request.patch("/api/stocks", {
-      data: {
-        stockId: "non-existent-stock-id-12345",
-        type: "READY",
-        locationId: testLocationId,
+    const response = await request.patch(
+      "/api/stocks/non-existent-stock-id-12345",
+      {
+        data: {
+          type: "READY",
+          locationId: testLocationId,
+        },
       },
-    });
+    );
 
     const body = await response.json();
 
@@ -272,7 +269,7 @@ test.describe("CRUD operations for Stock", () => {
   });
 
   test("Delete a stock", async ({ request }) => {
-    const createResponse = await request.post("/api/stocks", {
+    const createResponse = await request.post(`/api/stocks`, {
       data: {
         itemId: testItemId,
         quantity: 10,
@@ -283,21 +280,12 @@ test.describe("CRUD operations for Stock", () => {
       },
     });
 
-    await createResponse.json();
-
-    const stockDataResponse = await request.get(
-      "/api/stocks?page=1&dataPerPage=100&sortBy=createdAt&orderBy=asc",
-    );
-
-    const stockDataBody = await stockDataResponse.json();
-    console.log("Stock Data Body:", stockDataBody);
-
-    const findStock = stockDataBody.data.stocks.find(
-      (stock: any) => stock.itemId === testItemId,
-    );
+    const createdStockBody = await createResponse.json();
 
     // Try to delete - this will likely fail due to movements
-    const deleteResponse = await request.delete(`/api/stocks/${findStock.id}`);
+    const deleteResponse = await request.delete(
+      `/api/stocks/${createdStockBody.data.stockId}`,
+    );
     const deleteBody = await deleteResponse.json();
 
     console.log("Delete Response:", deleteBody);

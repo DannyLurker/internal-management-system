@@ -6,16 +6,21 @@ import { AlertCircle } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useFinancialSummary } from "../../dashboard.hooks";
 import { LowStockItem } from "../../dashboard.types";
+import { resolveDateRange } from "./DateFilterDropdown";
 
 export default function LowStockTable() {
   const [page, setPage] = useState(1);
   const dataPerPage = 10;
+
+  const dateRange = resolveDateRange("last7");
 
   const { data, isLoading } = useFinancialSummary({
     lowStockAlertPage: page,
     lowStockAlertDataPerPage: dataPerPage,
     flaggedExpiredStockPage: 1,
     flaggedExpiredStockDataPerPage: 10,
+    endDate: dateRange.endDate.toISOString(),
+    startDate: dateRange.startDate.toISOString(),
   });
 
   const lowStocks = data?.lowStockData || [];
