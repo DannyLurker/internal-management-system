@@ -5,7 +5,6 @@ import { Plus } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useItems } from "@/features/items/item.hooks";
 import type { Item, ItemOption } from "@/features/items/item.types";
-import { useCategories } from "@/features/categories/category.hooks";
 import ItemFormDialog from "./sub-components/ItemFormDialog";
 import ItemDeleteModal from "./sub-components/ItemDeleteModal";
 import ItemActiveOrInactiveModal from "./sub-components/ItemActiveOrInactiveModal";
@@ -17,15 +16,13 @@ import ItemInfoPanel from "./sub-components/item-table/ItemInfoPanel";
 import StockDeleteModal from "@/features/stocks/components/sub-components/StockDeleteModal";
 import StockFormDialog from "@/features/stocks/components/sub-components/StockFormDialog";
 import { Stock, StockDelete } from "@/features/stocks/stock.types";
-import { useLocations } from "@/features/locations/location.hooks";
-import { categoryGetManySchema } from "@/shared/lib/zods/category.zod";
 import ItemTable, { ItemTableFilters } from "./sub-components/item-table";
 import StockMovementFormDialog from "@/features/stock-movements/components/sub-components/StockMovementFormDialog";
 import { StockMovementFormOpenType } from "@/features/stock-movements/stock-movements.types";
 import { LocationOption } from "@/features/locations/location.types";
 
 type ItemManagementProps = {
-  locations: LocationOption[];
+  locations?: LocationOption[];
 };
 
 export default function ItemManagement({ locations }: ItemManagementProps) {
@@ -84,20 +81,6 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
     tableFilters.categoryId,
     tableFilters.activeStatus,
   ]);
-
-  const categoryListParams = useMemo(
-    () =>
-      categoryGetManySchema.parse({
-        page: 1,
-        dataPerPage: 100,
-        sortBy: "name",
-        sortOrder: "asc",
-      }),
-    [],
-  );
-
-  const { data: categoriesResponse } = useCategories(categoryListParams);
-  const categoryOptions = categoriesResponse?.data.categories ?? [];
 
   const params: ItemGetManySchema = useMemo(() => {
     const raw = {
@@ -206,22 +189,6 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
     setStatusChangeItem(null);
   }, []);
 
-  // Location data
-  const { data: locationsResponse } = useLocations({
-    dataPerPage: 100,
-    page: 1,
-    sortBy: "type",
-    sortOrderEnum: "asc",
-  });
-
-  const locationData = locationsResponse?.data.locations ?? [];
-
-  const transformLocations = locationData.map((location) => ({
-    id: location.id,
-    name: location.name,
-    type: location.type,
-  }));
-
   // Stock Modal state and handler
   const [formOpen, setFormOpen] = useState(false);
   const [editStock, setEditStock] = useState<Stock | null>(null);
@@ -304,7 +271,6 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
           onDataPerPageChange={setDataPerPage}
           page={page}
           onPageChange={setPage}
-          categoryOptions={categoryOptions}
           onInfo={(item: { id: string; name: string }) => setSelectedItem(item)}
           onEdit={itemOpenEdit}
           onStatusChange={itemOpenStatusChange}
@@ -318,7 +284,6 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
         item={editItem}
         onSuccess={handleFormSuccess}
         locations={locations}
-        categories={categoryOptions}
       />
 
       <ItemDeleteModal
@@ -361,7 +326,7 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
       <StockFormDialog
         onOpenChange={handleStockFormOpenChange}
         open={formOpen}
-        locations={transformLocations}
+        locations={locations}
         onSuccess={handleStockFormSuccess}
         stock={editStock}
         items={selectedItem?.id ? [selectedItem] : []}
@@ -369,9 +334,7 @@ export default function ItemManagement({ locations }: ItemManagementProps) {
 
       <StockMovementFormDialog
         items={selectedGlobalItemStock}
-        locations={
-          stockMovementFormOpenType === "GLOBAL_STOCK" ? [] : transformLocations
-        }
+        locations={locations}
         isGlobalStock={true}
         movementTypes={
           stockMovementFormOpenType === "GLOBAL_STOCK"

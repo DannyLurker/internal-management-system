@@ -15,11 +15,10 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@/shared/components/ui/select";
+  SearchItemDialog,
+  SearchLocationDialog,
+  SearchSelectTrigger,
+} from "@/shared/components/search-components";
 import type { Stock } from "@/features/stocks/stock.types";
 import { useCreateStock, useUpdateStock } from "@/features/stocks/stock.hooks";
 import {
@@ -33,6 +32,7 @@ import { inputClass } from "../../stock.style";
 import { toast } from "sonner";
 import { formatThousand, unformatThousand } from "@/shared/lib/formatter";
 import { LocationOption } from "@/features/locations/location.types";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/shared/components/ui/select";
 
 type ItemOption = { id: string; name: string };
 
@@ -41,7 +41,7 @@ type StockFormDialogProps = {
   onOpenChange: (open: boolean) => void;
   stock: Stock | null;
   onSuccess: () => void;
-  locations: LocationOption[];
+  locations?: LocationOption[];
   items?: ItemOption[];
 };
 
@@ -58,6 +58,10 @@ export default function StockFormDialog({
   const [expiryInputMode, setExpiryInputMode] = useState<"picker" | "manual">(
     "picker",
   );
+  const [itemSearchOpen, setItemSearchOpen] = useState(false);
+  const [locationSearchOpen, setLocationSearchOpen] = useState(false);
+  const [selectedItemName, setSelectedItemName] = useState<string>("");
+  const [selectedLocationName, setSelectedLocationName] = useState<string>("");
 
   const createMutation = useCreateStock();
   const updateMutation = useUpdateStock();
@@ -94,16 +98,24 @@ export default function StockFormDialog({
         locationId: stock.locationId,
         expiredAt: stock.expiredAt ? new Date(stock.expiredAt) : undefined,
       });
+      setSelectedItemName(stock.item?.name ?? "");
+      setSelectedLocationName(stock.location?.name ?? "");
     } else {
+      const initialItem = items && items.length === 1 ? items[0] : null;
+      const initialLocation =
+        locations && locations.length === 1 ? locations[0] : null;
+
       createForm.reset({
-        itemId: items && items.length > 0 ? items[0]?.id : "",
+        itemId: initialItem?.id ?? "",
         quantity: undefined,
         totalCost: undefined,
         reason: "",
         type: "READY",
-        locationId: locations[0]?.id ?? "",
+        locationId: initialLocation?.id ?? "",
         expiredAt: undefined,
       });
+      setSelectedItemName(initialItem?.name ?? "");
+      setSelectedLocationName(initialLocation?.name ?? "");
     }
   }, [open, stock, items, locations, createForm, updateForm]);
 
@@ -165,36 +177,25 @@ export default function StockFormDialog({
             {!isEdit ? (
               <div>
                 <Label className="font-ochre-ui text-sm">Item</Label>
-                {(() => {
-                  const selectedId = createForm.watch("itemId");
-
-                  return (
-                    <Select
-                      value={selectedId}
-                      onValueChange={(v) =>
-                        createForm.setValue("itemId", v ?? "", {
-                          shouldValidate: true,
-                        })
-                      }
-                    >
-                      <SelectTrigger
-                        className={cn("mt-1.5 w-full", inputClass)}
-                      >
-                        {selectedId
-                          ? (items?.find((i) => i.id === selectedId)?.name ??
-                            "Select an item")
-                          : "Select an item"}
-                      </SelectTrigger>
-                      <SelectContent>
-                        {items?.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  );
-                })()}
+                <div className="mt-1.5">
+                  <SearchSelectTrigger
+                    value={selectedItemName}
+                    placeholder="Search and select an item..."
+                    onClick={() => setItemSearchOpen(true)}
+                    error={Boolean(createForm.formState.errors.itemId)}
+                  />
+                  <SearchItemDialog
+                    open={itemSearchOpen}
+                    onOpenChange={setItemSearchOpen}
+                    selectedId={createForm.watch("itemId")}
+                    onSelect={(item) => {
+                      setSelectedItemName(item.name);
+                      createForm.setValue("itemId", item.id, {
+                        shouldValidate: true,
+                      });
+                    }}
+                  />
+                </div>
                 {createForm.formState.errors.itemId && (
                   <p className="mt-1 font-ochre-ui text-xs text-red-600">
                     {createForm.formState.errors.itemId.message}
@@ -214,44 +215,53 @@ export default function StockFormDialog({
               {/* Location Selection */}
               <div>
                 <Label className="font-ochre-ui text-sm">Location</Label>
-                {(() => {
-                  const selectedId = isEdit
-                    ? updateForm.watch("locationId")
-                    : createForm.watch("locationId");
-
-                  return (
-                    <Select
-                      value={selectedId}
-                      onValueChange={(v) => {
-                        if (isEdit) {
-                          updateForm.setValue("locationId", v ?? "", {
-                            shouldValidate: true,
-                          });
-                        } else {
-                          createForm.setValue("locationId", v ?? "", {
-                            shouldValidate: true,
-                          });
-                        }
-                      }}
-                    >
-                      <SelectTrigger
-                        className={cn("mt-1.5 w-full", inputClass)}
-                      >
-                        {selectedId
-                          ? (locations.find((l) => l.id === selectedId)?.name ??
-                            "Select a location")
-                          : "Select a location"}
-                      </SelectTrigger>
-                      <SelectContent>
-                        {locations.map((loc) => (
-                          <SelectItem key={loc.id} value={loc.id}>
-                            {loc.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  );
-                })()}
+                <div className="mt-1.5">
+                  <SearchSelectTrigger
+                    value={selectedLocationName}
+                    placeholder="Search and select location..."
+                    onClick={() => setLocationSearchOpen(true)}
+                    error={Boolean(
+                      isEdit
+                        ? updateForm.formState.errors.locationId
+                        : createForm.formState.errors.locationId,
+                    )}
+                  />
+                  <SearchLocationDialog
+                    open={locationSearchOpen}
+                    onOpenChange={setLocationSearchOpen}
+                    selectedId={
+                      isEdit
+                        ? updateForm.watch("locationId")
+                        : createForm.watch("locationId")
+                    }
+                    onSelect={(loc) => {
+                      setSelectedLocationName(loc.name);
+                      if (isEdit) {
+                        updateForm.setValue("locationId", loc.id, {
+                          shouldValidate: true,
+                        });
+                      } else {
+                        createForm.setValue("locationId", loc.id, {
+                          shouldValidate: true,
+                        });
+                      }
+                    }}
+                  />
+                </div>
+                {(
+                  isEdit
+                    ? updateForm.formState.errors.locationId
+                    : createForm.formState.errors.locationId
+                ) && (
+                    <p className="mt-1 font-ochre-ui text-xs text-red-600">
+                      {
+                        (isEdit
+                          ? updateForm.formState.errors.locationId
+                          : createForm.formState.errors.locationId
+                        )?.message
+                      }
+                    </p>
+                  )}
               </div>
 
               {/* Stock Type */}
@@ -432,24 +442,24 @@ export default function StockFormDialog({
                 className={cn("w-full", inputClass)}
                 {...(isEdit
                   ? updateForm.register("expiredAt", {
-                      setValueAs: (value) => (value === "" ? undefined : value),
-                    })
+                    setValueAs: (value) => (value === "" ? undefined : value),
+                  })
                   : createForm.register("expiredAt", {
-                      setValueAs: (value) => (value === "" ? undefined : value),
-                    }))}
+                    setValueAs: (value) => (value === "" ? undefined : value),
+                  }))}
               />
               {(isEdit
                 ? updateForm.formState.errors.expiredAt
                 : createForm.formState.errors.expiredAt) && (
-                <p className="mt-1 font-ochre-ui text-xs text-red-600">
-                  {
-                    (isEdit
-                      ? updateForm.formState.errors.expiredAt
-                      : createForm.formState.errors.expiredAt
-                    )?.message
-                  }
-                </p>
-              )}
+                  <p className="mt-1 font-ochre-ui text-xs text-red-600">
+                    {
+                      (isEdit
+                        ? updateForm.formState.errors.expiredAt
+                        : createForm.formState.errors.expiredAt
+                      )?.message
+                    }
+                  </p>
+                )}
             </div>
             <p className="mt-1.5 font-ochre-ui text-xs leading-normal text-[#524439]/70">
               {expiryInputMode === "picker"

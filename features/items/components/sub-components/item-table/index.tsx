@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowDownUp, ChevronsLeft, ChevronsRight, Search } from "lucide-react";
+import { useState } from "react";
+import { ArrowDownUp, ChevronsLeft, ChevronsRight, Folder, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -14,6 +15,9 @@ import { cn } from "@/shared/lib/utils";
 import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
 import { ItemGetManySchema } from "@/shared/lib/zods/item.zod";
+import {
+  SearchCategoryDialog,
+} from "@/shared/components/search-components";
 
 export type ItemTableFilters = {
   search: string;
@@ -36,7 +40,7 @@ type ItemTableProps = {
   onDataPerPageChange: (page: number) => void;
   page: number;
   onPageChange: (page: number) => void;
-  categoryOptions: { id: string; name: string }[];
+  categoryOptions?: { id: string; name: string }[];
   onInfo: (item: { id: string; name: string }) => void;
   onEdit: (item: Item) => void;
   onStatusChange: (item: Item, status: "ACTIVE" | "INACTIVE") => void;
@@ -58,18 +62,28 @@ export default function ItemTable({
   onDataPerPageChange,
   page,
   onPageChange,
-  categoryOptions,
+  categoryOptions = [],
   onInfo,
   onEdit,
   onStatusChange,
   onDelete,
 }: ItemTableProps) {
+  const [categorySearchOpen, setCategorySearchOpen] = useState(false);
+  const [selectedCategoryName, setSelectedCategoryName] = useState("");
+
   const totalPages = Math.ceil(totalItems / dataPerPage);
   const hasNextPage = page * dataPerPage < totalItems;
   const hasPrevPage = page > 1;
   const rangeStart = items.length === 0 ? 0 : (page - 1) * dataPerPage + 1;
   const rangeEnd = (page - 1) * dataPerPage + items.length;
   const totalShown = totalItems;
+
+  const currentCategoryLabel =
+    filters.categoryId === "ALL"
+      ? "Category: All"
+      : selectedCategoryName
+        ? `Category: ${selectedCategoryName}`
+        : `Category: ${categoryOptions.find((c) => c.id === filters.categoryId)?.name ?? "Selected"}`;
 
   if (isError) {
     return (
@@ -102,28 +116,31 @@ export default function ItemTable({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Select
-            value={filters.categoryId}
-            onValueChange={(value) =>
-              onFiltersChange({ categoryId: value ?? "ALL" })
-            }
+          <button
+            type="button"
+            onClick={() => setCategorySearchOpen(true)}
+            className="inline-flex h-10 min-w-36 items-center justify-between gap-2 rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 px-3 font-ochre-ui text-sm text-[#121c28] transition-colors hover:border-[#894d0d]/35 focus-visible:border-[#894d0d]/35 focus-visible:ring-2 focus-visible:ring-[#894d0d]/15"
           >
-            <SelectTrigger className="h-10 min-w-36 rounded-lg border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15">
-              <SelectValue>
-                {filters.categoryId === "ALL"
-                  ? "Category: All"
-                  : `Category: ${categoryOptions.find((c) => c.id === filters.categoryId)?.name ?? "…"}`}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Category: All</SelectItem>
-              {categoryOptions.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <span className="flex items-center gap-1.5 truncate">
+              <Folder className="size-3.5 text-[#565e74] shrink-0" />
+              <span className="truncate">{currentCategoryLabel}</span>
+            </span>
+          </button>
+
+          <SearchCategoryDialog
+            open={categorySearchOpen}
+            onOpenChange={setCategorySearchOpen}
+            selectedId={filters.categoryId}
+            showAllOption
+            onSelect={(cat) => {
+              setSelectedCategoryName(cat.name);
+              onFiltersChange({ categoryId: cat.id });
+            }}
+            onSelectAll={() => {
+              setSelectedCategoryName("");
+              onFiltersChange({ categoryId: "ALL" });
+            }}
+          />
 
           <Select
             value={

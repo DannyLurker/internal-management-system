@@ -16,11 +16,10 @@ import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Label } from "@/shared/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@/shared/components/ui/select";
+  SearchCategoryDialog,
+  SearchLocationDialog,
+  SearchSelectTrigger,
+} from "@/shared/components/search-components";
 import type { AttributeRow, Item } from "@/features/items/item.types";
 import { useCreateItem, useUpdateItem } from "@/features/items/item.hooks";
 import {
@@ -43,8 +42,8 @@ type ItemFormDialogProps = {
   onOpenChange: (open: boolean) => void;
   item: Item | null;
   onSuccess: () => void;
-  locations: LocationOption[];
-  categories: CategoryOption[];
+  locations?: LocationOption[];
+  categories?: CategoryOption[];
 };
 
 export default function ItemFormDialog({
@@ -65,6 +64,10 @@ export default function ItemFormDialog({
   const [expiryInputMode, setExpiryInputMode] = useState<"picker" | "manual">(
     "picker",
   );
+  const [categorySearchOpen, setCategorySearchOpen] = useState(false);
+  const [locationSearchOpen, setLocationSearchOpen] = useState(false);
+  const [selectedCategoryName, setSelectedCategoryName] = useState<string>("");
+  const [selectedLocationName, setSelectedLocationName] = useState<string>("");
 
   const createMutation = useCreateItem();
   const updateMutation = useUpdateItem();
@@ -123,14 +126,15 @@ export default function ItemFormDialog({
         minThreshold: item.minThreshold,
         attributes: (item.attributes as Record<string, unknown> | null) ?? {},
       });
+      setSelectedCategoryName(item.category?.name ?? "");
       setImagePreview(item.image ?? null);
       setAttributeRows(parseAttributes(item.attributes));
     } else {
       createForm.reset({
         name: "",
         description: "",
-        categoryId: categories[0]?.id ?? "",
-        locationId: locations[0]?.id ?? "",
+        categoryId: "",
+        locationId: "",
         image: "",
         sellingPrice: undefined,
         costPrice: 0,
@@ -143,10 +147,12 @@ export default function ItemFormDialog({
           expiredAt: undefined,
         },
       });
+      setSelectedCategoryName("");
+      setSelectedLocationName("");
       setImagePreview(null);
       setAttributeRows([{ key: "", value: "" }]);
     }
-  }, [open, item, categories, locations, createForm, updateForm]);
+  }, [open, item, createForm, updateForm]);
 
   const handleImageChange = (file: File | undefined) => {
     if (!file) return;
@@ -266,43 +272,53 @@ export default function ItemFormDialog({
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <Label className="font-ochre-ui text-sm">Category</Label>
-                {/* 1. Extract the current selected value by checking form state */}
-                {(() => {
-                  const selectedId = isEdit
-                    ? updateForm.watch("categoryId")
-                    : createForm.watch("categoryId");
-
-                  return (
-                    <Select
-                      value={selectedId}
-                      onValueChange={(v) => {
-                        if (isEdit) {
-                          updateForm.setValue("categoryId", v ?? "", {
-                            shouldValidate: true,
-                          });
-                        } else {
-                          createForm.setValue("categoryId", v ?? "", {
-                            shouldValidate: true,
-                          });
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        {selectedId
-                          ? (categories.find((c) => c.id === selectedId)
-                              ?.name ?? "Select a category")
-                          : "Select a category"}
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  );
-                })()}
+                <div className="mt-1.5">
+                  <SearchSelectTrigger
+                    value={selectedCategoryName}
+                    placeholder="Search category..."
+                    onClick={() => setCategorySearchOpen(true)}
+                    error={Boolean(
+                      isEdit
+                        ? updateForm.formState.errors.categoryId
+                        : createForm.formState.errors.categoryId,
+                    )}
+                  />
+                  <SearchCategoryDialog
+                    open={categorySearchOpen}
+                    onOpenChange={setCategorySearchOpen}
+                    selectedId={
+                      isEdit
+                        ? updateForm.watch("categoryId")
+                        : createForm.watch("categoryId")
+                    }
+                    onSelect={(cat) => {
+                      setSelectedCategoryName(cat.name);
+                      if (isEdit) {
+                        updateForm.setValue("categoryId", cat.id, {
+                          shouldValidate: true,
+                        });
+                      } else {
+                        createForm.setValue("categoryId", cat.id, {
+                          shouldValidate: true,
+                        });
+                      }
+                    }}
+                  />
+                </div>
+                {(
+                  isEdit
+                    ? updateForm.formState.errors.categoryId
+                    : createForm.formState.errors.categoryId
+                ) ? (
+                  <p className="mt-1 font-ochre-ui text-xs text-red-600">
+                    {
+                      (isEdit
+                        ? updateForm.formState.errors.categoryId
+                        : createForm.formState.errors.categoryId
+                      )?.message
+                    }
+                  </p>
+                ) : null}
               </div>
             </div>
 
@@ -328,41 +344,34 @@ export default function ItemFormDialog({
             <legend className="sr-only">Location and visual identity</legend>
             <div>
               <p className="font-ochre-ui text-[11px] font-semibold uppercase tracking-wider text-[#524439]">
-                Location
+                Initial Storage Location
               </p>
 
               {!isEdit ? (
-                (() => {
-                  // 1. Safe lookup variable for the current active creation form ID
-                  const selectedLocationId = createForm.watch("locationId");
-
-                  return (
-                    <Select
-                      value={selectedLocationId}
-                      onValueChange={(v) =>
-                        createForm.setValue("locationId", v ?? "", {
-                          shouldValidate: true,
-                        })
-                      }
-                    >
-                      <SelectTrigger className={cn("mt-2 w-full", inputClass)}>
-                        {/* 2. 💡 Look up the real location name text string matching the database ID */}
-                        {selectedLocationId
-                          ? (locations.find(
-                              (loc) => loc.id === selectedLocationId,
-                            )?.name ?? "Storage wing")
-                          : "Storage wing"}
-                      </SelectTrigger>
-                      <SelectContent>
-                        {locations.map((loc) => (
-                          <SelectItem key={loc.id} value={loc.id}>
-                            {loc.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  );
-                })()
+                <div className="mt-2">
+                  <SearchSelectTrigger
+                    value={selectedLocationName}
+                    placeholder="Select storage location..."
+                    onClick={() => setLocationSearchOpen(true)}
+                    error={Boolean(createForm.formState.errors.locationId)}
+                  />
+                  <SearchLocationDialog
+                    open={locationSearchOpen}
+                    onOpenChange={setLocationSearchOpen}
+                    selectedId={createForm.watch("locationId")}
+                    onSelect={(loc) => {
+                      setSelectedLocationName(loc.name);
+                      createForm.setValue("locationId", loc.id, {
+                        shouldValidate: true,
+                      });
+                    }}
+                  />
+                  {createForm.formState.errors.locationId ? (
+                    <p className="mt-1 font-ochre-ui text-xs text-red-600">
+                      {createForm.formState.errors.locationId.message}
+                    </p>
+                  ) : null}
+                </div>
               ) : (
                 <p className="mt-2 font-ochre-ui text-sm text-[#524439]">
                   Location is set at stock receipt and cannot be changed here.
