@@ -276,7 +276,9 @@ export default function ItemFormDialog({
                   <SearchSelectTrigger
                     value={selectedCategoryName}
                     placeholder="Search category..."
-                    onClick={() => setCategorySearchOpen(true)}
+                    onClick={() => {
+                      setCategorySearchOpen(true);
+                    }}
                     error={Boolean(
                       isEdit
                         ? updateForm.formState.errors.categoryId

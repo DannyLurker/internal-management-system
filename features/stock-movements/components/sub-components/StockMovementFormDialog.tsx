@@ -31,7 +31,12 @@ import { StockType } from "@prisma/client";
 import { formatThousand, unformatThousand } from "@/shared/lib/formatter";
 import { AUTO_CALCULATED_MOVEMENTS } from "../../stock-movements.utils";
 import { LocationOption } from "@/features/locations/location.types";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/shared/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/shared/components/ui/select";
 
 type ItemOption = { id: string; name: string };
 type MovementTypeOption = StockMovementCreateSchema["stockMovementType"];
@@ -141,12 +146,10 @@ export default function StockMovementFormDialog({
   const excludedStockTypes = useMemo(() => {
     if (selectedMovementType === "MARK_AS_DAMAGED")
       return ["DAMAGED" as StockType];
-    if (selectedMovementType === "MARK_AS_DIRTY")
-      return ["DIRTY" as StockType];
+    if (selectedMovementType === "MARK_AS_DIRTY") return ["DIRTY" as StockType];
     if (selectedMovementType === "MARK_AS_EXPIRED")
       return ["EXPIRED" as StockType];
-    if (selectedMovementType === "MARK_AS_LOST")
-      return ["LOST" as StockType];
+    if (selectedMovementType === "MARK_AS_LOST") return ["LOST" as StockType];
     return undefined;
   }, [selectedMovementType]);
 
@@ -342,14 +345,16 @@ export default function StockMovementFormDialog({
                         onOpenChange={setStockSearchOpen}
                         selectedId={selectedStockId}
                         itemId={selectedItemId}
-                        onlyReady={typeShowReadyStocks.has(selectedMovementType)}
+                        onlyReady={typeShowReadyStocks.has(
+                          selectedMovementType,
+                        )}
                         excludedTypes={excludedStockTypes}
                         onSelect={(stock) => {
                           form.setValue("stockId", stock.id, {
                             shouldValidate: true,
                           });
                           setSelectedStockLabel(
-                            `${stock.item.name} - ${stock.location?.name ?? "No location"} - ${stock.type} (${stock.quantity ?? 0})`,
+                            `${stock.location?.name ?? "No location"} - ${stock.type} (${stock.quantity ?? 0})`,
                           );
                         }}
                       />
@@ -480,43 +485,43 @@ export default function StockMovementFormDialog({
               {!AUTO_CALCULATED_MOVEMENTS.includes(
                 form.getValues("stockMovementType"),
               ) && (
-                  <>
-                    {form.getValues("stockMovementType") === "TRANSFER" ? (
-                      <div></div>
-                    ) : (
-                      <div>
-                        <Label className="font-ochre-ui text-sm">
-                          Total cost {requiresTotalCost ? "" : "(optional)"}
-                        </Label>
-                        <Controller
-                          control={form.control}
-                          name="totalCost"
-                          render={({ field }) => (
-                            <Input
-                              type="text"
-                              inputMode="numeric"
-                              className={cn("mt-1.5", stockMovementInputClass)}
-                              placeholder="10.000.000"
-                              value={formatThousand(field.value ?? "")}
-                              onChange={(e) => {
-                                const rawValue = e.target.value;
-                                const numericValue = unformatThousand(rawValue);
-                                field.onChange(
-                                  numericValue === 0 ? undefined : numericValue,
-                                );
-                              }}
-                            />
-                          )}
-                        />
-                        {form.formState.errors.totalCost ? (
-                          <p className="mt-1 font-ochre-ui text-xs text-red-600">
-                            {form.formState.errors.totalCost.message}
-                          </p>
-                        ) : null}
-                      </div>
-                    )}
-                  </>
-                )}
+                <>
+                  {form.getValues("stockMovementType") === "TRANSFER" ? (
+                    <div></div>
+                  ) : (
+                    <div>
+                      <Label className="font-ochre-ui text-sm">
+                        Total cost {requiresTotalCost ? "" : "(optional)"}
+                      </Label>
+                      <Controller
+                        control={form.control}
+                        name="totalCost"
+                        render={({ field }) => (
+                          <Input
+                            type="text"
+                            inputMode="numeric"
+                            className={cn("mt-1.5", stockMovementInputClass)}
+                            placeholder="10.000.000"
+                            value={formatThousand(field.value ?? "")}
+                            onChange={(e) => {
+                              const rawValue = e.target.value;
+                              const numericValue = unformatThousand(rawValue);
+                              field.onChange(
+                                numericValue === 0 ? undefined : numericValue,
+                              );
+                            }}
+                          />
+                        )}
+                      />
+                      {form.formState.errors.totalCost ? (
+                        <p className="mt-1 font-ochre-ui text-xs text-red-600">
+                          {form.formState.errors.totalCost.message}
+                        </p>
+                      ) : null}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
             <div>
