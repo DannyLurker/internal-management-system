@@ -15,8 +15,8 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import {
-  SearchItemDialog,
-  SearchLocationDialog,
+  SearchItemPopover,
+  SearchLocationPopover,
   SearchSelectTrigger,
 } from "@/shared/components/search-components";
 import type { Stock } from "@/features/stocks/stock.types";
@@ -178,13 +178,7 @@ export default function StockFormDialog({
               <div>
                 <Label className="font-ochre-ui text-sm">Item</Label>
                 <div className="mt-1.5">
-                  <SearchSelectTrigger
-                    value={selectedItemName}
-                    placeholder="Search and select an item..."
-                    onClick={() => setItemSearchOpen(true)}
-                    error={Boolean(createForm.formState.errors.itemId)}
-                  />
-                  <SearchItemDialog
+                  <SearchItemPopover
                     open={itemSearchOpen}
                     onOpenChange={setItemSearchOpen}
                     selectedId={createForm.watch("itemId")}
@@ -194,7 +188,13 @@ export default function StockFormDialog({
                         shouldValidate: true,
                       });
                     }}
-                  />
+                  >
+                    <SearchSelectTrigger
+                      value={selectedItemName}
+                      placeholder="Search and select an item..."
+                      error={Boolean(createForm.formState.errors.itemId)}
+                    />
+                  </SearchItemPopover>
                 </div>
                 {createForm.formState.errors.itemId && (
                   <p className="mt-1 font-ochre-ui text-xs text-red-600">
@@ -216,17 +216,7 @@ export default function StockFormDialog({
               <div>
                 <Label className="font-ochre-ui text-sm">Location</Label>
                 <div className="mt-1.5">
-                  <SearchSelectTrigger
-                    value={selectedLocationName}
-                    placeholder="Search and select location..."
-                    onClick={() => setLocationSearchOpen(true)}
-                    error={Boolean(
-                      isEdit
-                        ? updateForm.formState.errors.locationId
-                        : createForm.formState.errors.locationId,
-                    )}
-                  />
-                  <SearchLocationDialog
+                  <SearchLocationPopover
                     open={locationSearchOpen}
                     onOpenChange={setLocationSearchOpen}
                     selectedId={
@@ -246,7 +236,17 @@ export default function StockFormDialog({
                         });
                       }
                     }}
-                  />
+                  >
+                    <SearchSelectTrigger
+                      value={selectedLocationName}
+                      placeholder="Search and select location..."
+                      error={Boolean(
+                        isEdit
+                          ? updateForm.formState.errors.locationId
+                          : createForm.formState.errors.locationId,
+                      )}
+                    />
+                  </SearchLocationPopover>
                 </div>
                 {(
                   isEdit

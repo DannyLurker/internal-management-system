@@ -1,17 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { isValidElement, useEffect, useMemo, useState } from "react";
 import {
   Check,
   ChevronsLeft,
   ChevronsRight,
   Loader2,
   Package,
-  X,
 } from "lucide-react";
 import {
   Command,
-  CommandDialog,
   CommandEmpty,
   CommandGroup,
   CommandInput,
@@ -23,33 +21,34 @@ import { useItems } from "@/features/items/item.hooks";
 import { itemGetManyschema } from "@/shared/lib/zods/item.zod";
 import { cn } from "@/shared/lib/utils";
 import { formatThousand } from "@/shared/lib/formatter";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { SearchItemSearchOption } from "@/shared/lib/types/search-component.types";
 
-export interface SearchItemDialogProps {
+export interface SearchItemPopoverProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelect: (item: SearchItemSearchOption) => void;
   selectedId?: string;
   categoryId?: string;
   status?: boolean;
-  title?: string;
-  description?: string;
   showAllOption?: boolean;
   onSelectAll?: () => void;
+  children?: React.ReactNode;
+  trigger?: React.ReactNode;
 }
 
-export default function SearchItemDialog({
+export default function SearchItemPopover({
   open,
   onOpenChange,
   onSelect,
   selectedId,
   categoryId,
   status,
-  title = "Search Items",
-  description = "Search and select an inventory item...",
   showAllOption = false,
   onSelectAll,
-}: SearchItemDialogProps) {
+  children,
+  trigger,
+}: SearchItemPopoverProps) {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -109,37 +108,27 @@ export default function SearchItemDialog({
     );
   }, [items, search, debouncedSearch]);
 
+  const triggerElement = trigger ?? children;
+
   return (
-    <>
-      <CommandDialog
-        open={open}
-        onOpenChange={onOpenChange}
-        title={title}
-        description={description}
-        className="max-w-lg rounded-xl border border-[#d9e3f4] bg-white shadow-2xl"
+    <Popover open={open} onOpenChange={onOpenChange}>
+      {triggerElement && (
+        <PopoverTrigger
+          render={isValidElement(triggerElement) ? triggerElement : undefined}
+        >
+          {!isValidElement(triggerElement) ? triggerElement : undefined}
+        </PopoverTrigger>
+      )}
+      <PopoverContent
+        className="w-(--anchor-width,420px) min-w-[320px] max-w-[calc(100vw-2rem)] p-0 shadow-2xl rounded-xl border border-[#d9e3f4] bg-white"
+        align="start"
       >
         <Command shouldFilter={false} className="rounded-xl">
-          <div className="flex items-center justify-between border-b border-[#d9e3f4] px-4 py-2.5">
-            <span className="font-ochre-ui text-sm font-semibold text-[#121c28]">
-              {title}
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                onOpenChange(false);
-              }}
-              className="rounded-md p-1 text-[#565e74] hover:bg-[#eef4ff] hover:text-[#121c28] transition-colors focus:outline-none focus:ring-2 focus:ring-[#894d0d]"
-              aria-label="Close dialog"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-
           <CommandInput
             placeholder="Type item name or category..."
             value={search}
             onValueChange={setSearch}
-            className="font-ochre-ui text-sm"
+            className="font-ochre-ui text-sm border-b border-[#d9e3f4]"
           />
 
           <CommandList className="max-h-80 p-1 font-ochre-ui">
@@ -153,7 +142,7 @@ export default function SearchItemDialog({
                 No items found.
               </CommandEmpty>
             ) : (
-              <>
+              <div>
                 <CommandGroup heading="Items">
                   {showAllOption && (
                     <CommandItem
@@ -274,7 +263,7 @@ export default function SearchItemDialog({
                       <span className="font-semibold text-[#121c28]">
                         {totalItems}
                       </span>{" "}
-                      categories
+                      items
                     </p>
 
                     <div className="flex items-center gap-2">
@@ -340,11 +329,11 @@ export default function SearchItemDialog({
                     </div>
                   </div>
                 )}
-              </>
+              </div>
             )}
           </CommandList>
         </Command>
-      </CommandDialog>
-    </>
+      </PopoverContent>
+    </Popover>
   );
 }

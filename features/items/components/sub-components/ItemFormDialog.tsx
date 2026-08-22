@@ -16,8 +16,8 @@ import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Label } from "@/shared/components/ui/label";
 import {
-  SearchCategoryDialog,
-  SearchLocationDialog,
+  SearchCategoryPopover,
+  SearchLocationPopover,
   SearchSelectTrigger,
 } from "@/shared/components/search-components";
 import type { AttributeRow, Item } from "@/features/items/item.types";
@@ -269,23 +269,11 @@ export default function ItemFormDialog({
               ) : null}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 w-full">
               <div>
                 <Label className="font-ochre-ui text-sm">Category</Label>
                 <div className="mt-1.5">
-                  <SearchSelectTrigger
-                    value={selectedCategoryName}
-                    placeholder="Search category..."
-                    onClick={() => {
-                      setCategorySearchOpen(true);
-                    }}
-                    error={Boolean(
-                      isEdit
-                        ? updateForm.formState.errors.categoryId
-                        : createForm.formState.errors.categoryId,
-                    )}
-                  />
-                  <SearchCategoryDialog
+                  <SearchCategoryPopover
                     open={categorySearchOpen}
                     onOpenChange={setCategorySearchOpen}
                     selectedId={
@@ -305,7 +293,17 @@ export default function ItemFormDialog({
                         });
                       }
                     }}
-                  />
+                  >
+                    <SearchSelectTrigger
+                      value={selectedCategoryName}
+                      placeholder="Search and select category..."
+                      error={Boolean(
+                        isEdit
+                          ? updateForm.formState.errors.categoryId
+                          : createForm.formState.errors.categoryId,
+                      )}
+                    />
+                  </SearchCategoryPopover>
                 </div>
                 {(
                   isEdit
@@ -351,13 +349,7 @@ export default function ItemFormDialog({
 
               {!isEdit ? (
                 <div className="mt-2">
-                  <SearchSelectTrigger
-                    value={selectedLocationName}
-                    placeholder="Select storage location..."
-                    onClick={() => setLocationSearchOpen(true)}
-                    error={Boolean(createForm.formState.errors.locationId)}
-                  />
-                  <SearchLocationDialog
+                  <SearchLocationPopover
                     open={locationSearchOpen}
                     onOpenChange={setLocationSearchOpen}
                     selectedId={createForm.watch("locationId")}
@@ -367,7 +359,13 @@ export default function ItemFormDialog({
                         shouldValidate: true,
                       });
                     }}
-                  />
+                  >
+                    <SearchSelectTrigger
+                      value={selectedLocationName}
+                      placeholder="Select storage location..."
+                      error={Boolean(createForm.formState.errors.locationId)}
+                    />
+                  </SearchLocationPopover>
                   {createForm.formState.errors.locationId ? (
                     <p className="mt-1 font-ochre-ui text-xs text-red-600">
                       {createForm.formState.errors.locationId.message}

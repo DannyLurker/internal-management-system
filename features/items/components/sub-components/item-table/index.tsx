@@ -16,7 +16,7 @@ import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
 import { ItemGetManySchema } from "@/shared/lib/zods/item.zod";
 import {
-  SearchCategoryDialog,
+  SearchCategoryPopover,
 } from "@/shared/components/search-components";
 
 export type ItemTableFilters = {
@@ -116,18 +116,7 @@ export default function ItemTable({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setCategorySearchOpen(true)}
-            className="inline-flex h-10 min-w-36 items-center justify-between gap-2 rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 px-3 font-ochre-ui text-sm text-[#121c28] transition-colors hover:border-[#894d0d]/35 focus-visible:border-[#894d0d]/35 focus-visible:ring-2 focus-visible:ring-[#894d0d]/15"
-          >
-            <span className="flex items-center gap-1.5 truncate">
-              <Folder className="size-3.5 text-[#565e74] shrink-0" />
-              <span className="truncate">{currentCategoryLabel}</span>
-            </span>
-          </button>
-
-          <SearchCategoryDialog
+          <SearchCategoryPopover
             open={categorySearchOpen}
             onOpenChange={setCategorySearchOpen}
             selectedId={filters.categoryId}
@@ -140,7 +129,17 @@ export default function ItemTable({
               setSelectedCategoryName("");
               onFiltersChange({ categoryId: "ALL" });
             }}
-          />
+          >
+            <button
+              type="button"
+              className="inline-flex h-10 min-w-36 items-center justify-between gap-2 rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 px-3 font-ochre-ui text-sm text-[#121c28] transition-colors hover:border-[#894d0d]/35 focus-visible:border-[#894d0d]/35 focus-visible:ring-2 focus-visible:ring-[#894d0d]/15"
+            >
+              <span className="flex items-center gap-1.5 truncate">
+                <Folder className="size-3.5 text-[#565e74] shrink-0" />
+                <span className="truncate">{currentCategoryLabel}</span>
+              </span>
+            </button>
+          </SearchCategoryPopover>
 
           <Select
             value={

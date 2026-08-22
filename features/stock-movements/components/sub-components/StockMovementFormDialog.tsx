@@ -15,10 +15,10 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Textarea } from "@/shared/components/ui/textarea";
 import {
-  SearchItemDialog,
-  SearchLocationDialog,
+  SearchItemPopover,
+  SearchLocationPopover,
   SearchSelectTrigger,
-  SearchStockDialog,
+  SearchStockPopover,
 } from "@/shared/components/search-components";
 import { cn } from "@/shared/lib/utils";
 import {
@@ -261,13 +261,7 @@ export default function StockMovementFormDialog({
                 <div>
                   <Label className="font-ochre-ui text-sm">Item</Label>
                   <div className="mt-1.5">
-                    <SearchSelectTrigger
-                      value={selectedItemName}
-                      placeholder="Search and select item..."
-                      onClick={() => setItemSearchOpen(true)}
-                      error={Boolean(form.formState.errors.itemId)}
-                    />
-                    <SearchItemDialog
+                    <SearchItemPopover
                       open={itemSearchOpen}
                       onOpenChange={setItemSearchOpen}
                       selectedId={selectedItemId}
@@ -279,7 +273,13 @@ export default function StockMovementFormDialog({
                         form.setValue("stockId", defaultStockId ?? undefined);
                         setSelectedStockLabel("");
                       }}
-                    />
+                    >
+                      <SearchSelectTrigger
+                        value={selectedItemName}
+                        placeholder="Search and select item..."
+                        error={Boolean(form.formState.errors.itemId)}
+                      />
+                    </SearchItemPopover>
                   </div>
                   {form.formState.errors.itemId ? (
                     <p className="mt-1 font-ochre-ui text-xs text-red-600">
@@ -329,18 +329,7 @@ export default function StockMovementFormDialog({
                   <div>
                     <Label className="font-ochre-ui text-sm">Stock Batch</Label>
                     <div className="mt-1.5">
-                      <SearchSelectTrigger
-                        value={selectedStockLabel}
-                        placeholder={
-                          selectedItemId
-                            ? "Search and select source stock batch..."
-                            : "Select an item first..."
-                        }
-                        disabled={!selectedItemId}
-                        onClick={() => setStockSearchOpen(true)}
-                        error={Boolean(form.formState.errors.stockId)}
-                      />
-                      <SearchStockDialog
+                      <SearchStockPopover
                         open={stockSearchOpen}
                         onOpenChange={setStockSearchOpen}
                         selectedId={selectedStockId}
@@ -357,7 +346,18 @@ export default function StockMovementFormDialog({
                             `${stock.location?.name ?? "No location"} - ${stock.type} (${stock.quantity ?? 0})`,
                           );
                         }}
-                      />
+                      >
+                        <SearchSelectTrigger
+                          value={selectedStockLabel}
+                          placeholder={
+                            selectedItemId
+                              ? "Search and select source stock batch..."
+                              : "Select an item first..."
+                          }
+                          disabled={!selectedItemId}
+                          error={Boolean(form.formState.errors.stockId)}
+                        />
+                      </SearchStockPopover>
                     </div>
                     {form.formState.errors.stockId ? (
                       <p className="mt-1 font-ochre-ui text-xs text-red-600">
@@ -377,15 +377,7 @@ export default function StockMovementFormDialog({
                     Destination location
                   </Label>
                   <div className="mt-1.5">
-                    <SearchSelectTrigger
-                      value={selectedDestinationName}
-                      placeholder="Search and select destination..."
-                      onClick={() => setLocationSearchOpen(true)}
-                      error={Boolean(
-                        form.formState.errors.destinationLocationId,
-                      )}
-                    />
-                    <SearchLocationDialog
+                    <SearchLocationPopover
                       open={locationSearchOpen}
                       onOpenChange={setLocationSearchOpen}
                       selectedId={form.watch("destinationLocationId")}
@@ -400,7 +392,15 @@ export default function StockMovementFormDialog({
                           shouldValidate: true,
                         });
                       }}
-                    />
+                    >
+                      <SearchSelectTrigger
+                        value={selectedDestinationName}
+                        placeholder="Search and select destination..."
+                        error={Boolean(
+                          form.formState.errors.destinationLocationId,
+                        )}
+                      />
+                    </SearchLocationPopover>
                   </div>
                   {form.formState.errors.destinationLocationId ? (
                     <p className="mt-1 font-ochre-ui text-xs text-red-600">

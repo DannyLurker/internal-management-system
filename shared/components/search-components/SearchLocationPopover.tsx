@@ -1,17 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { isValidElement, useEffect, useMemo, useState } from "react";
 import {
   Check,
   ChevronsLeft,
   ChevronsRight,
   Loader2,
-  Package,
-  X,
+  MapPin,
 } from "lucide-react";
+import { LocationType } from "@prisma/client";
 import {
   Command,
-  CommandDialog,
   CommandEmpty,
   CommandGroup,
   CommandInput,
@@ -19,37 +18,43 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/shared/components/ui/command";
-import { useItems } from "@/features/items/item.hooks";
-import { itemGetManyschema } from "@/shared/lib/zods/item.zod";
+import { useLocations } from "@/features/locations/location.hooks";
+import { locationGetManySchema } from "@/shared/lib/zods/location.zod";
 import { cn } from "@/shared/lib/utils";
-import { formatThousand } from "@/shared/lib/formatter";
-import { SearchItemSearchOption } from "@/shared/lib/types/search-component.types";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { SearchLocationOption } from "@/shared/lib/types/search-component.types";
 
-export interface SearchItemDialogProps {
+interface SearchLocationPopoverProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect: (item: SearchItemSearchOption) => void;
+  onSelect: (location: SearchLocationOption) => void;
   selectedId?: string;
-  categoryId?: string;
-  status?: boolean;
-  title?: string;
-  description?: string;
+  locationType?: LocationType;
   showAllOption?: boolean;
   onSelectAll?: () => void;
+  children?: React.ReactNode;
+  trigger?: React.ReactNode;
 }
 
-export default function SearchItemDialog({
+const locationTypeLabels: Record<LocationType, string> = {
+  MAIN_WAREHOUSE: "Main Warehouse",
+  FRONT_OFFICE: "Front Office",
+  FLOOR_LOCKER: "Floor Locker",
+  VENDOR_LAUNDRY: "Laundry Vendor",
+  OPERATIONAL: "Operational",
+};
+
+export default function SearchLocationPopover({
   open,
   onOpenChange,
   onSelect,
   selectedId,
-  categoryId,
-  status,
-  title = "Search Items",
-  description = "Search and select an inventory item...",
+  locationType,
   showAllOption = false,
   onSelectAll,
-}: SearchItemDialogProps) {
+  children,
+  trigger,
+}: SearchLocationPopoverProps) {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -72,97 +77,89 @@ export default function SearchItemDialog({
 
   const queryParams = useMemo(() => {
     const trimmed = debouncedSearch.trim();
-    return itemGetManyschema.parse({
+    return locationGetManySchema.parse({
       page,
       dataPerPage,
       sortBy: "name",
-      orderBy: "asc",
-      search: trimmed.length >= 3 ? trimmed : undefined,
-      categoryId: categoryId && categoryId !== "ALL" ? categoryId : undefined,
-      findBy: categoryId && categoryId !== "ALL" ? "category" : undefined,
-      status: status !== undefined ? (status ? "true" : "false") : undefined,
+      sortOrderEnum: "asc",
+      searchQuery: trimmed.length >= 3 ? trimmed : undefined,
+      locationType,
     });
-  }, [debouncedSearch, categoryId, status, page]);
+  }, [debouncedSearch, locationType, page]);
 
-  const { data: itemsResponse, isLoading } = useItems(queryParams, {
+  const { data: locationsResponse, isLoading } = useLocations(queryParams, {
     enabled: open,
   });
 
-  const items = itemsResponse?.data.items ?? [];
-  const totalItems = itemsResponse?.data.totalItems ?? 0;
-  const totalPages = Math.ceil(totalItems / dataPerPage) || 1;
-  const hasNextPage = page * dataPerPage < totalItems;
+  const totalLocations = locationsResponse?.data.totalCount ?? 0;
+  const totalPages = Math.ceil(totalLocations / dataPerPage) || 1;
+  const hasNextPage = page * dataPerPage < totalLocations;
   const hasPreviousPage = page > 1;
-  const rangeStart = totalItems === 0 ? 0 : (page - 1) * dataPerPage + 1;
-  const rangeEnd = Math.min(page * dataPerPage, totalItems);
+  const rangeStart = totalLocations === 0 ? 0 : (page - 1) * dataPerPage + 1;
+  const rangeEnd = Math.min(page * dataPerPage, totalLocations);
 
-  const filteredItems = useMemo(() => {
+  const locations = locationsResponse?.data.locations ?? [];
+
+  const filteredLocations = useMemo(() => {
     const trimmed = search.trim().toLowerCase();
     if (!trimmed || debouncedSearch.trim().length >= 3) {
-      return items;
+      return locations;
     }
-    return items.filter(
-      (item) =>
-        item.name.toLowerCase().includes(trimmed) ||
-        (item.category?.name &&
-          item.category.name.toLowerCase().includes(trimmed)),
+    return locations.filter(
+      (loc) =>
+        loc.name.toLowerCase().includes(trimmed) ||
+        loc.type.toLowerCase().includes(trimmed),
     );
-  }, [items, search, debouncedSearch]);
+  }, [locations, search, debouncedSearch]);
+
+  const triggerElement = trigger ?? children;
 
   return (
-    <>
-      <CommandDialog
-        open={open}
-        onOpenChange={onOpenChange}
-        title={title}
-        description={description}
-        className="max-w-lg rounded-xl border border-[#d9e3f4] bg-white shadow-2xl"
+    <Popover open={open} onOpenChange={onOpenChange}>
+      {triggerElement && (
+        <PopoverTrigger
+          render={isValidElement(triggerElement) ? triggerElement : undefined}
+        >
+          {!isValidElement(triggerElement) ? triggerElement : undefined}
+        </PopoverTrigger>
+      )}
+      <PopoverContent
+        className="w-(--anchor-width,380px) min-w-[320px] max-w-[calc(100vw-2rem)] p-0 shadow-2xl rounded-xl border border-[#d9e3f4] bg-white"
+        align="start"
       >
         <Command shouldFilter={false} className="rounded-xl">
-          <div className="flex items-center justify-between border-b border-[#d9e3f4] px-4 py-2.5">
-            <span className="font-ochre-ui text-sm font-semibold text-[#121c28]">
-              {title}
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                onOpenChange(false);
-              }}
-              className="rounded-md p-1 text-[#565e74] hover:bg-[#eef4ff] hover:text-[#121c28] transition-colors focus:outline-none focus:ring-2 focus:ring-[#894d0d]"
-              aria-label="Close dialog"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-
           <CommandInput
-            placeholder="Type item name or category..."
+            placeholder="Type location name or type..."
             value={search}
             onValueChange={setSearch}
-            className="font-ochre-ui text-sm"
+            className="font-ochre-ui text-sm border-b border-[#d9e3f4]"
           />
 
           <CommandList className="max-h-80 p-1 font-ochre-ui">
             {isLoading ? (
               <div className="flex items-center justify-center gap-2 py-8 text-sm text-[#524439]/70">
                 <Loader2 className="size-4 animate-spin text-[#894d0d]" />
-                <span>Searching items...</span>
+                <span>Searching locations...</span>
               </div>
-            ) : filteredItems.length === 0 && !showAllOption ? (
+            ) : filteredLocations.length === 0 && !showAllOption ? (
               <CommandEmpty className="py-8 text-center text-sm text-[#524439]/70">
-                No items found.
+                No locations found.
               </CommandEmpty>
             ) : (
-              <>
-                <CommandGroup heading="Items">
+              <div>
+                <CommandGroup heading="Locations">
                   {showAllOption && (
                     <CommandItem
-                      value="ALL_ITEMS"
+                      value="ALL_LOCATIONS"
                       onSelect={() => {
                         if (onSelectAll) {
                           onSelectAll();
                         } else {
-                          onSelect({ id: "ALL", name: "All Items" });
+                          onSelect({
+                            id: "ALL",
+                            name: "All Locations",
+                            type: "MAIN_WAREHOUSE" as LocationType,
+                          });
                         }
                         onOpenChange(false);
                       }}
@@ -175,8 +172,8 @@ export default function SearchItemDialog({
                       )}
                     >
                       <div className="flex items-center gap-2.5">
-                        <Package className="size-4 text-[#894d0d]" />
-                        <span>All Items</span>
+                        <MapPin className="size-4 text-[#894d0d]" />
+                        <span>All Locations</span>
                       </div>
                       {(selectedId === "ALL" || !selectedId) && (
                         <Check className="size-4 text-[#894d0d]" />
@@ -184,22 +181,18 @@ export default function SearchItemDialog({
                     </CommandItem>
                   )}
 
-                  {filteredItems.map((item) => {
-                    const isSelected = selectedId === item.id;
+                  {filteredLocations.map((location) => {
+                    const isSelected = selectedId === location.id;
                     return (
                       <CommandItem
-                        key={item.id}
-                        value={item.name}
+                        key={location.id}
+                        value={location.name}
                         onSelect={() => {
                           onSelect({
-                            id: item.id,
-                            name: item.name,
-                            costPrice: item.costPrice,
-                            sellingPrice: item.sellingPrice,
-                            minThreshold: item.minThreshold,
-                            image: item.image,
-                            category: item.category,
-                            isActive: item.isActive,
+                            id: location.id,
+                            name: location.name,
+                            type: location.type,
+                            description: location.description,
                           });
                           onOpenChange(false);
                         }}
@@ -212,42 +205,24 @@ export default function SearchItemDialog({
                         )}
                       >
                         <div className="flex min-w-0 flex-1 items-center gap-3 pr-2">
-                          <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-[#d9e3f4] bg-[#f8f9ff] text-[#894d0d] overflow-hidden">
-                            {item.image ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={item.image}
-                                alt={item.name}
-                                className="size-full object-cover"
-                              />
-                            ) : (
-                              <Package className="size-4" />
-                            )}
+                          <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-[#eef4ff] text-[#894d0d]">
+                            <MapPin className="size-4" />
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
                               <span className="truncate font-medium text-[#121c28]">
-                                {item.name}
+                                {location.name}
                               </span>
-                              {item.category?.name && (
-                                <span className="rounded bg-[#eef4ff] px-2 py-0.5 font-ochre-ui text-[11px] font-semibold text-[#894d0d] shrink-0">
-                                  {item.category.name}
-                                </span>
-                              )}
-                            </div>
-                            <div className="mt-0.5 flex items-center gap-2 text-xs text-[#524439]/70">
-                              <span>
-                                Cost: ${formatThousand(item.costPrice)}
+                              <span className="rounded bg-[#eef4ff] px-2 py-0.5 font-ochre-ui text-[11px] font-semibold uppercase tracking-wider text-[#894d0d] shrink-0">
+                                {locationTypeLabels[location.type] ??
+                                  location.type}
                               </span>
-                              {item.sellingPrice != null && (
-                                <>
-                                  <span>•</span>
-                                  <span>
-                                    Sell: ${formatThousand(item.sellingPrice)}
-                                  </span>
-                                </>
-                              )}
                             </div>
+                            {location.description && (
+                              <p className="mt-0.5 truncate text-xs text-[#524439]/70">
+                                {location.description}
+                              </p>
+                            )}
                           </div>
                         </div>
 
@@ -259,7 +234,7 @@ export default function SearchItemDialog({
                   })}
                 </CommandGroup>
                 <CommandSeparator />
-                {totalItems > 0 && (
+                {totalLocations > 0 && (
                   <div className="flex flex-col gap-3 border-t border-[#eef4ff] px-4 py-3 font-ochre-ui text-sm text-[#524439] sm:items-center sm:justify-between">
                     <p>
                       Showing{" "}
@@ -272,9 +247,9 @@ export default function SearchItemDialog({
                       </span>{" "}
                       of{" "}
                       <span className="font-semibold text-[#121c28]">
-                        {totalItems}
+                        {totalLocations}
                       </span>{" "}
-                      categories
+                      locations
                     </p>
 
                     <div className="flex items-center gap-2">
@@ -340,11 +315,11 @@ export default function SearchItemDialog({
                     </div>
                   </div>
                 )}
-              </>
+              </div>
             )}
           </CommandList>
         </Command>
-      </CommandDialog>
-    </>
+      </PopoverContent>
+    </Popover>
   );
 }

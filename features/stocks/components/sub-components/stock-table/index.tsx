@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowDownUp, ChevronsLeft, ChevronsRight, Search } from "lucide-react";
+import { useState } from "react";
+import { ArrowDownUp, ChevronsLeft, ChevronsRight, MapPin, Package, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -14,6 +15,10 @@ import { cn } from "@/shared/lib/utils";
 import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
 import { StockGetManySchema } from "@/shared/lib/zods/stock.zod";
+import {
+  SearchLocationPopover,
+  SearchItemPopover,
+} from "@/shared/components/search-components";
 import { LocationOption } from "@/features/locations/location.types";
 
 export type StockTableFilters = {
@@ -66,12 +71,31 @@ export default function StockTable({
   onDelete,
   onInfo,
 }: StockTableProps) {
+  const [locationSearchOpen, setLocationSearchOpen] = useState(false);
+  const [itemSearchOpen, setItemSearchOpen] = useState(false);
+  const [selectedLocationName, setSelectedLocationName] = useState("");
+  const [selectedItemName, setSelectedItemName] = useState("");
+
   const totalPages = Math.ceil(totalCount / dataPerPage);
   const hasNextPage = page * dataPerPage < totalCount;
   const hasPrevPage = page > 1;
   const rangeStart = stocks.length === 0 ? 0 : (page - 1) * dataPerPage + 1;
   const rangeEnd = (page - 1) * dataPerPage + stocks.length;
   const totalShown = totalCount;
+
+  const currentLocationLabel =
+    filters.locationId === "ALL"
+      ? "Location: All"
+      : selectedLocationName
+        ? `Location: ${selectedLocationName}`
+        : `Location: ${locationOptions.find((l) => l.id === filters.locationId)?.name ?? "…"}`;
+
+  const currentItemLabel =
+    filters.itemId === "ALL"
+      ? "Item: All"
+      : selectedItemName
+        ? `Item: ${selectedItemName}`
+        : `Item: ${itemOptions.find((i) => i.id === filters.itemId)?.name ?? "…"}`;
 
   if (isError) {
     return (
@@ -130,52 +154,56 @@ export default function StockTable({
           )}
 
           {/* Location filter */}
-          <Select
-            value={filters.locationId}
-            onValueChange={(value) =>
-              onFiltersChange({ locationId: value ?? "ALL" })
-            }
+          <SearchLocationPopover
+            open={locationSearchOpen}
+            onOpenChange={setLocationSearchOpen}
+            selectedId={filters.locationId === "ALL" ? undefined : filters.locationId}
+            showAllOption
+            onSelect={(loc) => {
+              setSelectedLocationName(loc.name);
+              onFiltersChange({ locationId: loc.id });
+            }}
+            onSelectAll={() => {
+              setSelectedLocationName("");
+              onFiltersChange({ locationId: "ALL" });
+            }}
           >
-            <SelectTrigger className="h-10 min-w-36 rounded-lg border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15">
-              <SelectValue>
-                {filters.locationId === "ALL"
-                  ? "Location: All"
-                  : `Location: ${locationOptions.find((l) => l.id === filters.locationId)?.name ?? "…"}`}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Location: All</SelectItem>
-              {locationOptions.map((loc) => (
-                <SelectItem key={loc.id} value={loc.id}>
-                  {loc.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <button
+              type="button"
+              className="inline-flex h-10 min-w-36 items-center justify-between gap-2 rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 px-3 font-ochre-ui text-sm text-[#121c28] transition-colors hover:border-[#894d0d]/35 focus-visible:border-[#894d0d]/35 focus-visible:ring-2 focus-visible:ring-[#894d0d]/15"
+            >
+              <span className="flex items-center gap-1.5 truncate">
+                <MapPin className="size-3.5 text-[#565e74] shrink-0" />
+                <span className="truncate">{currentLocationLabel}</span>
+              </span>
+            </button>
+          </SearchLocationPopover>
 
           {/* Item filter */}
-          <Select
-            value={filters.itemId}
-            onValueChange={(value) =>
-              onFiltersChange({ itemId: value ?? "ALL" })
-            }
+          <SearchItemPopover
+            open={itemSearchOpen}
+            onOpenChange={setItemSearchOpen}
+            selectedId={filters.itemId === "ALL" ? undefined : filters.itemId}
+            showAllOption
+            onSelect={(item) => {
+              setSelectedItemName(item.name);
+              onFiltersChange({ itemId: item.id });
+            }}
+            onSelectAll={() => {
+              setSelectedItemName("");
+              onFiltersChange({ itemId: "ALL" });
+            }}
           >
-            <SelectTrigger className="h-10 min-w-36 rounded-lg border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15">
-              <SelectValue>
-                {filters.itemId === "ALL"
-                  ? "Item: All"
-                  : `Item: ${itemOptions.find((i) => i.id === filters.itemId)?.name ?? "…"}`}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Item: All</SelectItem>
-              {itemOptions.map((item) => (
-                <SelectItem key={item.id} value={item.id}>
-                  {item.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <button
+              type="button"
+              className="inline-flex h-10 min-w-36 items-center justify-between gap-2 rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 px-3 font-ochre-ui text-sm text-[#121c28] transition-colors hover:border-[#894d0d]/35 focus-visible:border-[#894d0d]/35 focus-visible:ring-2 focus-visible:ring-[#894d0d]/15"
+            >
+              <span className="flex items-center gap-1.5 truncate">
+                <Package className="size-3.5 text-[#565e74] shrink-0" />
+                <span className="truncate">{currentItemLabel}</span>
+              </span>
+            </button>
+          </SearchItemPopover>
 
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">

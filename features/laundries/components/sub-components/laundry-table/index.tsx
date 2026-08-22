@@ -1,6 +1,7 @@
 "use client";
 
-import { Search, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { useState } from "react";
+import { Search, ChevronsLeft, ChevronsRight, MapPin } from "lucide-react";
 import {
   Laundry,
   LaundryFilterStatus,
@@ -16,6 +17,7 @@ import {
 import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
 import { LaundryGetManySchema } from "@/shared/lib/zods/laundry.zod";
+import { SearchLocationPopover } from "@/shared/components/search-components";
 
 export type LaundryTableFilters = {
   searchQuery: string;
@@ -60,11 +62,21 @@ export default function LaundryTable({
   onInfo,
   onAction,
 }: LaundryTableProps) {
+  const [locationSearchOpen, setLocationSearchOpen] = useState(false);
+  const [selectedLocationName, setSelectedLocationName] = useState("");
+
   const totalPages = Math.max(1, Math.ceil(totalLaundries / dataPerPage));
   const hasNextPage = page < totalPages;
   const hasPrevPage = page > 1;
   const rangeStart = laundries.length === 0 ? 0 : (page - 1) * dataPerPage + 1;
   const rangeEnd = Math.min(page * dataPerPage, totalLaundries);
+
+  const currentLocationLabel =
+    filters.sourceLocationId === "ALL"
+      ? "Source: All Locations"
+      : selectedLocationName
+        ? `Source: ${selectedLocationName}`
+        : `Source: ${locations.find((l) => l.id === filters.sourceLocationId)?.name || "…"}`;
 
   return (
     <div className="flex flex-col gap-4">
@@ -111,28 +123,30 @@ export default function LaundryTable({
           </Select>
 
           {/* Location Filter */}
-          <Select
-            value={filters.sourceLocationId}
-            onValueChange={(val) =>
-              onFiltersChange({ sourceLocationId: val ?? "ALL" })
-            }
+          <SearchLocationPopover
+            open={locationSearchOpen}
+            onOpenChange={setLocationSearchOpen}
+            selectedId={filters.sourceLocationId === "ALL" ? undefined : filters.sourceLocationId}
+            showAllOption
+            onSelect={(loc) => {
+              setSelectedLocationName(loc.name);
+              onFiltersChange({ sourceLocationId: loc.id });
+            }}
+            onSelectAll={() => {
+              setSelectedLocationName("");
+              onFiltersChange({ sourceLocationId: "ALL" });
+            }}
           >
-            <SelectTrigger className="h-10 min-w-44 rounded-lg border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15">
-              <SelectValue placeholder="Source Location: All">
-                {filters.sourceLocationId === "ALL"
-                  ? "Source: All Locations"
-                  : `Source: ${locations.find((l) => l.id === filters.sourceLocationId)?.name || "…"}`}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Source: All Locations</SelectItem>
-              {locations.map((loc) => (
-                <SelectItem key={loc.id} value={loc.id}>
-                  {loc.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <button
+              type="button"
+              className="inline-flex h-10 min-w-44 items-center justify-between gap-2 rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 px-3 font-ochre-ui text-sm text-[#121c28] transition-colors hover:border-[#894d0d]/35 focus-visible:border-[#894d0d]/35 focus-visible:ring-2 focus-visible:ring-[#894d0d]/15"
+            >
+              <span className="flex items-center gap-1.5 truncate">
+                <MapPin className="size-3.5 text-[#565e74] shrink-0" />
+                <span className="truncate">{currentLocationLabel}</span>
+              </span>
+            </button>
+          </SearchLocationPopover>
         </div>
       </div>
 

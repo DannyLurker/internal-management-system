@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowDownUp, ChevronsLeft, ChevronsRight, Search } from "lucide-react";
+import { useState } from "react";
+import { ArrowDownUp, ChevronsLeft, ChevronsRight, MapPin, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -16,6 +17,7 @@ import { stockMovementPanelClass } from "@/features/stock-movements/stock-moveme
 import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
 import { LocationOption } from "@/features/locations/location.types";
+import { SearchLocationPopover } from "@/shared/components/search-components";
 
 type StockMovementRow =
   StockMovementGetManyApiResponse["data"]["movements"][number];
@@ -66,11 +68,30 @@ export default function StockMovementTable({
   movementTypes,
   onInfo,
 }: StockMovementTableProps) {
+  const [sourceLocationSearchOpen, setSourceLocationSearchOpen] = useState(false);
+  const [destLocationSearchOpen, setDestLocationSearchOpen] = useState(false);
+  const [selectedSourceName, setSelectedSourceName] = useState("");
+  const [selectedDestName, setSelectedDestName] = useState("");
+
   const totalPages = Math.max(1, Math.ceil(totalCount / dataPerPage));
   const hasNextPage = page * dataPerPage < totalCount;
   const hasPrevPage = page > 1;
   const rangeStart = movements.length === 0 ? 0 : (page - 1) * dataPerPage + 1;
   const rangeEnd = (page - 1) * dataPerPage + movements.length;
+
+  const currentSourceLabel =
+    filters.sourceLocation === "ALL"
+      ? "Source Location: All"
+      : selectedSourceName
+        ? `Source: ${selectedSourceName}`
+        : `Source: ${locations.find((l) => l.id === filters.sourceLocation)?.name || "…"}`;
+
+  const currentDestLabel =
+    filters.destinationLocation === "ALL"
+      ? "Destination Location: All"
+      : selectedDestName
+        ? `Destination: ${selectedDestName}`
+        : `Destination: ${locations.find((l) => l.id === filters.destinationLocation)?.name || "…"}`;
 
   if (isError) {
     return (
@@ -134,55 +155,57 @@ export default function StockMovementTable({
               </SelectContent>
             </Select>
 
-            {/* Source location Sorting */}
-            <Select
-              value={filters.sourceLocation}
-              onValueChange={(value) =>
-                onFiltersChange({ sourceLocation: value ?? "ALL" })
-              }
+            {/* Source location filter */}
+            <SearchLocationPopover
+              open={sourceLocationSearchOpen}
+              onOpenChange={setSourceLocationSearchOpen}
+              selectedId={filters.sourceLocation === "ALL" ? undefined : filters.sourceLocation}
+              showAllOption
+              onSelect={(loc) => {
+                setSelectedSourceName(loc.name);
+                onFiltersChange({ sourceLocation: loc.id });
+              }}
+              onSelectAll={() => {
+                setSelectedSourceName("");
+                onFiltersChange({ sourceLocation: "ALL" });
+              }}
             >
-              <SelectTrigger className="h-10 min-w-44 rounded-lg border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15">
-                <SelectValue>
-                  {filters.sourceLocation === "ALL"
-                    ? "Source Location: All"
-                    : `Source location: ${locations.find((l) => l.id === filters.sourceLocation)?.name || filters.sourceLocation}`}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Source Location: All</SelectItem>
-                {/* 💡 Diubah menjadi 'location' dengan ejaan yang benar */}
-                {locations.map((location) => (
-                  <SelectItem key={location.id} value={location.id}>
-                    {location.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <button
+                type="button"
+                className="inline-flex h-10 min-w-44 items-center justify-between gap-2 rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 px-3 font-ochre-ui text-sm text-[#121c28] transition-colors hover:border-[#894d0d]/35 focus-visible:border-[#894d0d]/35 focus-visible:ring-2 focus-visible:ring-[#894d0d]/15"
+              >
+                <span className="flex items-center gap-1.5 truncate">
+                  <MapPin className="size-3.5 text-[#565e74] shrink-0" />
+                  <span className="truncate">{currentSourceLabel}</span>
+                </span>
+              </button>
+            </SearchLocationPopover>
 
-            {/* Destination Locaiton sorting */}
-            <Select
-              value={filters.destinationLocation}
-              onValueChange={(value) =>
-                onFiltersChange({ destinationLocation: value ?? "ALL" })
-              }
+            {/* Destination Location filter */}
+            <SearchLocationPopover
+              open={destLocationSearchOpen}
+              onOpenChange={setDestLocationSearchOpen}
+              selectedId={filters.destinationLocation === "ALL" ? undefined : filters.destinationLocation}
+              showAllOption
+              onSelect={(loc) => {
+                setSelectedDestName(loc.name);
+                onFiltersChange({ destinationLocation: loc.id });
+              }}
+              onSelectAll={() => {
+                setSelectedDestName("");
+                onFiltersChange({ destinationLocation: "ALL" });
+              }}
             >
-              <SelectTrigger className="h-10 min-w-44 rounded-lg border-[#e5eeff] bg-[#f8f9ff]/80 font-ochre-ui text-sm focus:border-[#894d0d]/35 focus:ring-2 focus:ring-[#894d0d]/15">
-                <SelectValue>
-                  {filters.destinationLocation === "ALL"
-                    ? "Destination Location: All"
-                    : `Destination Location: ${locations.find((l) => l.id === filters.destinationLocation)?.name || filters.destinationLocation}`}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Destination Location: All</SelectItem>
-                {/* 💡 Diubah menjadi 'location' dengan ejaan yang benar */}
-                {locations.map((location) => (
-                  <SelectItem key={location.id} value={location.id}>
-                    {location.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <button
+                type="button"
+                className="inline-flex h-10 min-w-44 items-center justify-between gap-2 rounded-lg border border-[#e5eeff] bg-[#f8f9ff]/80 px-3 font-ochre-ui text-sm text-[#121c28] transition-colors hover:border-[#894d0d]/35 focus-visible:border-[#894d0d]/35 focus-visible:ring-2 focus-visible:ring-[#894d0d]/15"
+              >
+                <span className="flex items-center gap-1.5 truncate">
+                  <MapPin className="size-3.5 text-[#565e74] shrink-0" />
+                  <span className="truncate">{currentDestLabel}</span>
+                </span>
+              </button>
+            </SearchLocationPopover>
 
             <div className="flex items-center gap-2">
               <span className="font-ochre-ui text-xs font-medium uppercase tracking-wide text-[#524439]/70">

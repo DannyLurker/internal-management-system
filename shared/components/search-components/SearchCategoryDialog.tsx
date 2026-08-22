@@ -23,17 +23,12 @@ import {
 import { useCategories } from "@/features/categories/category.hooks";
 import { categoryGetManySchema } from "@/shared/lib/zods/category.zod";
 import { cn } from "@/shared/lib/utils";
-
-export interface CategoryOption {
-  id: string;
-  name: string;
-  totalItems?: number;
-}
+import { SearchCategoryOption } from "@/shared/lib/types/search-component.types";
 
 export interface SearchCategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect: (category: CategoryOption) => void;
+  onSelect: (category: SearchCategoryOption) => void;
   selectedId?: string;
   title?: string;
   description?: string;
