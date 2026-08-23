@@ -58,6 +58,12 @@ enum LaundryStatus {
   CANCELLED
 }
 
+enum StockRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum UserAction {
   CREATE
   UPDATE
@@ -93,17 +99,19 @@ model User {
   // Optional for WebAuthn support
   Authenticator Authenticator[]
 
-  createdCategories Category[]      @relation("CategoryCreator")
-  updatedCategories Category[]      @relation("CategoryUpdater")
-  createdItems      Item[]          @relation("ItemsCreator")
-  updatedItems      Item[]          @relation("ItemsUpdater")
-  createdLocations  Location[]      @relation("LocationCreator")
-  updatedLocations  Location[]      @relation("LocationUpdater")
-  createdStocks     Stock[]         @relation("StockCreator")
-  updatedStocks     Stock[]         @relation("StockUpdater")
-  orders            Order[]
-  logs              AuditLog[]
-  stockMovements    StockMovement[]
+  createdCategories      Category[]      @relation("CategoryCreator")
+  updatedCategories      Category[]      @relation("CategoryUpdater")
+  createdItems           Item[]          @relation("ItemsCreator")
+  updatedItems           Item[]          @relation("ItemsUpdater")
+  createdLocations       Location[]      @relation("LocationCreator")
+  updatedLocations       Location[]      @relation("LocationUpdater")
+  createdStocks          Stock[]         @relation("StockCreator")
+  updatedStocks          Stock[]         @relation("StockUpdater")
+  requestedStockRequests StockRequest[]  @relation("StockRequestsRequested")
+  approvedStockRequests  StockRequest[]  @relation("StockRequestsApproved")
+  orders                 Order[]
+  logs                   AuditLog[]
+  stockMovements         StockMovement[]
 
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
@@ -203,15 +211,16 @@ model Category {
 }
 
 model Item {
-  id           String  @id @default(cuid())
-  name         String  @unique
-  image        String?
-  description  String
-  sellingPrice Int?
-  costPrice    Int
-  attributes   Json?
-  minThreshold Int     @default(0)
-  isActive     Boolean @default(true)
+  id               String  @id @default(cuid())
+  name             String  @unique
+  image            String?
+  description      String
+  sellingPrice     Int?
+  costPrice        Int
+  attributes       Json?
+  minThreshold     Int     @default(0)
+  requiresApproval Boolean @default(true)
+  isActive         Boolean @default(true)
 
   stockMovements StockMovement[]
   categoryId     String?
@@ -226,8 +235,9 @@ model Item {
   orderItems OrderItem[]
   laundries  Laundry[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt     DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime       @updatedAt @db.Timestamptz(3)
+  stockRequests StockRequest[] @relation("ItemStockRequests")
 }
 
 model Stock {
@@ -273,15 +283,39 @@ model StockMovement {
   destinationLocationId String?
   destinationLocation   Location? @relation("Destination", fields: [destinationLocationId], references: [id])
 
-  stockId String?
-  stock   Stock?  @relation(fields: [stockId], references: [id])
-  orderId String?
-  order   Order?  @relation(fields: [orderId], references: [id])
+  stockId        String?
+  stock          Stock?        @relation(fields: [stockId], references: [id])
+  orderId        String?
+  order          Order?        @relation(fields: [orderId], references: [id])
+  stockRequestId String?       @unique
+  stockRequest   StockRequest? @relation(fields: [stockRequestId], references: [id])
 
   createdBy String
   user      User   @relation(fields: [createdBy], references: [id])
 
   createdAt DateTime @default(now()) @db.Timestamptz(3)
+}
+
+model StockRequest {
+  id String @id @default(cuid())
+
+  // Item Relation
+  itemId String
+  item   Item   @relation("ItemStockRequests", fields: [itemId], references: [id])
+
+  // User Relations
+  requestedById String
+  requestedBy   User   @relation("StockRequestsRequested", fields: [requestedById], references: [id])
+
+  approvedById String?
+  approvedBy   User?   @relation("StockRequestsApproved", fields: [approvedById], references: [id])
+
+  quantity      Int
+  status        StockRequestStatus @default(PENDING)
+  stockMovement StockMovement?
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 }
 
 model Laundry {
