@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Laundry } from "@/features/laundries/laundry.types";
-import { useLaundries } from "@/features/laundries/laundry.hooks";
+
 import {
   laundryGetManySchema,
   LaundryGetManySchema,
@@ -15,6 +14,8 @@ import LaundryActionModal from "./sub-components/LaundryActionModal";
 import { laundryStyles } from "../laundry.style";
 import { Shirt } from "lucide-react";
 import { LocationOption } from "@/features/locations/location.types";
+import { Laundry } from "../laundry.types";
+import { useLaundries } from "../laundry.hooks";
 
 type LaundryManagementProps = {
   locations: LocationOption[];

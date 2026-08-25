@@ -11,7 +11,7 @@ import {
 import {
   createLaundryWhereInput,
   laundryRepository,
-} from "../laundries/laundry.repository";
+} from "../laundry/laundry.repository";
 import { FinancialSummaryParamSchema } from "@/shared/lib/zods/dashboard.zod";
 import { buildDateRangeFilter } from "./dashboard.util";
 

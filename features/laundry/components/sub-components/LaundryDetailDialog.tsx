@@ -1,9 +1,7 @@
 "use client";
 
-import { Laundry } from "@/features/laundries/laundry.types";
 import { formatPrice } from "@/shared/lib/formatter";
 import { formatTimestamp, cn } from "@/shared/lib/utils";
-import { getLaundryStatusBadge } from "@/features/laundries/laundry.utils";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +10,8 @@ import {
   DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { Tag, MapPin, Calendar, Clock, UserCheck, Shirt } from "lucide-react";
+import { getLaundryStatusBadge } from "../../laundry.utils";
+import { Laundry } from "../../laundry.types";
 
 type LaundryDetailDialogProps = {
   open: boolean;

@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Laundry } from "@/features/laundries/laundry.types";
-import { useLaundryAction } from "@/features/laundries/laundry.hooks";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +19,8 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { RotateCcw, XCircle, Loader2 } from "lucide-react";
 import { LocationOption } from "@/features/locations/location.types";
+import { Laundry } from "../../laundry.types";
+import { useLaundryAction } from "../../laundry.hooks";
 
 type LaundryActionModalProps = {
   open: boolean;

@@ -1,8 +1,8 @@
-import { laundryService } from "@/features/laundries/laundry.service";
+import { laundryService } from "@/features/laundry/laundry.service";
 import {
   LaundryCUDApiResponse,
   LaundryGetManyApiResponse,
-} from "@/features/laundries/laundry.types";
+} from "@/features/laundry/laundry.types";
 import prisma from "@/shared/db/prisma";
 import { forbidden } from "@/shared/lib/error-handlers";
 import {
@@ -72,4 +72,3 @@ export async function POST(req: Request) {
     return handleError(error);
   }
 }
-

@@ -1,10 +1,10 @@
 "use client";
 
 import { Info, RotateCcw, XCircle } from "lucide-react";
-import { Laundry } from "@/features/laundries/laundry.types";
 import { formatPrice } from "@/shared/lib/formatter";
 import { cn, formatTimestamp } from "@/shared/lib/utils";
-import { getLaundryStatusBadge } from "@/features/laundries/laundry.utils";
+import { Laundry } from "@/features/laundry/laundry.types";
+import { getLaundryStatusBadge } from "@/features/laundry/laundry.utils";
 
 type TableRowProps = {
   laundry: Laundry;

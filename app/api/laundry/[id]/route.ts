@@ -1,5 +1,5 @@
-import { laundryService } from "@/features/laundries/laundry.service";
-import { LaundryGetByIdApiResponse } from "@/features/laundries/laundry.types";
+import { laundryService } from "@/features/laundry/laundry.service";
+import { LaundryGetByIdApiResponse } from "@/features/laundry/laundry.types";
 import prisma from "@/shared/db/prisma";
 import { forbidden } from "@/shared/lib/error-handlers";
 import {

@@ -1,4 +1,4 @@
-import LaundryManagement from "@/features/laundries/components/LaundryManagement";
+import LaundryManagement from "@/features/laundry/components/LaundryManagement";
 import { locationRepository } from "@/features/locations/location.repository";
 import prisma from "@/shared/db/prisma";
 

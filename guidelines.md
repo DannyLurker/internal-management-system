@@ -22,6 +22,7 @@ This project is an internal hotel management system designed to be extended into
   - Use `camelCase` for variable, method, and function declarations.
   - Use `kebab-case` for general structural directories and feature asset configurations.
   - **Strict Feature File Extensions:** Append exact operational classifiers to matching files: `*.api.ts`, `*.hooks.ts`, `*.keys.ts`, `*.repository.ts`, `*.service.ts`, `*.styles.ts`, `*.types.ts`, and `*.utils.ts`.
+- **Types:** Always put types in their own domain folder. Look at the features folder.
 
 ## 4. Database & Prisma Workflow
 

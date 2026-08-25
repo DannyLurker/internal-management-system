@@ -2,10 +2,7 @@
 
 import { useState } from "react";
 import { Search, ChevronsLeft, ChevronsRight, MapPin } from "lucide-react";
-import {
-  Laundry,
-  LaundryFilterStatus,
-} from "@/features/laundries/laundry.types";
+import { Laundry, LaundryFilterStatus } from "@/features/laundry/laundry.types";
 import { Input } from "@/shared/components/ui/input";
 import {
   Select,
@@ -126,7 +123,11 @@ export default function LaundryTable({
           <SearchLocationPopover
             open={locationSearchOpen}
             onOpenChange={setLocationSearchOpen}
-            selectedId={filters.sourceLocationId === "ALL" ? undefined : filters.sourceLocationId}
+            selectedId={
+              filters.sourceLocationId === "ALL"
+                ? undefined
+                : filters.sourceLocationId
+            }
             showAllOption
             onSelect={(loc) => {
               setSelectedLocationName(loc.name);

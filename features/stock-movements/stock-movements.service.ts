@@ -21,7 +21,7 @@ import {
   markStockAs,
 } from "./stock-movements.utils";
 import { Session } from "next-auth";
-import { laundryRepository } from "../laundries/laundry.repository";
+import { laundryRepository } from "../laundry/laundry.repository";
 
 const stockMovementsService = {
   create: async (

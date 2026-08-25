@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import STOCK_KEYS from "../stocks/stock.keys";
 import ITEM_KEYS from "../items/item.keys";
 import { dashboardKeys } from "../dashboards/dashboard.keys";
-import { laundryKeys } from "../laundries/laundry.keys";
+import { laundryKeys } from "../laundry/laundry.keys";
 
 export const useStockMovementsHooks = (
   params: StockMovementGetManySchema,
