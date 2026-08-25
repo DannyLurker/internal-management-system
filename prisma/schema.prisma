@@ -12,7 +12,7 @@ datasource db {
 }
 
 // Enum
-enum Roles {
+enum Role {
   ADMIN
   HOTEL_MANAGER
   SUPERVISOR
@@ -58,6 +58,12 @@ enum LaundryStatus {
   CANCELLED
 }
 
+enum StockRequestType {
+  CONSUME
+  LAUNDRY
+  DISCARD
+}
+
 enum StockRequestStatus {
   PENDING
   APPROVED
@@ -93,7 +99,7 @@ model User {
   password      String
   emailVerified DateTime?
   image         String?
-  role          Roles
+  role          Role
   accounts      Account[]
   sessions      Session[]
   // Optional for WebAuthn support
@@ -299,19 +305,20 @@ model StockMovement {
 model StockRequest {
   id String @id @default(cuid())
 
-  // Item Relation
   itemId String
   item   Item   @relation("ItemStockRequests", fields: [itemId], references: [id])
 
-  // User Relations
   requestedById String
   requestedBy   User   @relation("StockRequestsRequested", fields: [requestedById], references: [id])
 
   approvedById String?
   approvedBy   User?   @relation("StockRequestsApproved", fields: [approvedById], references: [id])
 
-  quantity      Int
-  status        StockRequestStatus @default(PENDING)
+  quantity Int
+
+  type   StockRequestType
+  status StockRequestStatus @default(PENDING)
+
   stockMovement StockMovement?
 
   createdAt DateTime @default(now()) @db.Timestamptz(3)

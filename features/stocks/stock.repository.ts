@@ -2,6 +2,7 @@ import { SortOrder } from "@/shared/lib/types/zod.type";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { describeStockStatusFilter } from "./stock.rule";
 import { StockGetManySchema } from "@/shared/lib/zods/stock.zod";
+import { StockRequestCreateSchema } from "@/shared/lib/zods/stock-request.zod";
 
 export interface StockStatusFilterParams {
   sortBy: string;
@@ -92,6 +93,7 @@ export const stockRepository = {
       data,
     });
   },
+
   getMany: async <T extends Prisma.StockSelect>(
     where: Prisma.StockWhereInput,
     select: T,
@@ -143,6 +145,20 @@ export const stockRepository = {
   ) => {
     return tx.stock.delete({
       where: { id: stockId },
+    });
+  },
+
+  createRequest: async (
+    userId: string,
+    data: StockRequestCreateSchema,
+    tx: Prisma.TransactionClient | PrismaClient,
+  ) => {
+    return await tx.stockRequest.create({
+      data: {
+        itemId: data.itemId,
+        requestedById: userId,
+        quantity: data.quantity,
+      },
     });
   },
 
@@ -252,6 +268,7 @@ export const stockRepository = {
 
     return result._sum;
   },
+
   getGroupedStockQuantities: async (
     by: Prisma.StockGroupByArgs["by"],
     itemId: string,
