@@ -17,6 +17,7 @@ const LOCATION_TYPE_BADGE_LABELS: Record<LocationType, string> = {
   [LocationType.FRONT_OFFICE]: "ROOM",
   [LocationType.OPERATIONAL]: "STORAGE",
   [LocationType.VENDOR_LAUNDRY]: "VENDOR LAUNDRY",
+  [LocationType.GUEST_ROOM]: "GUEST ROOM",
 };
 
 export function formatLocationTypeBadge(type: LocationType): string {

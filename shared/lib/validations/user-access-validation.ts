@@ -64,6 +64,6 @@ export const canPrintReport = (role: Role) => {
   return PERMISSIONS.PRINT_REPORT.includes(role);
 };
 
-export const canAccessStockRequest = (role: Role) => {
+export const canManageStockRequest = (role: Role) => {
   return PERMISSIONS.STOCK_REQUEST.includes(role);
 };

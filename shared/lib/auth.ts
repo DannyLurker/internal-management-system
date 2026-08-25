@@ -8,7 +8,7 @@ import {
 import { signInSchema } from "./zods/auth.zod";
 import bcrypt from "bcryptjs";
 import prisma from "../db/prisma";
-import { Roles } from "@prisma/client";
+import { Role } from "@prisma/client";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -70,7 +70,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.name = token.name as string;
       session.user.email = token.email as string;
       session.user.image = token.image as string;
-      session.user.role = token.role as Roles;
+      session.user.role = token.role as Role;
 
       return session;
     },
@@ -79,7 +79,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
 declare module "next-auth" {
   interface User {
-    role: Roles;
+    role: Role;
   }
 
   export interface Session {
@@ -88,7 +88,7 @@ declare module "next-auth" {
       name: string;
       email: string;
       image: string | null;
-      role: Roles;
+      role: Role;
     } & DefaultSession["user"];
   }
 }

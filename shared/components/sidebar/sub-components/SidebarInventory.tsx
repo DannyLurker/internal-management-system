@@ -7,6 +7,16 @@ import CollapsedFlyoutLink from "./ColapsedFlyoutLink";
 import { navAmbient } from "../sidebar-link.styles";
 import { AnimatePresence, motion } from "framer-motion";
 import { PathsType } from "@/shared/lib/constants/url-paths";
+import {
+  canManageCategory,
+  canManageItem,
+  canManageLaundry,
+  canManageLocation,
+  canManageStock,
+  canManageStockMovement,
+  canManageStockRequest,
+} from "@/shared/lib/validations/user-access-validation";
+import { useSession } from "next-auth/react";
 
 interface SidebarInventoryProps {
   isExpanded: boolean;
@@ -33,6 +43,8 @@ export default function SidebarInventory({
   onKeyDown,
   inventoryFlyoutId,
 }: SidebarInventoryProps) {
+  const { data } = useSession();
+
   const inventoryChildActive = isInventoryChildActive(pathname, paths);
   if (isExpanded) {
     return (
@@ -70,36 +82,55 @@ export default function SidebarInventory({
           <div className="min-h-0 overflow-hidden">
             <div className="relative ms-3 mt-1 border-s border-[#eaf1ff]/12 ps-3">
               <div className="space-y-1 pb-1 pt-0.5">
-                <InventorySubLink
-                  href={paths.locations}
-                  label="Locations"
-                  active={pathname === paths.locations}
-                />
-                <InventorySubLink
-                  href={paths.categories}
-                  label="Categories"
-                  active={pathname === paths.categories}
-                />
-                <InventorySubLink
-                  href={paths.items}
-                  label="Items"
-                  active={pathname === paths.items}
-                />
-                <InventorySubLink
-                  href={paths.stocks}
-                  label="Stocks"
-                  active={pathname === paths.stocks}
-                />
-                <InventorySubLink
-                  href={paths.stock_movements}
-                  label="Stock Movements"
-                  active={pathname === paths.stock_movements}
-                />
-                <InventorySubLink
-                  href={paths.laundries}
-                  label="Laundry"
-                  active={pathname === paths.laundries}
-                />
+                {data?.user.role && canManageLocation(data?.user.role) && (
+                  <InventorySubLink
+                    href={paths.locations}
+                    label="Locations"
+                    active={pathname === paths.locations}
+                  />
+                )}
+                {data?.user.role && canManageCategory(data?.user.role) && (
+                  <InventorySubLink
+                    href={paths.categories}
+                    label="Categories"
+                    active={pathname === paths.categories}
+                  />
+                )}
+                {data?.user.role && canManageItem(data?.user.role) && (
+                  <InventorySubLink
+                    href={paths.items}
+                    label="Items"
+                    active={pathname === paths.items}
+                  />
+                )}
+                {data?.user.role && canManageStock(data?.user.role) && (
+                  <InventorySubLink
+                    href={paths.stocks}
+                    label="Stocks"
+                    active={pathname === paths.stocks}
+                  />
+                )}
+                {data?.user.role && canManageStockMovement(data?.user.role) && (
+                  <InventorySubLink
+                    href={paths.stock_movements}
+                    label="Stock Movements"
+                    active={pathname === paths.stock_movements}
+                  />
+                )}
+                {data?.user.role && canManageLaundry(data?.user.role) && (
+                  <InventorySubLink
+                    href={paths.laundry}
+                    label="Laundry"
+                    active={pathname === paths.laundry}
+                  />
+                )}
+                {data?.user.role && canManageStockRequest(data?.user.role) && (
+                  <InventorySubLink
+                    href={paths.stock_requests}
+                    label="Stock Requests"
+                    active={pathname === paths.stock_requests}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -151,38 +182,55 @@ export default function SidebarInventory({
             </p>
 
             <div className="flex flex-col gap-0.5">
-              <CollapsedFlyoutLink
-                href={paths.categories}
-                label="Categories"
-                active={pathname === paths.categories}
-              />
-
-              <CollapsedFlyoutLink
-                href={paths.locations}
-                label="Locations"
-                active={pathname === paths.locations}
-              />
-
-              <CollapsedFlyoutLink
-                href={paths.items}
-                label="Items"
-                active={pathname === paths.items}
-              />
-              <CollapsedFlyoutLink
-                href={paths.stocks}
-                label="Stocks"
-                active={pathname === paths.stocks}
-              />
-              <CollapsedFlyoutLink
-                href={paths.stock_movements}
-                label="Stock Movements"
-                active={pathname === paths.stock_movements}
-              />
-              <CollapsedFlyoutLink
-                href={paths.laundries}
-                label="Laundry"
-                active={pathname === paths.laundries}
-              />
+              {data?.user.role && canManageLocation(data?.user.role) && (
+                <CollapsedFlyoutLink
+                  href={paths.locations}
+                  label="Locations"
+                  active={pathname === paths.locations}
+                />
+              )}
+              {data?.user.role && canManageCategory(data?.user.role) && (
+                <CollapsedFlyoutLink
+                  href={paths.categories}
+                  label="Categories"
+                  active={pathname === paths.categories}
+                />
+              )}
+              {data?.user.role && canManageItem(data?.user.role) && (
+                <CollapsedFlyoutLink
+                  href={paths.items}
+                  label="Items"
+                  active={pathname === paths.items}
+                />
+              )}
+              {data?.user.role && canManageStock(data?.user.role) && (
+                <CollapsedFlyoutLink
+                  href={paths.stocks}
+                  label="Stocks"
+                  active={pathname === paths.stocks}
+                />
+              )}
+              {data?.user.role && canManageStockMovement(data?.user.role) && (
+                <CollapsedFlyoutLink
+                  href={paths.stock_movements}
+                  label="Stock Movements"
+                  active={pathname === paths.stock_movements}
+                />
+              )}
+              {data?.user.role && canManageLaundry(data?.user.role) && (
+                <CollapsedFlyoutLink
+                  href={paths.laundry}
+                  label="Laundry"
+                  active={pathname === paths.laundry}
+                />
+              )}
+              {data?.user.role && canManageStockRequest(data?.user.role) && (
+                <CollapsedFlyoutLink
+                  href={paths.stock_requests}
+                  label="Stock Requests"
+                  active={pathname === paths.stock_requests}
+                />
+              )}
             </div>
           </motion.div>
         )}

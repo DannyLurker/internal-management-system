@@ -27,6 +27,7 @@ enum LocationType {
   FRONT_OFFICE
   OPERATIONAL
   VENDOR_LAUNDRY
+  GUEST_ROOM
 }
 
 enum StockType {
@@ -59,15 +60,17 @@ enum LaundryStatus {
 }
 
 enum StockRequestType {
-  CONSUME
-  LAUNDRY
-  DISCARD
+  ISSUE // Standard checkout for usage (e.g., Housekeeper taking linens)
+  RESTOCK // Replenishing storage levels
+  TRANSFER // Moving stock between sub-locations
 }
 
 enum StockRequestStatus {
   PENDING
   APPROVED
   REJECTED
+  FULFILLED
+  CANCELLED
 }
 
 enum UserAction {
@@ -193,10 +196,12 @@ model Location {
   outGoinglaundries Laundry[] @relation("LaundrySource")
   inComingLaundries Laundry[] @relation("LaundryDestination")
 
-  createdBy     String
-  userCreatedBy User    @relation("LocationCreator", fields: [createdBy], references: [id])
-  updatedBy     String?
-  userUpdatedBy User?   @relation("LocationUpdater", fields: [updatedBy], references: [id])
+  createdBy               String
+  userCreatedBy           User           @relation("LocationCreator", fields: [createdBy], references: [id])
+  updatedBy               String?
+  userUpdatedBy           User?          @relation("LocationUpdater", fields: [updatedBy], references: [id])
+  StockRequestSource      StockRequest[] @relation("StockRequestSource")
+  StockRequestDestination StockRequest[] @relation("StockRequestDestination")
 
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
@@ -305,20 +310,32 @@ model StockMovement {
 model StockRequest {
   id String @id @default(cuid())
 
+  // Item Relation
   itemId String
   item   Item   @relation("ItemStockRequests", fields: [itemId], references: [id])
 
+  // User Relations
   requestedById String
   requestedBy   User   @relation("StockRequestsRequested", fields: [requestedById], references: [id])
 
   approvedById String?
   approvedBy   User?   @relation("StockRequestsApproved", fields: [approvedById], references: [id])
 
+  sourceLocationId String?
+  sourceLocation   Location? @relation("StockRequestSource", fields: [sourceLocationId], references: [id])
+
+  destinationLocationId String
+  destinationLocation   Location @relation("StockRequestDestination", fields: [destinationLocationId], references: [id])
+
   quantity Int
 
-  type   StockRequestType
+  type   StockRequestType   @default(ISSUE)
   status StockRequestStatus @default(PENDING)
 
+  // Rejection tracking
+  rejectionReason String?
+
+  // Relation to execution ledger
   stockMovement StockMovement?
 
   createdAt DateTime @default(now()) @db.Timestamptz(3)

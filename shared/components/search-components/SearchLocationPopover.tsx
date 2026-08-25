@@ -23,6 +23,7 @@ import { locationGetManySchema } from "@/shared/lib/zods/location.zod";
 import { cn } from "@/shared/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { SearchLocationOption } from "@/shared/lib/types/search-component.types";
+import { locationTypeLabels } from "@/features/locations/location.types";
 
 interface SearchLocationPopoverProps {
   open: boolean;
@@ -35,14 +36,6 @@ interface SearchLocationPopoverProps {
   children?: React.ReactNode;
   trigger?: React.ReactNode;
 }
-
-const locationTypeLabels: Record<LocationType, string> = {
-  MAIN_WAREHOUSE: "Main Warehouse",
-  FRONT_OFFICE: "Front Office",
-  FLOOR_LOCKER: "Floor Locker",
-  VENDOR_LAUNDRY: "Laundry Vendor",
-  OPERATIONAL: "Operational",
-};
 
 export default function SearchLocationPopover({
   open,

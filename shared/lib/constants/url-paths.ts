@@ -5,8 +5,8 @@ export const paths = {
   locations: "/inventory/locations",
   stocks: "/inventory/stocks",
   stock_movements: "/inventory/stock-movements",
-  laundries: "/inventory/laundries",
+  laundry: "/inventory/laundry",
+  stock_requests: "/inventory/stock-requests",
 } as const;
 
 export type PathsType = typeof paths;
-

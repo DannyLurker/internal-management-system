@@ -12,20 +12,20 @@ import {
 const laundryApi = {
   getById: async (laundryId: string) => {
     const result = await api.get<LaundryGetByIdApiResponse>(
-      `/laundries/${laundryId}`,
+      `/laundry/${laundryId}`,
     );
     return result.data;
   },
 
   getMany: async (params: LaundryGetManySchema) => {
-    const result = await api.get<LaundryGetManyApiResponse>("/laundries", {
+    const result = await api.get<LaundryGetManyApiResponse>("/laundry", {
       params,
     });
     return result.data;
   },
 
   executeAction: async (data: LaundryCreateSchema) => {
-    const result = await api.post<LaundryCUDApiResponse>("/laundries", data);
+    const result = await api.post<LaundryCUDApiResponse>("/laundry", data);
     return result.data;
   },
 };

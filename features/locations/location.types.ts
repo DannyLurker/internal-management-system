@@ -34,3 +34,12 @@ export type LocationOption = {
   name: string;
   type: LocationType;
 };
+
+export const locationTypeLabels: Record<LocationType, string> = {
+  MAIN_WAREHOUSE: "Main Warehouse",
+  FRONT_OFFICE: "Front Office",
+  FLOOR_LOCKER: "Floor Locker",
+  VENDOR_LAUNDRY: "Laundry Vendor",
+  OPERATIONAL: "Operational",
+  GUEST_ROOM: "Guest Room",
+};

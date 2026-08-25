@@ -161,15 +161,13 @@ export default function SearchStockPopover({
     <Popover open={open} onOpenChange={onOpenChange}>
       {triggerElement && (
         <PopoverTrigger
-          render={
-            isValidElement(triggerElement) ? triggerElement : undefined
-          }
+          render={isValidElement(triggerElement) ? triggerElement : undefined}
         >
           {!isValidElement(triggerElement) ? triggerElement : undefined}
         </PopoverTrigger>
       )}
       <PopoverContent
-        className="w-[var(--anchor-width,460px)] min-w-[340px] max-w-[calc(100vw-2rem)] p-0 shadow-2xl rounded-xl border border-[#d9e3f4] bg-white"
+        className="w-(--anchor-width,460px) min-w-85 max-w-[calc(100vw-2rem)] p-0 shadow-2xl rounded-xl border border-[#d9e3f4] bg-white"
         align="start"
       >
         <Command shouldFilter={false} className="rounded-xl">

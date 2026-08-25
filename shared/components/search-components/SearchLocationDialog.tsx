@@ -23,6 +23,7 @@ import {
 import { useLocations } from "@/features/locations/location.hooks";
 import { locationGetManySchema } from "@/shared/lib/zods/location.zod";
 import { cn } from "@/shared/lib/utils";
+import { locationTypeLabels } from "@/features/locations/location.types";
 
 export interface LocationOption {
   id: string;
@@ -42,14 +43,6 @@ export interface SearchLocationDialogProps {
   showAllOption?: boolean;
   onSelectAll?: () => void;
 }
-
-const locationTypeLabels: Record<LocationType, string> = {
-  MAIN_WAREHOUSE: "Main Warehouse",
-  FRONT_OFFICE: "Front Office",
-  FLOOR_LOCKER: "Floor Locker",
-  VENDOR_LAUNDRY: "Laundry Vendor",
-  OPERATIONAL: "Operational",
-};
 
 export default function SearchLocationDialog({
   open,

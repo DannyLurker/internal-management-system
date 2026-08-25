@@ -1,6 +1,6 @@
-import { Roles } from "@prisma/client";
+import { Role } from "@prisma/client";
 
-export const ROLE_LABEL: Record<Roles, string> = {
+export const ROLE_LABEL: Record<Role, string> = {
   ADMIN: "Administrator",
   HOTEL_MANAGER: "Hotel Manager",
   SUPERVISOR: "Supervisor",

@@ -1,4 +1,4 @@
-import { Roles } from "@prisma/client";
+import { Role } from "@prisma/client";
 import { hash } from "bcryptjs";
 import prisma from "../prisma";
 
@@ -10,7 +10,7 @@ export async function createUserAccountsSeed() {
       name: "System Admin",
       email: "admin@hotel.com",
       password: await hash("admin123", 10),
-      role: Roles.ADMIN,
+      role: Role.ADMIN,
     },
   });
 
@@ -21,7 +21,7 @@ export async function createUserAccountsSeed() {
       name: "Hotel Manager",
       email: "manager@hotel.com",
       password: await hash("manager123", 10),
-      role: Roles.HOTEL_MANAGER,
+      role: Role.HOTEL_MANAGER,
     },
   });
 
@@ -32,7 +32,7 @@ export async function createUserAccountsSeed() {
       name: "Shift Supervisor",
       email: "supervisor@hotel.com",
       password: await hash("supervisor123", 10),
-      role: Roles.SUPERVISOR,
+      role: Role.SUPERVISOR,
     },
   });
 
@@ -43,7 +43,7 @@ export async function createUserAccountsSeed() {
       name: "Hotel Accountant",
       email: "accountant@hotel.com",
       password: await hash("accountant123", 10),
-      role: Roles.ACCOUNTANT,
+      role: Role.ACCOUNTANT,
     },
   });
 
@@ -54,7 +54,7 @@ export async function createUserAccountsSeed() {
       name: "Housekeeping Staff",
       email: "housekeeping@hotel.com",
       password: await hash("housekeeping123", 10),
-      role: Roles.HOUSEKEEPING,
+      role: Role.HOUSEKEEPING,
     },
   });
 
@@ -65,7 +65,7 @@ export async function createUserAccountsSeed() {
       name: "Front Desk Staff",
       email: "frontdesk@hotel.com",
       password: await hash("frontdesk123", 10),
-      role: Roles.FRONT_DESK,
+      role: Role.FRONT_DESK,
     },
   });
 

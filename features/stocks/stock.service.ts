@@ -16,9 +16,6 @@ import { Session } from "next-auth";
 import { locationRepository } from "../locations/location.repository";
 import { stockRules } from "./stock.rule";
 import stockMovementsRepository from "../stock-movements/stock-movements.repository";
-import { StockRequestCreateSchema } from "@/shared/lib/zods/stock-request.zod";
-import { userRepository } from "../users/user.repository";
-import itemRepository from "../items/item.repository";
 
 const stockService = {
   create: async (
@@ -143,28 +140,6 @@ const stockService = {
       message: `Stock created successfully`,
       id: created.id,
     };
-  },
-
-  createRequest: async (
-    session: Session["user"],
-    data: StockRequestCreateSchema,
-    prisma: PrismaClient | Prisma.TransactionClient,
-  ) => {
-    const item = await itemRepository.findById(data.itemId, prisma);
-
-    if (!item) throw badRequest("Item not found");
-
-    const stockRequest = await stockRepository.createRequest(
-      session.id,
-      {
-        itemId: data.itemId,
-        quantity: data.quantity,
-      },
-      prisma,
-    );
-
-    
-
   },
 
   getById: async (
