@@ -5,6 +5,7 @@ import itemRepository from "../items/item.repository";
 import { locationRepository } from "../locations/location.repository";
 import { badRequest } from "@/shared/lib/error-handlers";
 import stockRequestRepository from "./stock-request.repository";
+import { sendPushToUser } from "@/shared/lib/push";
 
 const stockRequestService = {
   create: async (
@@ -34,6 +35,12 @@ const stockRequestService = {
       },
       prisma,
     );
+
+    sendPushToUser(null, ["HOTEL_MANAGER", "SUPERVISOR"], {
+      title: "New Stock Request",
+      body: `${session.name} has submitted a new stock request.`,
+      url: "http://localhost:3000/",
+    });
 
     return {
       message: "Stock request created successfully",

@@ -24,13 +24,15 @@
       "@/*": ["./*"]
     }
   },
+  "lib": ["dom", "dom.iterable", "esnext", "webworker"],
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "**/*.mts",
+    "public/service-worker.js"
   ],
   "exclude": ["node_modules"]
 }

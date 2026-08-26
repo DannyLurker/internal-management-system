@@ -1,9 +1,10 @@
 "use client";
 
 import { signOut } from "next-auth/react";
-import { LogOut } from "lucide-react";
+import { LogOut, Bell, BellOff, Check } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { motion } from "framer-motion";
+import { usePushNotifications } from "../PushNotificationSetup";
 
 interface UserFlyoutProps {
   className?: string;
@@ -16,8 +17,39 @@ export default function UserFlyout({
   onMouseEnter,
   onMouseLeave,
 }: UserFlyoutProps) {
+  const { permission, subscribe } = usePushNotifications();
+
+  // Handle sign-out action
   const handleSignOut = async () => {
     await signOut({ callbackUrl: "/sign-in" });
+  };
+
+  // Render button text and icon based on notification permission state
+  const renderNotificationButtonContent = () => {
+    if (permission === "granted") {
+      return (
+        <>
+          <Check className="size-4 text-emerald-400" strokeWidth={1.5} />
+          <span className="text-emerald-400">Notifications On</span>
+        </>
+      );
+    }
+
+    if (permission === "denied") {
+      return (
+        <>
+          <BellOff className="size-4 text-rose-400" strokeWidth={1.5} />
+          <span className="text-rose-400">Blocked in Browser</span>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <Bell className="size-4 opacity-90" strokeWidth={1.5} />
+        <span>Enable Notifications</span>
+      </>
+    );
   };
 
   return (
@@ -34,7 +66,7 @@ export default function UserFlyout({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       className={cn(
-        "absolute z-9999 w-44 rounded-[10px] border border-white/[0.07] bg-[#1e2733] p-2 shadow-2xl",
+        "absolute z-9999 w-48 rounded-[10px] border border-white/[0.07] bg-[#1e2733] p-2 shadow-2xl",
         className,
       )}
     >
@@ -43,6 +75,28 @@ export default function UserFlyout({
       </p>
 
       <div className="flex flex-col gap-0.5">
+        {/* Toggle Notification Button */}
+        <button
+          type="button"
+          onClick={subscribe}
+          disabled={permission === "granted" || permission === "denied"}
+          className={cn(
+            "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-[#eaf1ff]/90 transition-colors",
+            permission === "default" && "hover:bg-white/10 hover:text-white",
+            permission === "granted" && "cursor-default bg-emerald-500/10",
+            permission === "denied" &&
+              "cursor-not-allowed bg-rose-500/10 opacity-80",
+          )}
+          title={
+            permission === "denied"
+              ? "Notifications are blocked. Please allow them in your browser settings."
+              : undefined
+          }
+        >
+          {renderNotificationButtonContent()}
+        </button>
+
+        {/* Sign Out Button */}
         <button
           type="button"
           onClick={handleSignOut}
