@@ -1,3 +1,4 @@
+import pushSubscriptionService from "@/features/push-subscriptions/push-subscription.service";
 import prisma from "@/shared/db/prisma";
 import { badRequest } from "@/shared/lib/error-handlers";
 import {
@@ -17,20 +18,7 @@ export async function POST(req: Request) {
 
     const subscription = await req.json();
 
-    await prisma.pushSubscription.upsert({
-      where: { endpoint: subscription.endpoint },
-      update: {
-        p256dh: subscription.keys.p256dh,
-        auth: subscription.keys.auth,
-        userId: session.id,
-      },
-      create: {
-        endpoint: subscription.endpoint,
-        p256dh: subscription.keys.p256dh,
-        auth: subscription.keys.auth,
-        userId: session.id,
-      },
-    });
+    await pushSubscriptionService.create(session, subscription, prisma);
 
     return Response.json({ success: true });
   } catch (error) {

@@ -1,10 +1,6 @@
 self.addEventListener("push", (event) => {
   let data = {};
-  try {
-    data = event.data ? event.data.json() : {};
-  } catch {
-    data = { title: "Notification", body: event.data ? event.data.text() : "" };
-  }
+  data = event.data ? event.data.json() : {};
 
   const title = data.title || "Notification";
   const options = {
@@ -19,4 +15,10 @@ self.addEventListener("push", (event) => {
   };
 
   event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || "/";
+  event.waitUntil(clients.openWindow(url));
 });

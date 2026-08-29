@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -20,7 +21,7 @@ export function usePushNotifications() {
 
   async function subscribe() {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-      alert("Push notifications are not supported in this browser.");
+      toast.error("Push notifications are not supported in this browser.");
       return;
     }
 

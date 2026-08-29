@@ -39,7 +39,7 @@ const stockRequestService = {
     sendPushToUser(null, ["HOTEL_MANAGER", "SUPERVISOR"], {
       title: "New Stock Request",
       body: `${session.name} has submitted a new stock request.`,
-      url: "http://localhost:3000/",
+      url: process.env.BASE_URL,
     });
 
     return {
