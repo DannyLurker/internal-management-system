@@ -68,6 +68,7 @@ enum StockRequestType {
 enum StockRequestStatus {
   PENDING
   APPROVED
+  PARTIALLY_APPROVED
   REJECTED
   FULFILLED
   CANCELLED
@@ -340,13 +341,14 @@ model StockRequest {
   destinationLocationId String
   destinationLocation   Location @relation("StockRequestDestination", fields: [destinationLocationId], references: [id])
 
-  quantity Int
+  requestedQuantity Int
+  approvedQuantity  Int @default(0)
 
   type   StockRequestType   @default(ISSUE)
   status StockRequestStatus @default(PENDING)
 
   // Rejection tracking
-  rejectionReason String?
+  decisionNotes String?
 
   // Relation to execution ledger
   stockMovement StockMovement?

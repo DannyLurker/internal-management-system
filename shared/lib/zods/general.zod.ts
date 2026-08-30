@@ -3,6 +3,7 @@ import {
   Entity,
   LocationType,
   MovementType,
+  StockRequestStatus,
   StockRequestType,
   StockType,
 } from "@prisma/client";
@@ -48,6 +49,8 @@ export const stockSpecificSortByEnum = z.enum(["createdAt", "type"]);
 
 // Stock request
 export const stockRequestTypeEnum = z.enum(Object.values(StockRequestType));
+
+export const stockRequestStatusEnum = z.enum(Object.values(StockRequestStatus));
 
 export const stockMovementTypeEnum = z.enum([...Object.values(MovementType)]);
 export const stockMovementSortByEnum = z.enum([

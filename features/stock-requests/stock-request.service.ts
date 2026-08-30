@@ -1,4 +1,7 @@
-import { StockRequestCreateSchema } from "@/shared/lib/zods/stock-request.zod";
+import {
+  StockRequestCreateSchema,
+  StockRequestUpdateSchema,
+} from "@/shared/lib/zods/stock-request.zod";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { Session } from "next-auth";
 import itemRepository from "../items/item.repository";
@@ -49,6 +52,13 @@ const stockRequestService = {
       },
     };
   },
+
+  update: async (
+    session: Session["user"],
+    stockRequestId: string,
+    data: StockRequestUpdateSchema,
+    prisma: PrismaClient | Prisma.TransactionClient,
+  ) => {},
 };
 
 export default stockRequestService;

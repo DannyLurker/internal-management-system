@@ -32,7 +32,7 @@ export function usePushNotifications() {
     const registration = await navigator.serviceWorker.register(
       "/service-worker.js",
       {
-        updateViaCache: "none", // always fetch the latest sw.js, never a cached copy
+        updateViaCache: "none", // always fetch the latest service-worker.js, never a cached copy
       },
     );
 
