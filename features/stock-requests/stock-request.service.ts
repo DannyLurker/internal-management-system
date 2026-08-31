@@ -10,6 +10,7 @@ import { locationRepository } from "../locations/location.repository";
 import { badRequest, notFound } from "@/shared/lib/error-handlers";
 import stockRequestRepository from "./stock-request.repository";
 import { sendPushToUser } from "@/shared/lib/push";
+import { stockRepository } from "../stocks/stock.repository";
 
 const stockRequestService = {
   create: async (
@@ -43,7 +44,7 @@ const stockRequestService = {
     sendPushToUser(null, ["HOTEL_MANAGER", "SUPERVISOR"], {
       title: "New Stock Request",
       body: `${session.name} has submitted a new stock request.`,
-      url: process.env.BASE_URL,
+      url: process.env.NEXT_PUBLIC_BASE_URL!,
     });
 
     return {
@@ -60,13 +61,19 @@ const stockRequestService = {
     data: StockRequestUpdateSchema,
     prisma: PrismaClient | Prisma.TransactionClient,
   ) => {
-    const [sourceLocation, destinationLocation] = await Promise.all([
-      locationRepository.findById(data.sourceLocationId, prisma),
-      locationRepository.findById(data.destinationLocationId, prisma),
-    ]);
+    const [sourceLocation, destinationLocation, stockRequest] =
+      await Promise.all([
+        locationRepository.findById(data.sourceLocationId, prisma),
+        locationRepository.findById(data.destinationLocationId, prisma),
+        stockRequestRepository.findById(stockRequestId, prisma),
+      ]);
 
     if (!sourceLocation) throw notFound("Source location not found");
     if (!destinationLocation) throw notFound("Destination location not found");
+    if (!stockRequest) throw notFound("Stock request not found");
+
+    if (stockRequest.status !== "PENDING")
+      throw badRequest("Can't update a stock request that has been reviewed");
 
     if (sourceLocation.id === destinationLocation.id)
       throw badRequest(
@@ -91,12 +98,50 @@ const stockRequestService = {
     data: StockRequestReviewSchema,
     prisma: PrismaClient | Prisma.TransactionClient,
   ) => {
+    const stockRequest = await stockRequestRepository.findById(
+      stockRequestId,
+      prisma,
+    );
+
+    if (!stockRequest) throw notFound("Stock request not found");
+
+    const totalActiveReadyStock = await stockRepository.aggregate(
+      {
+        itemId: stockRequest.itemId,
+      },
+      { quantity: true },
+      prisma,
+    );
+
+    // Guard clause: Ensure stock record exists
+    if (
+      totalActiveReadyStock.quantity === null ||
+      totalActiveReadyStock.quantity === undefined
+    ) {
+      throw notFound("Stock record not found.");
+    }
+
+    if (
+      !totalActiveReadyStock ||
+      totalActiveReadyStock.quantity < data.approvedQuantity
+    ) {
+      throw badRequest(
+        "Approved quantity cannot exceed the total ready stock quantity.",
+      );
+    }
+
     const reviewedStockRequest = await stockRequestRepository.review(
       session.id,
       stockRequestId,
       data,
       prisma,
     );
+
+    sendPushToUser(reviewedStockRequest.requestedById, null, {
+      title: "Stock Request Reviewed",
+      body: `Your stock request has been ${data.stockRequestStatus.toLowerCase()}.`,
+      url: process.env.NEXT_PUBLIC_BASE_URL!,
+    });
 
     return {
       message: "Stock request reviewed successfully",

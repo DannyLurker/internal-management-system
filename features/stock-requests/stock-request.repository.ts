@@ -6,6 +6,17 @@ import {
 import { Prisma, PrismaClient } from "@prisma/client";
 
 const stockRequestRepository = {
+  findById: async (
+    stockRequestId: string,
+    tx: Prisma.TransactionClient | PrismaClient,
+  ) => {
+    return await tx.stockRequest.findUnique({
+      where: {
+        id: stockRequestId,
+      },
+    });
+  },
+
   create: async (
     userId: string,
     data: StockRequestCreateSchema,
@@ -52,7 +63,9 @@ const stockRequestRepository = {
       },
       data: {
         status: data.stockRequestStatus,
-        approvedById: userId,
+        approvedBy: {
+          connect: { id: userId },
+        },
         decisionNotes: data.decisitonNotes,
         approvedQuantity: data.approvedQuantity,
       },

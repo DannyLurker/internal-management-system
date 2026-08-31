@@ -10,6 +10,12 @@ const PERMISSIONS = {
   ACCESS_MANAGER_DASHBOARD: "HOTEL_MANAGER" as Role,
   PRINT_REPORT: ["HOTEL_MANAGER", "ACCOUNTANT"] as Role[],
   STOCK_REQUEST: ["HOUSEKEEPING", "FRONT_DESK"] as Role[],
+  STOCK_REQUEST_UPDATE_REVIEW: [
+    "HOTEL_MANAGER",
+    "SUPERVISOR",
+    "FRONT_DESK",
+    "HOUSEKEEPING",
+  ] as Role[],
 };
 
 export const canManageLocation = (role: Role) => {
@@ -66,4 +72,8 @@ export const canPrintReport = (role: Role) => {
 
 export const canManageStockRequest = (role: Role) => {
   return PERMISSIONS.STOCK_REQUEST.includes(role);
+};
+
+export const canUpdateReviewStockRequest = (role: Role) => {
+  return PERMISSIONS.STOCK_REQUEST_UPDATE_REVIEW.includes(role);
 };

@@ -14,7 +14,7 @@ export type StockRequestCreateSchema = z.infer<typeof stockRequestCreateSchema>;
 export const stockRequestReviewSchema = z
   .object({
     stockRequestStatus: stockRequestStatusEnum,
-    approvedQuantity: z.number().optional(),
+    approvedQuantity: z.number().min(0),
     decisitonNotes: z.string().max(100).optional(),
   })
   .superRefine((val, ctx) => {
