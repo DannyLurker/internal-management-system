@@ -1,4 +1,8 @@
-import { StockRequestCreateSchema } from "@/shared/lib/zods/stock-request.zod";
+import {
+  StockRequestCreateSchema,
+  StockRequestReviewSchema,
+  StockRequestUpdateSchema,
+} from "@/shared/lib/zods/stock-request.zod";
 import { Prisma, PrismaClient } from "@prisma/client";
 
 const stockRequestRepository = {
@@ -11,9 +15,46 @@ const stockRequestRepository = {
       data: {
         itemId: data.itemId,
         requestedById: userId,
-        quantity: data.quantity,
+        requestedQuantity: data.quantity,
         sourceLocationId: data.sourceLocationId,
         destinationLocationId: data.destinationLocationId,
+      },
+    });
+  },
+
+  update: async (
+    stockRequestId: string,
+    data: StockRequestUpdateSchema,
+    tx: Prisma.TransactionClient | PrismaClient,
+  ) => {
+    return await tx.stockRequest.update({
+      where: {
+        id: stockRequestId,
+      },
+      data: {
+        requestedQuantity: data.requestedQuantity,
+        sourceLocationId: data.destinationLocationId,
+        destinationLocationId: data.sourceLocationId,
+        type: data.type,
+      },
+    });
+  },
+
+  review: async (
+    userId: string,
+    stockRequestId: string,
+    data: StockRequestReviewSchema,
+    tx: Prisma.TransactionClient | PrismaClient,
+  ) => {
+    return await tx.stockRequest.update({
+      where: {
+        id: stockRequestId,
+      },
+      data: {
+        status: data.stockRequestStatus,
+        approvedById: userId,
+        decisionNotes: data.decisitonNotes,
+        approvedQuantity: data.approvedQuantity,
       },
     });
   },

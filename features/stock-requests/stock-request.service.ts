@@ -1,12 +1,13 @@
 import {
   StockRequestCreateSchema,
+  StockRequestReviewSchema,
   StockRequestUpdateSchema,
 } from "@/shared/lib/zods/stock-request.zod";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { Session } from "next-auth";
 import itemRepository from "../items/item.repository";
 import { locationRepository } from "../locations/location.repository";
-import { badRequest } from "@/shared/lib/error-handlers";
+import { badRequest, notFound } from "@/shared/lib/error-handlers";
 import stockRequestRepository from "./stock-request.repository";
 import { sendPushToUser } from "@/shared/lib/push";
 
@@ -58,7 +59,50 @@ const stockRequestService = {
     stockRequestId: string,
     data: StockRequestUpdateSchema,
     prisma: PrismaClient | Prisma.TransactionClient,
-  ) => {},
+  ) => {
+    const [sourceLocation, destinationLocation] = await Promise.all([
+      locationRepository.findById(data.sourceLocationId, prisma),
+      locationRepository.findById(data.destinationLocationId, prisma),
+    ]);
+
+    if (!sourceLocation) throw notFound("Source location not found");
+    if (!destinationLocation) throw notFound("Destination location not found");
+
+    if (sourceLocation.id === destinationLocation.id)
+      throw badRequest(
+        "Source location and destination location can't be same",
+      );
+
+    const result = await stockRequestRepository.update(
+      stockRequestId,
+      data,
+      prisma,
+    );
+
+    return {
+      message: `Stock request updated successfully`,
+      stockRequestId: result.id,
+    };
+  },
+
+  review: async (
+    session: Session["user"],
+    stockRequestId: string,
+    data: StockRequestReviewSchema,
+    prisma: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    const reviewedStockRequest = await stockRequestRepository.review(
+      session.id,
+      stockRequestId,
+      data,
+      prisma,
+    );
+
+    return {
+      message: "Stock request reviewed successfully",
+      stockRequestId: reviewedStockRequest.id,
+    };
+  },
 };
 
 export default stockRequestService;
