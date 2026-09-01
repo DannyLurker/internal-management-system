@@ -9,8 +9,8 @@ const PERMISSIONS = {
   MANAGER_LAUNDRY: ["HOTEL_MANAGER", "SUPERVISOR"] as Role[],
   ACCESS_MANAGER_DASHBOARD: "HOTEL_MANAGER" as Role,
   PRINT_REPORT: ["HOTEL_MANAGER", "ACCOUNTANT"] as Role[],
-  STOCK_REQUEST: ["HOUSEKEEPING", "FRONT_DESK"] as Role[],
-  STOCK_REQUEST_UPDATE_REVIEW: [
+  STOCK_REQUEST_CREATE: ["HOUSEKEEPING", "FRONT_DESK"] as Role[],
+  STOCK_REQUEST_UPDATE_REVIEW_GET: [
     "HOTEL_MANAGER",
     "SUPERVISOR",
     "FRONT_DESK",
@@ -70,10 +70,10 @@ export const canPrintReport = (role: Role) => {
   return PERMISSIONS.PRINT_REPORT.includes(role);
 };
 
-export const canManageStockRequest = (role: Role) => {
-  return PERMISSIONS.STOCK_REQUEST.includes(role);
+export const canCreateStockRequest = (role: Role) => {
+  return PERMISSIONS.STOCK_REQUEST_CREATE.includes(role);
 };
 
-export const canUpdateReviewStockRequest = (role: Role) => {
-  return PERMISSIONS.STOCK_REQUEST_UPDATE_REVIEW.includes(role);
+export const canUpdateReviewGetStockRequest = (role: Role) => {
+  return PERMISSIONS.STOCK_REQUEST_UPDATE_REVIEW_GET.includes(role);
 };

@@ -1,9 +1,17 @@
 import z from "zod";
-import { stockRequestStatusEnum, stockRequestTypeEnum } from "./general.zod";
+import {
+  dataPerPage,
+  page,
+  sortOrderEnum,
+  stockRequestSortByEnum,
+  stockRequestStatusEnum,
+  stockRequestTypeEnum,
+} from "./general.zod";
 
 export const stockRequestCreateSchema = z.object({
   itemId: z.string().trim().min(1),
   quantity: z.number().min(1),
+  reason: z.string().min(10),
   sourceLocationId: z.string().trim().min(1),
   destinationLocationId: z.string().trim().min(1),
   requestType: stockRequestTypeEnum,
@@ -37,3 +45,17 @@ export const stockRequestUpdateSchema = z.object({
 });
 
 export type StockRequestUpdateSchema = z.infer<typeof stockRequestUpdateSchema>;
+
+export const stockRequestFilterSchema = z.object({
+  page,
+  dataPerPage,
+  search: z.string().trim().min(3).optional(),
+  type: stockRequestTypeEnum.optional(),
+  status: stockRequestStatusEnum.optional(),
+  destinationLocationId: z.string().trim().optional(),
+  sourceLocationId: z.string().trim().optional(),
+  sortBy: stockRequestSortByEnum.optional().default("createdAt"),
+  sortOrder: sortOrderEnum,
+});
+
+export type StockRequestFilterSchema = z.infer<typeof stockRequestFilterSchema>;

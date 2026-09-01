@@ -63,6 +63,7 @@ enum StockRequestType {
   ISSUE // Standard checkout for usage (e.g., Housekeeper taking linens)
   RESTOCK // Replenishing storage levels
   TRANSFER // Moving stock between sub-locations
+  SALE
 }
 
 enum StockRequestStatus {
@@ -324,11 +325,9 @@ model StockMovement {
 model StockRequest {
   id String @id @default(cuid())
 
-  // Item Relation
   itemId String
   item   Item   @relation("ItemStockRequests", fields: [itemId], references: [id])
 
-  // User Relations
   requestedById String
   requestedBy   User   @relation("StockRequestsRequested", fields: [requestedById], references: [id])
 
@@ -346,6 +345,8 @@ model StockRequest {
 
   type   StockRequestType   @default(ISSUE)
   status StockRequestStatus @default(PENDING)
+
+  reason String
 
   // Rejection tracking
   decisionNotes String?

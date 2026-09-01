@@ -6,7 +6,7 @@ import {
   handleError,
   printConsoleError,
 } from "@/shared/lib/error-handlers/handleError";
-import { canUpdateReviewStockRequest } from "@/shared/lib/validations/user-access-validation";
+import { canUpdateReviewGetStockRequest } from "@/shared/lib/validations/user-access-validation";
 import sessionValidation from "@/shared/lib/validations/user-session-validation";
 import {
   stockRequestReviewSchema,
@@ -21,7 +21,7 @@ export async function PATCH(
   try {
     const session = await sessionValidation();
 
-    if (!canUpdateReviewStockRequest(session.role))
+    if (!canUpdateReviewGetStockRequest(session.role))
       throw forbidden("You're not allowed to access this feature");
 
     const { id } = await params;

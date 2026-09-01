@@ -47,11 +47,6 @@ export const stockSortByEnum = z.enum([
 // For specific stock information, that return stock movement as one of the data
 export const stockSpecificSortByEnum = z.enum(["createdAt", "type"]);
 
-// Stock request
-export const stockRequestTypeEnum = z.enum(Object.values(StockRequestType));
-
-export const stockRequestStatusEnum = z.enum(Object.values(StockRequestStatus));
-
 export const stockMovementTypeEnum = z.enum([...Object.values(MovementType)]);
 export const stockMovementSortByEnum = z.enum([
   "name",
@@ -61,6 +56,22 @@ export const stockMovementSortByEnum = z.enum([
   "destinationLocation",
 ]);
 
+// Stock request
+export const stockRequestTypeEnum = z.enum(Object.values(StockRequestType));
+
+export const stockRequestStatusEnum = z.enum(Object.values(StockRequestStatus));
+
+export const stockRequestSortByEnum = z.enum([
+  "createdAt",
+  "updatedAt",
+  "requestType",
+  "stockRequestStatus",
+  "sourceLocation",
+  "destinationLocation",
+  "itemName",
+]);
+
+// Laundry
 export const laundryStatusEnum = z
   .enum(["SENT", "RETURNED", "CANCELLED", "ALL"])
   .default("ALL");

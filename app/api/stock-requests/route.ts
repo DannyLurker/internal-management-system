@@ -6,14 +6,14 @@ import {
   handleError,
   printConsoleError,
 } from "@/shared/lib/error-handlers/handleError";
-import { canManageStockRequest } from "@/shared/lib/validations/user-access-validation";
+import { canCreateStockRequest } from "@/shared/lib/validations/user-access-validation";
 import sessionValidation from "@/shared/lib/validations/user-session-validation";
 import { stockRequestCreateSchema } from "@/shared/lib/zods/stock-request.zod";
 export async function POST(req: Request) {
   try {
     const session = await sessionValidation();
 
-    if (!canManageStockRequest(session.role)) {
+    if (!canCreateStockRequest(session.role)) {
       throw forbidden("You're not allowed to access this feature.");
     }
 

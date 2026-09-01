@@ -1,16 +1,23 @@
 import {
   StockRequestCreateSchema,
+  StockRequestFilterSchema,
   StockRequestReviewSchema,
   StockRequestUpdateSchema,
 } from "@/shared/lib/zods/stock-request.zod";
-import { Prisma, PrismaClient } from "@prisma/client";
+import { MovementType, Prisma, PrismaClient } from "@prisma/client";
 import { Session } from "next-auth";
 import itemRepository from "../items/item.repository";
 import { locationRepository } from "../locations/location.repository";
 import { badRequest, notFound } from "@/shared/lib/error-handlers";
-import stockRequestRepository from "./stock-request.repository";
+
 import { sendPushToUser } from "@/shared/lib/push";
 import { stockRepository } from "../stocks/stock.repository";
+import {
+  createStockRequestSelect,
+  createStockRequestWhereQuery,
+  stockRequestRepository,
+} from "./stock-request.repository";
+import stockMovementsService from "../stock-movements/stock-movements.service";
 
 const stockRequestService = {
   create: async (
@@ -37,6 +44,7 @@ const stockRequestService = {
         sourceLocationId: data.sourceLocationId,
         destinationLocationId: data.destinationLocationId,
         requestType: data.requestType,
+        reason: data.reason,
       },
       prisma,
     );
@@ -137,6 +145,21 @@ const stockRequestService = {
       prisma,
     );
 
+    // const stockMovementType: MovementType = stockRequest.type === "ISSUE" ? "CONSUME" : stockRequest.type === "RESTOCK" ? "RECEIVE" : 
+
+    // TODO: Work in this part
+    // I think it's better for me to use "MovementType" instead of using another "StockRequestType"
+    await stockMovementsService.create(
+      session,
+      {
+        itemId: stockRequest.itemId,
+        quantity: data.approvedQuantity,
+        reason: stockRequest.reason,
+        stockMovementType: 
+      },
+      prisma,
+    );
+
     sendPushToUser(reviewedStockRequest.requestedById, null, {
       title: "Stock Request Reviewed",
       body: `Your stock request has been ${data.stockRequestStatus.toLowerCase()}.`,
@@ -147,6 +170,54 @@ const stockRequestService = {
       message: "Stock request reviewed successfully",
       stockRequestId: reviewedStockRequest.id,
     };
+  },
+
+  getMany: async (
+    session: Session["user"],
+    filters: StockRequestFilterSchema,
+    prisma: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    const whereQuery = createStockRequestWhereQuery(filters);
+
+    const stockRequestSelect = createStockRequestSelect({
+      approvedBy: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      requestedBy: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      createdAt: true,
+      updatedAt: true,
+      item: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      type: true,
+      status: true,
+      destinationLocation: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      sourceLocation: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      decisionNotes: true,
+      requestedQuantity: true,
+      approvedQuantity: true,
+    });
   },
 };
 
