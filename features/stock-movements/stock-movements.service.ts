@@ -451,6 +451,7 @@ const stockMovementsService = {
           {
             ...createdStockMovement,
             stockId: destinationStock.id,
+            sourceLocationId: currentStock.locationId,
             destinationLocationId: destinationStock.locationId,
             totalCost: totalCost,
           },

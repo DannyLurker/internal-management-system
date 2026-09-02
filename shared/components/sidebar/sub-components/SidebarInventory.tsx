@@ -8,13 +8,13 @@ import { navAmbient } from "../sidebar-link.styles";
 import { AnimatePresence, motion } from "framer-motion";
 import { PathsType } from "@/shared/lib/constants/url-paths";
 import {
+  canCreateStockRequest,
   canManageCategory,
   canManageItem,
   canManageLaundry,
   canManageLocation,
   canManageStock,
   canManageStockMovement,
-  canManageStockRequest,
 } from "@/shared/lib/validations/user-access-validation";
 import { useSession } from "next-auth/react";
 
@@ -124,7 +124,7 @@ export default function SidebarInventory({
                     active={pathname === paths.laundry}
                   />
                 )}
-                {data?.user.role && canManageStockRequest(data?.user.role) && (
+                {data?.user.role && canCreateStockRequest(data?.user.role) && (
                   <InventorySubLink
                     href={paths.stock_requests}
                     label="Stock Requests"
@@ -224,7 +224,7 @@ export default function SidebarInventory({
                   active={pathname === paths.laundry}
                 />
               )}
-              {data?.user.role && canManageStockRequest(data?.user.role) && (
+              {data?.user.role && canCreateStockRequest(data?.user.role) && (
                 <CollapsedFlyoutLink
                   href={paths.stock_requests}
                   label="Stock Requests"

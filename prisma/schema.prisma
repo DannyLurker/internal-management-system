@@ -60,10 +60,14 @@ enum LaundryStatus {
 }
 
 enum StockRequestType {
-  ISSUE // Standard checkout for usage (e.g., Housekeeper taking linens)
+  ISSUE // Standard checkout for usage
   RESTOCK // Replenishing storage levels
-  TRANSFER // Moving stock between sub-locations
-  SALE
+  TRANSFER // Moving stock between locations
+  SALE // Direct customer sale
+  WRITE_OFF // Reporting damaged, expired, or discarded stock
+  REPORT_LOST // Reporting missing/lost stock
+  LAUNDRY_IN
+  LAUNDRY_OUT
 }
 
 enum StockRequestStatus {

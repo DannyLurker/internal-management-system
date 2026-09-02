@@ -71,6 +71,10 @@ export const stockRequestSortByEnum = z.enum([
   "itemName",
 ]);
 
+export const writeOffTypeDecisionEnum = z
+  .enum(["MARK_AS_DAMAGED", "MARK_AS_EXPIRED", "DISCARD"] as MovementType[])
+  .optional();
+
 // Laundry
 export const laundryStatusEnum = z
   .enum(["SENT", "RETURNED", "CANCELLED", "ALL"])

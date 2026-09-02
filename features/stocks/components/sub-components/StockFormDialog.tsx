@@ -32,7 +32,12 @@ import { inputClass } from "../../stock.style";
 import { toast } from "sonner";
 import { formatThousand, unformatThousand } from "@/shared/lib/formatter";
 import { LocationOption } from "@/features/locations/location.types";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/shared/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/shared/components/ui/select";
 
 type ItemOption = { id: string; name: string };
 
@@ -248,20 +253,18 @@ export default function StockFormDialog({
                     />
                   </SearchLocationPopover>
                 </div>
-                {(
-                  isEdit
-                    ? updateForm.formState.errors.locationId
-                    : createForm.formState.errors.locationId
-                ) && (
-                    <p className="mt-1 font-ochre-ui text-xs text-red-600">
-                      {
-                        (isEdit
-                          ? updateForm.formState.errors.locationId
-                          : createForm.formState.errors.locationId
-                        )?.message
-                      }
-                    </p>
-                  )}
+                {(isEdit
+                  ? updateForm.formState.errors.locationId
+                  : createForm.formState.errors.locationId) && (
+                  <p className="mt-1 font-ochre-ui text-xs text-red-600">
+                    {
+                      (isEdit
+                        ? updateForm.formState.errors.locationId
+                        : createForm.formState.errors.locationId
+                      )?.message
+                    }
+                  </p>
+                )}
               </div>
 
               {/* Stock Type */}
@@ -291,6 +294,7 @@ export default function StockFormDialog({
                         <SelectItem value="DIRTY">Dirty</SelectItem>
                         <SelectItem value="DAMAGED">Damaged</SelectItem>
                         <SelectItem value="EXPIRED">Expired</SelectItem>
+                        <SelectItem value="LOST">Lost</SelectItem>
                       </SelectContent>
                     </Select>
                   );
@@ -442,24 +446,24 @@ export default function StockFormDialog({
                 className={cn("w-full", inputClass)}
                 {...(isEdit
                   ? updateForm.register("expiredAt", {
-                    setValueAs: (value) => (value === "" ? undefined : value),
-                  })
+                      setValueAs: (value) => (value === "" ? undefined : value),
+                    })
                   : createForm.register("expiredAt", {
-                    setValueAs: (value) => (value === "" ? undefined : value),
-                  }))}
+                      setValueAs: (value) => (value === "" ? undefined : value),
+                    }))}
               />
               {(isEdit
                 ? updateForm.formState.errors.expiredAt
                 : createForm.formState.errors.expiredAt) && (
-                  <p className="mt-1 font-ochre-ui text-xs text-red-600">
-                    {
-                      (isEdit
-                        ? updateForm.formState.errors.expiredAt
-                        : createForm.formState.errors.expiredAt
-                      )?.message
-                    }
-                  </p>
-                )}
+                <p className="mt-1 font-ochre-ui text-xs text-red-600">
+                  {
+                    (isEdit
+                      ? updateForm.formState.errors.expiredAt
+                      : createForm.formState.errors.expiredAt
+                    )?.message
+                  }
+                </p>
+              )}
             </div>
             <p className="mt-1.5 font-ochre-ui text-xs leading-normal text-[#524439]/70">
               {expiryInputMode === "picker"

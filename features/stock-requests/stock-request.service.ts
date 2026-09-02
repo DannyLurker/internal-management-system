@@ -71,7 +71,9 @@ const stockRequestService = {
   ) => {
     const [sourceLocation, destinationLocation, stockRequest] =
       await Promise.all([
-        locationRepository.findById(data.sourceLocationId, prisma),
+        data.sourceLocationId
+          ? locationRepository.findById(data.sourceLocationId, prisma)
+          : null,
         locationRepository.findById(data.destinationLocationId, prisma),
         stockRequestRepository.findById(stockRequestId, prisma),
       ]);
@@ -111,6 +113,10 @@ const stockRequestService = {
       prisma,
     );
 
+    if (stockRequest?.type !== data.stockRequestType) {
+      throw badRequest("Stock request type mismatch");
+    }
+
     if (!stockRequest) throw notFound("Stock request not found");
 
     const totalActiveReadyStock = await stockRepository.aggregate(
@@ -145,17 +151,57 @@ const stockRequestService = {
       prisma,
     );
 
-    // const stockMovementType: MovementType = stockRequest.type === "ISSUE" ? "CONSUME" : stockRequest.type === "RESTOCK" ? "RECEIVE" : 
+    let stockMovementType: MovementType;
 
-    // TODO: Work in this part
-    // I think it's better for me to use "MovementType" instead of using another "StockRequestType"
+    switch (stockRequest.type) {
+      case "ISSUE":
+        stockMovementType = "CONSUME";
+        break;
+      case "RESTOCK":
+        stockMovementType = "RECEIVE";
+        break;
+      case "SALE":
+        stockMovementType = "SALE";
+        break;
+      case "TRANSFER":
+        stockMovementType = "TRANSFER";
+        break;
+      case "REPORT_LOST":
+        stockMovementType = "MARK_AS_LOST";
+        break;
+      case "WRITE_OFF":
+        stockMovementType = data.writeOffTypeDecision as MovementType;
+        break;
+      case "LAUNDRY_IN":
+        stockMovementType = "LAUNDRY_IN";
+        break;
+      case "LAUNDRY_OUT":
+        stockMovementType = "LAUNDRY_OUT";
+        break;
+      default:
+        throw badRequest("Invalid stock request type");
+    }
+
+    const stock = await stockRepository.findFirst(
+      {
+        itemId: stockRequest.itemId,
+        locationId: stockRequest.sourceLocationId
+          ? stockRequest.sourceLocationId
+          : stockRequest.destinationLocationId,
+      },
+      prisma,
+    );
+
     await stockMovementsService.create(
       session,
       {
         itemId: stockRequest.itemId,
         quantity: data.approvedQuantity,
         reason: stockRequest.reason,
-        stockMovementType: 
+        stockMovementType,
+        destinationLocationId: stockRequest.destinationLocationId,
+        stockId: stock?.id,
+        isGlobalStock: stockRequest.sourceLocationId === null,
       },
       prisma,
     );

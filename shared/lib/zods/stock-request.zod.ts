@@ -6,7 +6,9 @@ import {
   stockRequestSortByEnum,
   stockRequestStatusEnum,
   stockRequestTypeEnum,
+  writeOffTypeDecisionEnum,
 } from "./general.zod";
+import { StockRequestType } from "@prisma/client";
 
 export const stockRequestCreateSchema = z.object({
   itemId: z.string().trim().min(1),
@@ -22,6 +24,8 @@ export type StockRequestCreateSchema = z.infer<typeof stockRequestCreateSchema>;
 export const stockRequestReviewSchema = z
   .object({
     stockRequestStatus: stockRequestStatusEnum,
+    stockRequestType: stockRequestTypeEnum,
+    writeOffTypeDecision: writeOffTypeDecisionEnum,
     approvedQuantity: z.number().min(0),
     decisitonNotes: z.string().max(100).optional(),
   })
@@ -33,16 +37,46 @@ export const stockRequestReviewSchema = z
         path: ["stockRequestStatus"],
       });
     }
+
+    if (val.stockRequestType === "WRITE_OFF") {
+      if (!val.writeOffTypeDecision) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Write off type decision is required for write off requests",
+        });
+      }
+    }
   });
 
 export type StockRequestReviewSchema = z.infer<typeof stockRequestReviewSchema>;
 
-export const stockRequestUpdateSchema = z.object({
-  type: stockRequestTypeEnum,
-  requestedQuantity: z.number().min(1),
-  sourceLocationId: z.string().trim().min(1),
-  destinationLocationId: z.string().trim().min(1),
-});
+export const stockRequestUpdateSchema = z
+  .object({
+    type: stockRequestTypeEnum,
+    requestedQuantity: z.number().min(1),
+    sourceLocationId: z.string().trim().min(1).optional(),
+    destinationLocationId: z.string().trim().min(1),
+  })
+  .superRefine((val, ctx) => {
+    const requiredSourceLocationTypes = [
+      "ISSUE",
+      "LAUNDRY_OUT",
+      "LAUNDRY_IN",
+      "SALE",
+      "TRANSFER",
+      "WRITE_OFF",
+    ] as StockRequestType[];
+
+    if (
+      requiredSourceLocationTypes.includes(val.type) &&
+      !val.sourceLocationId
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Source location is required for this type of stock request",
+      });
+    }
+  });
 
 export type StockRequestUpdateSchema = z.infer<typeof stockRequestUpdateSchema>;
 
