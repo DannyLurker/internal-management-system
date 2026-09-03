@@ -1,5 +1,9 @@
 import stockRequestService from "@/features/stock-requests/stock-request.service";
-import { StockRequestCUDApiResponse } from "@/features/stock-requests/stock-request.types";
+import {
+  requesterRoles,
+  reviewerRoles,
+  StockRequestCUDApiResponse,
+} from "@/features/stock-requests/stock-request.types";
 import prisma from "@/shared/db/prisma";
 import { badRequest, forbidden } from "@/shared/lib/error-handlers";
 import {
@@ -12,7 +16,6 @@ import {
   stockRequestReviewSchema,
   stockRequestUpdateSchema,
 } from "@/shared/lib/zods/stock-request.zod";
-import { Role } from "@prisma/client";
 
 export async function PATCH(
   req: Request,
@@ -31,9 +34,6 @@ export async function PATCH(
     const body = await req.json();
 
     let updatedStockRequest;
-
-    const reviewerRoles: Role[] = ["HOTEL_MANAGER", "SUPERVISOR"];
-    const requesterRoles: Role[] = ["HOUSEKEEPING", "FRONT_DESK"];
 
     if (reviewerRoles.includes(session.role)) {
       const data = stockRequestReviewSchema.parse(body);

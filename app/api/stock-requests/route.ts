@@ -1,14 +1,23 @@
 import stockRequestService from "@/features/stock-requests/stock-request.service";
-import { StockRequestCUDApiResponse } from "@/features/stock-requests/stock-request.types";
+import {
+  StockRequestCUDApiResponse,
+  StockRequestGetManyApiResponse,
+} from "@/features/stock-requests/stock-request.types";
 import prisma from "@/shared/db/prisma";
 import { forbidden } from "@/shared/lib/error-handlers";
 import {
   handleError,
   printConsoleError,
 } from "@/shared/lib/error-handlers/handleError";
-import { canCreateStockRequest } from "@/shared/lib/validations/user-access-validation";
+import {
+  canCreateStockRequest,
+  canUpdateReviewGetStockRequest,
+} from "@/shared/lib/validations/user-access-validation";
 import sessionValidation from "@/shared/lib/validations/user-session-validation";
-import { stockRequestCreateSchema } from "@/shared/lib/zods/stock-request.zod";
+import {
+  stockRequestCreateSchema,
+  stockRequestFilterSchema,
+} from "@/shared/lib/zods/stock-request.zod";
 export async function POST(req: Request) {
   try {
     const session = await sessionValidation();
@@ -33,6 +42,40 @@ export async function POST(req: Request) {
     return Response.json(response, { status: 201 });
   } catch (error) {
     printConsoleError(error, "POST", req.url);
+    return handleError(error);
+  }
+}
+
+export async function GET(req: Request) {
+  try {
+    const session = await sessionValidation();
+
+    if (!canUpdateReviewGetStockRequest(session.role)) {
+      throw forbidden("You're not allowed to access this feature");
+    }
+
+    const { searchParams } = new URL(req.url);
+    const rawFilters = Object.fromEntries(searchParams.entries());
+    const filters = stockRequestFilterSchema.parse(rawFilters);
+
+    const { data, message } = await stockRequestService.getMany(
+      session,
+      filters,
+      prisma,
+    );
+
+    const responseData: StockRequestGetManyApiResponse = {
+      message,
+      data: {
+        stockRequests: data.stockRequests,
+        totalStockRequests: data.totalStockRequests,
+      },
+      status: 200,
+    };
+
+    return Response.json(responseData, { status: 200 });
+  } catch (error) {
+    printConsoleError(error, "GET", req.url);
     return handleError(error);
   }
 }

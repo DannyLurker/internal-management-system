@@ -13,6 +13,7 @@ import { badRequest, notFound } from "@/shared/lib/error-handlers";
 import { sendPushToUser } from "@/shared/lib/push";
 import { stockRepository } from "../stocks/stock.repository";
 import {
+  createStockRequestOrderByQuery,
   createStockRequestSelect,
   createStockRequestWhereQuery,
   stockRequestRepository,
@@ -113,11 +114,15 @@ const stockRequestService = {
       prisma,
     );
 
+    if (!stockRequest) throw notFound("Stock request not found");
+
+    if (stockRequest.status !== "PENDING") {
+      throw badRequest("This stock request has already been reviewed.");
+    }
+
     if (stockRequest?.type !== data.stockRequestType) {
       throw badRequest("Stock request type mismatch");
     }
-
-    if (!stockRequest) throw notFound("Stock request not found");
 
     const totalActiveReadyStock = await stockRepository.aggregate(
       {
@@ -223,47 +228,61 @@ const stockRequestService = {
     filters: StockRequestFilterSchema,
     prisma: PrismaClient | Prisma.TransactionClient,
   ) => {
-    const whereQuery = createStockRequestWhereQuery(filters);
+    const where = createStockRequestWhereQuery(session, filters);
+    const orderBy = createStockRequestOrderByQuery(
+      filters.sortBy,
+      filters.sortOrder,
+    );
 
-    const stockRequestSelect = createStockRequestSelect({
-      approvedBy: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      requestedBy: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
+    const select = createStockRequestSelect({
+      approvedBy: { select: { id: true, name: true } },
+      requestedBy: { select: { id: true, name: true } },
       createdAt: true,
       updatedAt: true,
-      item: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
+      item: { select: { id: true, name: true } },
       type: true,
       status: true,
-      destinationLocation: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      sourceLocation: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
+      destinationLocation: { select: { id: true, name: true } },
+      sourceLocation: { select: { id: true, name: true } },
       decisionNotes: true,
       requestedQuantity: true,
       approvedQuantity: true,
     });
+
+    const take = filters.dataPerPage;
+    const skip = (filters.page - 1) * take;
+
+    const [stockRequests, totalStockRequests] = await Promise.all([
+      stockRequestRepository.getMany(
+        where,
+        select,
+        orderBy,
+        skip,
+        take,
+        prisma,
+      ),
+      stockRequestRepository.countRows(where, prisma),
+    ]);
+
+    return {
+      message: "Stock requests successfully retrieved",
+      data: { stockRequests, totalStockRequests: totalStockRequests },
+    };
+  },
+
+  getById: async (
+    session: Session["user"],
+    stockRequestId: string,
+    prisma: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    const stockRequest = await stockRepository.findById(stockRequestId, prisma);
+
+    if (!stockRequest) throw notFound("Stock request not found");
+
+    return {
+      message: "Stock request retrieved successfully",
+      stockRequest
+    };
   },
 };
 

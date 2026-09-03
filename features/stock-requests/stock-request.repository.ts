@@ -5,15 +5,22 @@ import {
   StockRequestUpdateSchema,
 } from "@/shared/lib/zods/stock-request.zod";
 import { Prisma, PrismaClient } from "@prisma/client";
+import { Session } from "next-auth";
+import { requesterRoles } from "./stock-request.types";
 
 export const createStockRequestSelect = <T extends Prisma.StockRequestSelect>(
   select: T,
 ): T => select;
 
 export const createStockRequestWhereQuery = (
+  session: Session["user"],
   baseFilter: StockRequestFilterSchema,
 ): Prisma.StockRequestWhereInput => {
   const where: Prisma.StockRequestWhereInput = {};
+
+  if (requesterRoles.includes(session.role)) {
+    where.requestedById = session.id;
+  }
 
   // Filtering by search keyword (minimum 3 characters)
   if (baseFilter.search && baseFilter.search.trim().length >= 3) {
@@ -126,6 +133,32 @@ export const stockRequestRepository = {
         decisionNotes: data.decisitonNotes,
         approvedQuantity: data.approvedQuantity,
       },
+    });
+  },
+
+  getMany: async (
+    where: Prisma.StockRequestWhereInput,
+    select: Prisma.StockRequestSelect,
+    orderBy: Prisma.StockRequestOrderByWithRelationInput,
+    skip: number,
+    take: number,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    return tx.stockRequest.findMany({
+      where,
+      select,
+      orderBy,
+      skip,
+      take,
+    });
+  },
+
+  countRows: async (
+    where: Prisma.StockRequestWhereInput,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    return tx.stockRequest.count({
+      where,
     });
   },
 };
