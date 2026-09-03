@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "Entity" ADD VALUE 'STOCK_REQUEST';

@@ -15,7 +15,7 @@ self.addEventListener("push", (event) => {
     icon: data.icon || "/icon-192.png",
     badge: "/badge-72.png",
     vibrate: [200, 100, 200],
-    requireInteraction: true,
+    requireInteraction: false,
     tag: "ims-notification",
     renotify: true,
     silent: false,

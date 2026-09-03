@@ -19,6 +19,7 @@ import {
   stockRequestRepository,
 } from "./stock-request.repository";
 import stockMovementsService from "../stock-movements/stock-movements.service";
+import auditLogsRepository from "../audit-logs/audit-log.repository";
 
 const stockRequestService = {
   create: async (
@@ -37,29 +38,51 @@ const stockRequestService = {
     if (!destinationLocation)
       throw badRequest("Destination location not found");
 
-    const stockRequest = await stockRequestRepository.create(
-      session.id,
-      {
-        itemId: data.itemId,
-        quantity: data.quantity,
-        sourceLocationId: data.sourceLocationId,
-        destinationLocationId: data.destinationLocationId,
-        requestType: data.requestType,
-        reason: data.reason,
-      },
-      prisma,
-    );
+    const transaction = await prisma.$transaction(async (tx) => {
+      const stockRequest = await stockRequestRepository.create(
+        session.id,
+        {
+          itemId: data.itemId,
+          quantity: data.quantity,
+          sourceLocationId: data.sourceLocationId,
+          destinationLocationId: data.destinationLocationId,
+          requestType: data.requestType,
+          reason: data.reason,
+        },
+        tx,
+      );
 
-    sendPushToUser(null, ["HOTEL_MANAGER", "SUPERVISOR"], {
-      title: "New Stock Request",
-      body: `${session.name} has submitted a new stock request.`,
-      url: process.env.NEXT_PUBLIC_BASE_URL!,
+      sendPushToUser(null, ["HOTEL_MANAGER", "SUPERVISOR"], {
+        title: "New Stock Request",
+        body: `${session.name} has submitted a new stock request.`,
+        url: process.env.NEXT_PUBLIC_BASE_URL!,
+      });
+
+      await auditLogsRepository.create(
+        {
+          entity: "STOCK_REQUEST",
+          action: "CREATE",
+          entityId: stockRequest.id,
+          metadata: {
+            itemId: stockRequest.itemId,
+            quantity: stockRequest.requestedQuantity,
+            sourceLocationId: stockRequest.sourceLocationId,
+            destinationLocationId: stockRequest.destinationLocationId,
+            requestType: stockRequest.type,
+            reason: stockRequest.reason,
+          },
+          userId: session.id,
+        },
+        tx,
+      );
+
+      return { stockRequest };
     });
 
     return {
       message: "Stock request created successfully",
       data: {
-        id: stockRequest.id,
+        id: transaction.stockRequest.id,
       },
     };
   },
@@ -91,15 +114,39 @@ const stockRequestService = {
         "Source location and destination location can't be same",
       );
 
-    const result = await stockRequestRepository.update(
-      stockRequestId,
-      data,
-      prisma,
-    );
+    const transaction = await prisma.$transaction(async (tx) => {
+      const updatedStockRequest = await stockRequestRepository.update(
+        stockRequestId,
+        data,
+        tx,
+      );
+
+      await auditLogsRepository.create(
+        {
+          entity: "STOCK_REQUEST",
+          action: "CREATE",
+          entityId: updatedStockRequest.id,
+          metadata: {
+            stockRequestId: updatedStockRequest.id,
+            quantity: updatedStockRequest.requestedQuantity,
+            sourceLocationId: updatedStockRequest.sourceLocationId,
+            destinationLocationId: updatedStockRequest.destinationLocationId,
+            requestType: updatedStockRequest.type,
+            reason: updatedStockRequest.reason,
+          },
+          userId: session.id,
+        },
+        tx,
+      );
+
+      return {
+        updatedStockRequest,
+      };
+    });
 
     return {
       message: `Stock request updated successfully`,
-      stockRequestId: result.id,
+      stockRequestId: transaction.updatedStockRequest.id,
     };
   },
 
@@ -149,77 +196,101 @@ const stockRequestService = {
       );
     }
 
-    const reviewedStockRequest = await stockRequestRepository.review(
-      session.id,
-      stockRequestId,
-      data,
-      prisma,
-    );
+    const transaction = await prisma.$transaction(async (tx) => {
+      const reviewedStockRequest = await stockRequestRepository.review(
+        session.id,
+        stockRequestId,
+        data,
+        tx,
+      );
 
-    let stockMovementType: MovementType;
+      let stockMovementType: MovementType;
 
-    switch (stockRequest.type) {
-      case "ISSUE":
-        stockMovementType = "CONSUME";
-        break;
-      case "RESTOCK":
-        stockMovementType = "RECEIVE";
-        break;
-      case "SALE":
-        stockMovementType = "SALE";
-        break;
-      case "TRANSFER":
-        stockMovementType = "TRANSFER";
-        break;
-      case "REPORT_LOST":
-        stockMovementType = "MARK_AS_LOST";
-        break;
-      case "WRITE_OFF":
-        stockMovementType = data.writeOffTypeDecision as MovementType;
-        break;
-      case "LAUNDRY_IN":
-        stockMovementType = "LAUNDRY_IN";
-        break;
-      case "LAUNDRY_OUT":
-        stockMovementType = "LAUNDRY_OUT";
-        break;
-      default:
-        throw badRequest("Invalid stock request type");
-    }
+      switch (stockRequest.type) {
+        case "ISSUE":
+          stockMovementType = "CONSUME";
+          break;
+        case "RESTOCK":
+          stockMovementType = "RECEIVE";
+          break;
+        case "SALE":
+          stockMovementType = "SALE";
+          break;
+        case "TRANSFER":
+          stockMovementType = "TRANSFER";
+          break;
+        case "REPORT_LOST":
+          stockMovementType = "MARK_AS_LOST";
+          break;
+        case "WRITE_OFF":
+          stockMovementType = data.writeOffTypeDecision as MovementType;
+          break;
+        case "LAUNDRY_IN":
+          stockMovementType = "LAUNDRY_IN";
+          break;
+        case "LAUNDRY_OUT":
+          stockMovementType = "LAUNDRY_OUT";
+          break;
+        default:
+          throw badRequest("Invalid stock request type");
+      }
 
-    const stock = await stockRepository.findFirst(
-      {
-        itemId: stockRequest.itemId,
-        locationId: stockRequest.sourceLocationId
-          ? stockRequest.sourceLocationId
-          : stockRequest.destinationLocationId,
-      },
-      prisma,
-    );
+      const stock = await stockRepository.findFirst(
+        {
+          itemId: stockRequest.itemId,
+          locationId: stockRequest.sourceLocationId
+            ? stockRequest.sourceLocationId
+            : stockRequest.destinationLocationId,
+        },
+        tx,
+      );
 
-    await stockMovementsService.create(
-      session,
-      {
-        itemId: stockRequest.itemId,
-        quantity: data.approvedQuantity,
-        reason: stockRequest.reason,
-        stockMovementType,
-        destinationLocationId: stockRequest.destinationLocationId,
-        stockId: stock?.id,
-        isGlobalStock: stockRequest.sourceLocationId === null,
-      },
-      prisma,
-    );
+      await stockMovementsService.create(
+        session,
+        {
+          itemId: stockRequest.itemId,
+          quantity: data.approvedQuantity,
+          reason: stockRequest.reason,
+          stockMovementType,
+          destinationLocationId: stockRequest.destinationLocationId,
+          stockId: stock?.id,
+          isGlobalStock: stockRequest.sourceLocationId === null,
+        },
+        tx,
+      );
 
-    sendPushToUser(reviewedStockRequest.requestedById, null, {
-      title: "Stock Request Reviewed",
-      body: `Your stock request has been ${data.stockRequestStatus.toLowerCase()}.`,
-      url: process.env.NEXT_PUBLIC_BASE_URL!,
+      sendPushToUser(reviewedStockRequest.requestedById, null, {
+        title: "Stock Request Reviewed",
+        body: `Your stock request has been ${data.stockRequestStatus.toLowerCase()}.`,
+        url: process.env.NEXT_PUBLIC_BASE_URL!,
+      });
+
+      await auditLogsRepository.create(
+        {
+          entity: "STOCK_REQUEST",
+          action: "CREATE",
+          entityId: reviewedStockRequest.id,
+          metadata: {
+            itemId: reviewedStockRequest.itemId,
+            quantity: reviewedStockRequest.requestedQuantity,
+            sourceLocationId: reviewedStockRequest.sourceLocationId,
+            destinationLocationId: reviewedStockRequest.destinationLocationId,
+            requestType: reviewedStockRequest.type,
+            reason: reviewedStockRequest.reason,
+          },
+          userId: session.id,
+        },
+        tx,
+      );
+
+      return {
+        reviewedStockRequest,
+      };
     });
 
     return {
       message: "Stock request reviewed successfully",
-      stockRequestId: reviewedStockRequest.id,
+      stockRequestId: transaction.reviewedStockRequest.id,
     };
   },
 
