@@ -275,13 +275,32 @@ const stockRequestService = {
     stockRequestId: string,
     prisma: PrismaClient | Prisma.TransactionClient,
   ) => {
-    const stockRequest = await stockRepository.findById(stockRequestId, prisma);
+    const select = createStockRequestSelect({
+      approvedBy: { select: { id: true, name: true } },
+      requestedBy: { select: { id: true, name: true } },
+      createdAt: true,
+      updatedAt: true,
+      item: { select: { id: true, name: true } },
+      type: true,
+      status: true,
+      destinationLocation: { select: { id: true, name: true } },
+      sourceLocation: { select: { id: true, name: true } },
+      decisionNotes: true,
+      requestedQuantity: true,
+      approvedQuantity: true,
+    });
+
+    const stockRequest = await stockRequestRepository.getById(
+      stockRequestId,
+      select,
+      prisma,
+    );
 
     if (!stockRequest) throw notFound("Stock request not found");
 
     return {
       message: "Stock request retrieved successfully",
-      stockRequest
+      stockRequest,
     };
   },
 };

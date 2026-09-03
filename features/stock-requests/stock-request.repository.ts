@@ -153,6 +153,19 @@ export const stockRequestRepository = {
     });
   },
 
+  getById: async (
+    stockRequestId: string,
+    select: Prisma.StockRequestSelect,
+    tx: Prisma.TransactionClient | PrismaClient,
+  ) => {
+    return await tx.stockRequest.findUnique({
+      where: {
+        id: stockRequestId,
+      },
+      select,
+    });
+  },
+
   countRows: async (
     where: Prisma.StockRequestWhereInput,
     tx: PrismaClient | Prisma.TransactionClient,

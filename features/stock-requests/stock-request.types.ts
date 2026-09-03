@@ -9,10 +9,16 @@ export type StockRequestCUDApiResponse = ApiResponse<{
 type StockRequestGetManyResult = Awaited<
   ReturnType<typeof stockRequestService.getMany>
 >;
+type StockRequestGetByIdResult = Awaited<
+  ReturnType<typeof stockRequestService.getById>
+>;
 
 export type StockRequestGetManyApiResponse = ApiResponse<{
   stockRequests: StockRequestGetManyResult["data"]["stockRequests"];
   totalStockRequests: StockRequestGetManyResult["data"]["totalStockRequests"];
+}>;
+export type StockRequestGetByIdResponse = ApiResponse<{
+  stockRequest: StockRequestGetByIdResult["stockRequest"];
 }>;
 
 export const reviewerRoles: Role[] = ["HOTEL_MANAGER", "SUPERVISOR"];

@@ -3,6 +3,7 @@ import {
   requesterRoles,
   reviewerRoles,
   StockRequestCUDApiResponse,
+  StockRequestGetByIdResponse,
 } from "@/features/stock-requests/stock-request.types";
 import prisma from "@/shared/db/prisma";
 import { badRequest, forbidden } from "@/shared/lib/error-handlers";
@@ -66,6 +67,42 @@ export async function PATCH(
     return Response.json(responseData, { status: 200 });
   } catch (error) {
     printConsoleError(error, "PATCH", req.url);
+    return handleError(error);
+  }
+}
+
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const session = await sessionValidation();
+
+    if (!canUpdateReviewGetStockRequest(session.role)) {
+      throw forbidden("You're not allowed to access this feature");
+    }
+
+    const { id } = await params;
+
+    if (!id) throw badRequest("Id is misisng");
+
+    const { stockRequest, message } = await stockRequestService.getById(
+      session,
+      id,
+      prisma,
+    );
+
+    const responseData: StockRequestGetByIdResponse = {
+      message,
+      data: {
+        stockRequest: stockRequest,
+      },
+      status: 200,
+    };
+
+    return Response.json(responseData, { status: 200 });
+  } catch (error) {
+    printConsoleError(error, "GET", req.url);
     return handleError(error);
   }
 }
