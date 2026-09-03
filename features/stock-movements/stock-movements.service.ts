@@ -27,7 +27,7 @@ const stockMovementsService = {
   create: async (
     session: Session["user"],
     payload: StockMovementCreateSchema,
-    prisma: PrismaClient,
+    prisma: PrismaClient | Prisma.TransactionClient,
   ) => {
     const result = await prisma.$transaction(async (tx) => {
       const [item, currentStock, destLoc, order] = await Promise.all([
