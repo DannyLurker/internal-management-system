@@ -27,27 +27,35 @@ const stockRequestService = {
     data: StockRequestCreateSchema,
     prisma: PrismaClient | Prisma.TransactionClient,
   ) => {
-    const [item, sourceLocation, destinationLocation] = await Promise.all([
+    const [item, stock, destinationLocation] = await Promise.all([
       itemRepository.findById(data.itemId, prisma),
-      locationRepository.findById(data.sourceLocationId, prisma),
+      stockRepository.findById(data.stockId, prisma),
       locationRepository.findById(data.destinationLocationId, prisma),
     ]);
 
+    // TODO: Create a validation to check wether the requested stock exceeds the limit or not
+
     if (!item) throw badRequest("Item not found");
-    if (!sourceLocation) throw badRequest("Source location not found");
+    if (!stock) throw badRequest("Stock not found");
     if (!destinationLocation)
       throw badRequest("Destination location not found");
 
     const transaction = await prisma.$transaction(async (tx) => {
       const stockRequest = await stockRequestRepository.create(
-        session.id,
         {
-          itemId: data.itemId,
-          quantity: data.quantity,
-          sourceLocationId: data.sourceLocationId,
-          destinationLocationId: data.destinationLocationId,
-          requestType: data.requestType,
+          item: {
+            connect: {
+              id: data.itemId,
+            },
+          },
+          requestedQuantity: data.quantity,
+          sourceLocation: { connect: { id: stock.locationId } },
+          destinationLocation: {
+            connect: { id: data.destinationLocationId },
+          },
+          type: data.requestType,
           reason: data.reason,
+          requestedBy: { connect: { id: session.id } },
         },
         tx,
       );

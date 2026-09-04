@@ -4,12 +4,13 @@ import {
   stockRepository,
   stockWhereInput,
 } from "@/features/stocks/stock.repository";
-import { laundryRepository } from "@/features/laundries/laundry.repository";
+
 import { FinancialSummaryParamSchema } from "@/shared/lib/zods/dashboard.zod";
 import { PrismaClient } from "@prisma/client";
 import { Session } from "next-auth";
 import { mockDeep, mockReset } from "jest-mock-extended";
 import { resolveDateRange } from "@/features/dashboards/components/sub-components/DateFilterDropdown";
+import { laundryRepository } from "@/features/laundry/laundry.repository";
 
 const dateRange = resolveDateRange("last7");
 const startDate = dateRange.startDate.toISOString();
@@ -41,7 +42,7 @@ jest.mock("@/features/stocks/stock.repository", () => {
 });
 
 jest.mock("@/features/laundries/laundry.repository", () => {
-  const actual = jest.requireActual("@/features/laundries/laundry.repository");
+  const actual = jest.requireActual("@/features/laundry/laundry.repository");
   const autoMocked = jest.createMockFromModule(
     "@/features/laundries/laundry.repository",
   ) as typeof actual;

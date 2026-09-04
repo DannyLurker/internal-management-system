@@ -14,7 +14,7 @@ export const stockRequestCreateSchema = z.object({
   itemId: z.string().trim().min(1),
   quantity: z.number().min(1),
   reason: z.string().min(10),
-  sourceLocationId: z.string().trim().min(1),
+  stockId: z.string().trim().min(1),
   destinationLocationId: z.string().trim().min(1),
   requestType: stockRequestTypeEnum,
 });

@@ -81,19 +81,11 @@ export const stockRequestRepository = {
   },
 
   create: async (
-    userId: string,
-    data: StockRequestCreateSchema,
+    data: Prisma.StockRequestCreateInput,
     tx: Prisma.TransactionClient | PrismaClient,
   ) => {
     return await tx.stockRequest.create({
-      data: {
-        itemId: data.itemId,
-        requestedById: userId,
-        requestedQuantity: data.quantity,
-        sourceLocationId: data.sourceLocationId,
-        destinationLocationId: data.destinationLocationId,
-        reason: data.reason,
-      },
+      data
     });
   },
 
