@@ -3,6 +3,7 @@ import itemService from "./item.service";
 import { itemStockStatusArray } from "./item.utils";
 import z from "zod";
 import { filterItemByEnum } from "@/shared/lib/zods/general.zod";
+import itemRepository from "./item.repository";
 
 export type ItemServiceGetById = Awaited<
   ReturnType<typeof itemService.getById>
@@ -17,8 +18,7 @@ export type ItemListItem = ItemServiceGetMany["data"]["items"][number];
 export type Item = ItemListItem;
 
 export type StockInItemById =
-  | ItemServiceGetById["data"]["item"]["stocks"][number]
-  | undefined;
+  ItemServiceGetById["data"]["item"]["stocks"][number] | undefined;
 
 // Api Response Types
 export type ItemGetByIdApiResponse = ApiResponse<ItemServiceGetById["data"]>;
@@ -41,3 +41,8 @@ export type filterItemBy = z.infer<typeof filterItemByEnum> | null;
 
 // frontend use case
 export type ItemOption = { id: string; name: string };
+
+// Repository types
+export type ItemRepositoryFindById = Awaited<
+  ReturnType<typeof itemRepository.findById>
+>;

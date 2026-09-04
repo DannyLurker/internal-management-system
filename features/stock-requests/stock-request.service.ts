@@ -20,6 +20,11 @@ import {
 } from "./stock-request.repository";
 import stockMovementsService from "../stock-movements/stock-movements.service";
 import auditLogsRepository from "../audit-logs/audit-log.repository";
+import {
+  assertCanCreateStockRequest,
+  assertCanDeleteStockRequest,
+  assertCanUpdateStockRequest,
+} from "./stock-request.rules";
 
 const stockRequestService = {
   create: async (
@@ -27,29 +32,32 @@ const stockRequestService = {
     data: StockRequestCreateSchema,
     prisma: PrismaClient | Prisma.TransactionClient,
   ) => {
-    const [item, stock, destinationLocation] = await Promise.all([
-      itemRepository.findById(data.itemId, prisma),
-      stockRepository.findById(data.stockId, prisma),
-      locationRepository.findById(data.destinationLocationId, prisma),
-    ]);
+    const [item, stock, destinationLocation, totalReadyStocks] =
+      await Promise.all([
+        itemRepository.findById(data.itemId, prisma),
+        stockRepository.findById(data.stockId, prisma),
+        locationRepository.findById(data.destinationLocationId, prisma),
+        stockRepository.aggregate(
+          { itemId: data.itemId, type: "READY" },
+          { quantity: true },
+          prisma,
+        ),
+      ]);
 
-    // TODO: Create a validation to check wether the requested stock exceeds the limit or not
+    assertCanCreateStockRequest(
+      item,
+      stock,
+      destinationLocation,
+      totalReadyStocks?.quantity,
+      data.quantity,
+    );
 
-    if (!item) throw badRequest("Item not found");
-    if (!stock) throw badRequest("Stock not found");
-    if (!destinationLocation)
-      throw badRequest("Destination location not found");
-
-    const transaction = await prisma.$transaction(async (tx) => {
+    const createdStockRequest = await prisma.$transaction(async (tx) => {
       const stockRequest = await stockRequestRepository.create(
         {
-          item: {
-            connect: {
-              id: data.itemId,
-            },
-          },
+          item: { connect: { id: data.itemId } },
           requestedQuantity: data.quantity,
-          sourceLocation: { connect: { id: stock.locationId } },
+          sourceLocation: { connect: { id: stock!.locationId } },
           destinationLocation: {
             connect: { id: data.destinationLocationId },
           },
@@ -59,12 +67,6 @@ const stockRequestService = {
         },
         tx,
       );
-
-      sendPushToUser(null, ["HOTEL_MANAGER", "SUPERVISOR"], {
-        title: "New Stock Request",
-        body: `${session.name} has submitted a new stock request.`,
-        url: process.env.NEXT_PUBLIC_BASE_URL!,
-      });
 
       await auditLogsRepository.create(
         {
@@ -84,13 +86,19 @@ const stockRequestService = {
         tx,
       );
 
-      return { stockRequest };
+      return stockRequest;
+    });
+
+    sendPushToUser(null, ["HOTEL_MANAGER", "SUPERVISOR"], {
+      title: "New Stock Request",
+      body: `${session.name} has submitted a new stock request.`,
+      url: `${process.env.NEXT_PUBLIC_BASE_URL}/stock-requests`,
     });
 
     return {
       message: "Stock request created successfully",
       data: {
-        id: transaction.stockRequest.id,
+        id: createdStockRequest.id,
       },
     };
   },
@@ -110,17 +118,12 @@ const stockRequestService = {
         stockRequestRepository.findById(stockRequestId, prisma),
       ]);
 
-    if (!sourceLocation) throw notFound("Source location not found");
-    if (!destinationLocation) throw notFound("Destination location not found");
-    if (!stockRequest) throw notFound("Stock request not found");
-
-    if (stockRequest.status !== "PENDING")
-      throw badRequest("Can't update a stock request that has been reviewed");
-
-    if (sourceLocation.id === destinationLocation.id)
-      throw badRequest(
-        "Source location and destination location can't be same",
-      );
+    assertCanUpdateStockRequest(
+      data,
+      stockRequest,
+      sourceLocation,
+      destinationLocation,
+    );
 
     const transaction = await prisma.$transaction(async (tx) => {
       const updatedStockRequest = await stockRequestRepository.update(
@@ -132,7 +135,7 @@ const stockRequestService = {
       await auditLogsRepository.create(
         {
           entity: "STOCK_REQUEST",
-          action: "CREATE",
+          action: "UPDATE",
           entityId: updatedStockRequest.id,
           metadata: {
             stockRequestId: updatedStockRequest.id,
@@ -380,6 +383,33 @@ const stockRequestService = {
     return {
       message: "Stock request retrieved successfully",
       stockRequest,
+    };
+  },
+
+  delete: async (
+    session: Session["user"],
+    stockRequestId: string,
+    prisma: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    const stockRequest = await stockRequestRepository.findById(
+      stockRequestId,
+      prisma,
+    );
+
+    if (!stockRequest) throw badRequest("Stock request not found.");
+
+    assertCanDeleteStockRequest(session, stockRequest);
+
+    const deletedStockRequest = await stockRequestRepository.delete(
+      stockRequestId,
+      prisma,
+    );
+
+    return {
+      message: "Stock request deleted successfully.",
+      data: {
+        id: deletedStockRequest.id,
+      },
     };
   },
 };

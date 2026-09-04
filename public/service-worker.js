@@ -17,7 +17,6 @@ self.addEventListener("push", (event) => {
     vibrate: [200, 100, 200],
     requireInteraction: false,
     tag: "ims-notification",
-    renotify: true,
     silent: false,
     data: {
       url: data.url || "/",

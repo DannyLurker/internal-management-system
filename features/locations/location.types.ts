@@ -1,6 +1,7 @@
 import { ApiResponse } from "@/shared/lib/api-client";
 import locationService from "./location.service";
 import { LocationType } from "@prisma/client";
+import { locationRepository } from "./location.repository";
 
 type LocationServiceGetMany = Awaited<
   ReturnType<typeof locationService.getMany>
@@ -43,3 +44,8 @@ export const locationTypeLabels: Record<LocationType, string> = {
   OPERATIONAL: "Operational",
   GUEST_ROOM: "Guest Room",
 };
+
+// repository types
+export type LocationRepositoryFindById = Awaited<
+  ReturnType<typeof locationRepository.findById>
+>;

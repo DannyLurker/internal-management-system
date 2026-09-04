@@ -10,12 +10,14 @@ const PERMISSIONS = {
   ACCESS_MANAGER_DASHBOARD: "HOTEL_MANAGER" as Role,
   PRINT_REPORT: ["HOTEL_MANAGER", "ACCOUNTANT"] as Role[],
   STOCK_REQUEST_CREATE: ["HOUSEKEEPING", "FRONT_DESK"] as Role[],
-  STOCK_REQUEST_UPDATE_REVIEW_GET: [
+  STOCK_REQUEST_UPDATE_REVIEW_GET_DELETE: [
     "HOTEL_MANAGER",
     "SUPERVISOR",
     "FRONT_DESK",
     "HOUSEKEEPING",
   ] as Role[],
+  DELETE_ALL_STOCK_REQUESTS: ["HOTEL_MANAGER", "SUPERVISOR"] as Role[],
+  DELETE_OWN_STOCK_REQUESTS: ["HOUSEKEEPING", "FRONT_DESK"] as Role[],
 };
 
 export const canManageLocation = (role: Role) => {
@@ -74,6 +76,14 @@ export const canCreateStockRequest = (role: Role) => {
   return PERMISSIONS.STOCK_REQUEST_CREATE.includes(role);
 };
 
-export const canUpdateReviewGetStockRequest = (role: Role) => {
-  return PERMISSIONS.STOCK_REQUEST_UPDATE_REVIEW_GET.includes(role);
+export const canUpdateReviewGetDeleteStockRequest = (role: Role) => {
+  return PERMISSIONS.STOCK_REQUEST_UPDATE_REVIEW_GET_DELETE.includes(role);
+};
+
+export const canDeleteAllStockRequest = (role: Role) => {
+  return PERMISSIONS.DELETE_ALL_STOCK_REQUESTS.includes(role);
+};
+
+export const canDeleteOwnStockRequest = (role: Role) => {
+  return PERMISSIONS.DELETE_OWN_STOCK_REQUESTS.includes(role);
 };

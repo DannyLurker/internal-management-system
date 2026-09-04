@@ -1,27 +1,31 @@
+// Environment setup for push notification dependencies
+process.env.VAPID_SUBJECT = "mailto:admin@example.com";
+process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY =
+  "BODfHCuNmOf40o7PBsBT-1nmZCtGO9bPBWNnufOq-7IJyZPBzEDaP0dZu2SDSUTZFpqGmH3z9jJwMv_LExT_2Os";
+process.env.VAPID_PRIVATE_KEY = "dlcAeEogpKe7pTE9s5xKU8nlGPaje55UDimXMKog60A";
+
 import auditLogsRepository from "@/features/audit-logs/audit-log.repository";
 import itemRepository from "@/features/items/item.repository";
 import { locationRepository } from "@/features/locations/location.repository";
 import { stockRequestRepository } from "@/features/stock-requests/stock-request.repository";
 import stockRequestService from "@/features/stock-requests/stock-request.service";
 import { stockRepository } from "@/features/stocks/stock.repository";
+import { sendPushToUser } from "@/shared/lib/push";
 import { StockRequestCreateSchema } from "@/shared/lib/zods/stock-request.zod";
 import { PrismaClient } from "@prisma/client";
 import { mockDeep, mockReset } from "jest-mock-extended";
 import { Session } from "next-auth";
 
+// Mocking external dependencies only (do NOT mock stockRequestService)
 jest.mock("@/features/stock-requests/stock-request.repository");
-jest.mock("@/features/stock-requests/stock-request.service");
 jest.mock("@/features/locations/location.repository");
 jest.mock("@/features/items/item.repository");
 jest.mock("@/features/stocks/stock.repository");
 jest.mock("@/features/audit-logs/audit-log.repository");
+jest.mock("@/shared/lib/push");
 
 const mockedStockRequestRepository = stockRequestRepository as jest.Mocked<
   typeof stockRequestRepository
->;
-
-const mockedStockRequestService = stockRequestService as jest.Mocked<
-  typeof stockRequestService
 >;
 
 const mockedLocationRepository = locationRepository as jest.Mocked<
@@ -40,30 +44,35 @@ const mockedAuditLogRepository = auditLogsRepository as jest.Mocked<
   typeof auditLogsRepository
 >;
 
-const managerFakeSession = {
-  id: "user-1",
-  role: "HOTEL_MANAGER",
-} as Session["user"];
+const mockedSendPushToUser = sendPushToUser as jest.MockedFunction<
+  typeof sendPushToUser
+>;
 
+// Test mock fixtures
 const housekeepingFakeSession = {
+  name: "Housekeeper John",
   id: "user-2",
   role: "HOUSEKEEPING",
 } as Session["user"];
 
 const prismaMock = mockDeep<PrismaClient>();
 
-describe("stockService.create", () => {
+describe("stockRequestService.create", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockReset(prismaMock);
-    prismaMock.$transaction.mockImplementation((callback) =>
+
+    // Mock Prisma transaction execution to execute callback directly
+    prismaMock.$transaction.mockImplementation(async (callback: any) =>
       callback(prismaMock),
     );
   });
 
-  it("Create a new stock request and stock request log", async () => {
+  it("should successfully create a stock request, record an audit log, and send push notifications", async () => {
+    // 1. Setup repository mock responses
     mockedItemRepository.findById.mockResolvedValue({
       id: "itemId-1",
+      name: "Towel",
     } as any);
 
     mockedStockRepository.findById.mockResolvedValue({
@@ -73,32 +82,45 @@ describe("stockService.create", () => {
 
     mockedLocationRepository.findById.mockResolvedValue({
       id: "loc-2",
+      name: "Floor 2 Locker",
     } as any);
 
-    mockedStockRequestService.create.mockResolvedValue({
+    mockedStockRequestRepository.create.mockResolvedValue({
       id: "stock-request-1",
+      itemId: "itemId-1",
+      requestedQuantity: 10,
+      sourceLocationId: "loc-1",
+      destinationLocationId: "loc-2",
+      type: "ISSUE",
+      reason: "mock request stock",
     } as any);
 
+    mockedAuditLogRepository.create.mockResolvedValue({ id: "audit-1" } as any);
+    mockedSendPushToUser.mockResolvedValue();
+
+    // 2. Define test input payload
     const payload: StockRequestCreateSchema = {
       itemId: "itemId-1",
       destinationLocationId: "loc-2",
       stockId: "stock-1",
       quantity: 10,
-      reason: "mock request stock",
+      reason: "Restocking housekeeping cart",
       requestType: "ISSUE",
     };
 
-    const stockRequest = mockedStockRequestService.create(
+    // 3. Execute the service method under test
+    const result = await stockRequestService.create(
       housekeepingFakeSession,
       payload,
       prismaMock,
     );
 
+    // 4. Verify audit log creation
     expect(mockedAuditLogRepository.create).toHaveBeenCalledWith(
       {
         entity: "STOCK_REQUEST",
         action: "CREATE",
-        entityId: "stock-1",
+        entityId: "stock-request-1",
         metadata: {
           itemId: "itemId-1",
           quantity: 10,
@@ -112,9 +134,23 @@ describe("stockService.create", () => {
       prismaMock,
     );
 
-    expect(stockRequest).toEqual({
+    // 5. Verify notification targeting managers
+    expect(mockedSendPushToUser).toHaveBeenCalledWith(
+      null,
+      ["HOTEL_MANAGER", "SUPERVISOR"],
+      {
+        title: "New Stock Request",
+        body: `${housekeepingFakeSession.name} has submitted a new stock request.`,
+        url: process.env.NEXT_PUBLIC_BASE_URL + "/stock-requests",
+      },
+    );
+
+    // 6. Verify final service output
+    expect(result).toEqual({
       message: "Stock request created successfully",
-      id: "stock-request-1",
+      data: {
+        id: "stock-request-1",
+      },
     });
   });
 });

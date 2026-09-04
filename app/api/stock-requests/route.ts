@@ -11,7 +11,7 @@ import {
 } from "@/shared/lib/error-handlers/handleError";
 import {
   canCreateStockRequest,
-  canUpdateReviewGetStockRequest,
+  canUpdateReviewGetDeleteStockRequest,
 } from "@/shared/lib/validations/user-access-validation";
 import sessionValidation from "@/shared/lib/validations/user-session-validation";
 import {
@@ -50,7 +50,7 @@ export async function GET(req: Request) {
   try {
     const session = await sessionValidation();
 
-    if (!canUpdateReviewGetStockRequest(session.role)) {
+    if (!canUpdateReviewGetDeleteStockRequest(session.role)) {
       throw forbidden("You're not allowed to access this feature");
     }
 

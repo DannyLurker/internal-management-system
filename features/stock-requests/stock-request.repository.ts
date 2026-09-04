@@ -1,5 +1,4 @@
 import {
-  StockRequestCreateSchema,
   StockRequestFilterSchema,
   StockRequestReviewSchema,
   StockRequestUpdateSchema,
@@ -85,7 +84,7 @@ export const stockRequestRepository = {
     tx: Prisma.TransactionClient | PrismaClient,
   ) => {
     return await tx.stockRequest.create({
-      data
+      data,
     });
   },
 
@@ -155,6 +154,17 @@ export const stockRequestRepository = {
         id: stockRequestId,
       },
       select,
+    });
+  },
+
+  delete: async (
+    stockRequestId: string,
+    tx: Prisma.TransactionClient | PrismaClient,
+  ) => {
+    return await tx.stockRequest.delete({
+      where: {
+        id: stockRequestId,
+      },
     });
   },
 

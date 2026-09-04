@@ -2,6 +2,7 @@ import { ApiResponse } from "@/shared/lib/api-client";
 import stockService from "./stock.service";
 import { StockGetManySchema } from "@/shared/lib/zods/stock.zod";
 import { StockType } from "@prisma/client";
+import { stockRepository } from "./stock.repository";
 
 type StockServiceGetManyResponse = Awaited<
   ReturnType<typeof stockService.getMany>
@@ -51,3 +52,8 @@ export type StockDelete = {
   stockLocation: string;
   stockId: string;
 };
+
+// Stock Repository Types
+export type StockRepositoryFindById = Awaited<
+  ReturnType<typeof stockRepository.findById>
+>;

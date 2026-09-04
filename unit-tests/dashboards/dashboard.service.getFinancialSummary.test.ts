@@ -41,10 +41,10 @@ jest.mock("@/features/stocks/stock.repository", () => {
   };
 });
 
-jest.mock("@/features/laundries/laundry.repository", () => {
+jest.mock("@/features/laundry/laundry.repository", () => {
   const actual = jest.requireActual("@/features/laundry/laundry.repository");
   const autoMocked = jest.createMockFromModule(
-    "@/features/laundries/laundry.repository",
+    "@/features/laundry/laundry.repository",
   ) as typeof actual;
   return {
     ...autoMocked,

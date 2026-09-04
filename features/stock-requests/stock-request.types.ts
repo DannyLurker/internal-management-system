@@ -1,6 +1,7 @@
 import { ApiResponse } from "@/shared/lib/api-client";
 import { Role } from "@prisma/client";
 import stockRequestService from "./stock-request.service";
+import { stockRequestRepository } from "./stock-request.repository";
 
 export type StockRequestCUDApiResponse = ApiResponse<{
   id: string;
@@ -23,3 +24,8 @@ export type StockRequestGetByIdResponse = ApiResponse<{
 
 export const reviewerRoles: Role[] = ["HOTEL_MANAGER", "SUPERVISOR"];
 export const requesterRoles: Role[] = ["HOUSEKEEPING", "FRONT_DESK"];
+
+// repository types
+export type StockRequestRepositoryFindById = Awaited<
+  ReturnType<typeof stockRequestRepository.findById>
+>;
