@@ -185,7 +185,7 @@ export default function StockManagement({
   }, []);
 
   return (
-    <div className="min-h-0 flex-1 bg-[#f8f9ff] px-4 py-8 md:px-10">
+    <div className="flex-1 bg-[#f8f9ff] px-4 py-8 md:px-10 min-h-screen">
       <header className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-2xl">
           <h1 className="font-ochre-brand text-3xl font-medium text-[#894d0d] md:text-4xl">

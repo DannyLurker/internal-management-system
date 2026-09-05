@@ -7,8 +7,38 @@ import { Session } from "next-auth";
 import { ItemRepositoryFindById } from "../items/item.types";
 import { StockRepositoryFindById } from "../stocks/stock.types";
 import { LocationRepositoryFindById } from "../locations/location.types";
-import { StockRequestUpdateSchema } from "@/shared/lib/zods/stock-request.zod";
+import {
+  StockRequestReviewSchema,
+  StockRequestUpdateSchema,
+} from "@/shared/lib/zods/stock-request.zod";
 import { StockRequestRepositoryFindById } from "./stock-request.types";
+
+export function assertCanReviewStockRequest(
+  data: StockRequestReviewSchema,
+  stockRequest: StockRequestRepositoryFindById,
+  totalActiveReadyStock: number | null | undefined,
+) {
+  if (!stockRequest) throw notFound("Stock request not found");
+
+  if (stockRequest.status !== "PENDING") {
+    throw badRequest("This stock request has already been reviewed.");
+  }
+
+  if (stockRequest?.type !== data.stockRequestType) {
+    throw badRequest("Stock request type mismatch");
+  }
+
+  // Guard clause: Ensure stock record exists
+  if (totalActiveReadyStock === null || totalActiveReadyStock === undefined) {
+    throw notFound("Stock record not found.");
+  }
+
+  if (!totalActiveReadyStock || totalActiveReadyStock < data.approvedQuantity) {
+    throw badRequest(
+      "Approved quantity cannot exceed the total ready stock quantity.",
+    );
+  }
+}
 
 export function assertCanCreateStockRequest(
   item: ItemRepositoryFindById | undefined | null,
@@ -33,19 +63,33 @@ export function assertCanCreateStockRequest(
 export function assertCanUpdateStockRequest(
   data: StockRequestUpdateSchema,
   stockRequest: StockRequestRepositoryFindById,
-  sourceLocation: LocationRepositoryFindById,
+  stock: StockRepositoryFindById,
   destinationLocation: LocationRepositoryFindById,
+  totalActiveReadyStock: number | null | undefined,
 ) {
-  if (!sourceLocation && data.sourceLocationId)
-    throw notFound("Source location not found");
+  if (!stock && data.stockId) throw notFound("stock not found");
   if (!destinationLocation) throw notFound("Destination location not found");
   if (!stockRequest) throw notFound("Stock request not found");
 
   if (stockRequest.status !== "PENDING")
     throw badRequest("Can't update a stock request that has been reviewed");
 
-  if (sourceLocation!.id === destinationLocation.id)
+  if (stock?.locationId === destinationLocation.id)
     throw badRequest("Source location and destination location can't be same");
+
+  // Guard clause: Ensure stock record exists
+  if (totalActiveReadyStock === null || totalActiveReadyStock === undefined) {
+    throw notFound("Stock record not found.");
+  }
+
+  if (
+    !totalActiveReadyStock ||
+    totalActiveReadyStock < data.requestedQuantity
+  ) {
+    throw badRequest(
+      "Requested quantity cannot exceed the total ready stock quantity.",
+    );
+  }
 }
 
 export function assertCanDeleteStockRequest(

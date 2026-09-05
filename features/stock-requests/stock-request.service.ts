@@ -23,6 +23,7 @@ import auditLogsRepository from "../audit-logs/audit-log.repository";
 import {
   assertCanCreateStockRequest,
   assertCanDeleteStockRequest,
+  assertCanReviewStockRequest,
   assertCanUpdateStockRequest,
 } from "./stock-request.rules";
 
@@ -109,20 +110,26 @@ const stockRequestService = {
     data: StockRequestUpdateSchema,
     prisma: PrismaClient | Prisma.TransactionClient,
   ) => {
-    const [sourceLocation, destinationLocation, stockRequest] =
-      await Promise.all([
-        data.sourceLocationId
-          ? locationRepository.findById(data.sourceLocationId, prisma)
-          : null,
-        locationRepository.findById(data.destinationLocationId, prisma),
-        stockRequestRepository.findById(stockRequestId, prisma),
-      ]);
+    const [stock, destinationLocation, stockRequest] = await Promise.all([
+      data.stockId ? stockRepository.findById(data.stockId, prisma) : null,
+      locationRepository.findById(data.destinationLocationId, prisma),
+      stockRequestRepository.findById(stockRequestId, prisma),
+    ]);
+
+    const totalActiveReadyStock = await stockRepository.aggregate(
+      {
+        itemId: stockRequest?.itemId,
+      },
+      { quantity: true },
+      prisma,
+    );
 
     assertCanUpdateStockRequest(
       data,
       stockRequest,
-      sourceLocation,
+      stock,
       destinationLocation,
+      totalActiveReadyStock.quantity,
     );
 
     const transaction = await prisma.$transaction(async (tx) => {
@@ -172,40 +179,19 @@ const stockRequestService = {
       prisma,
     );
 
-    if (!stockRequest) throw notFound("Stock request not found");
-
-    if (stockRequest.status !== "PENDING") {
-      throw badRequest("This stock request has already been reviewed.");
-    }
-
-    if (stockRequest?.type !== data.stockRequestType) {
-      throw badRequest("Stock request type mismatch");
-    }
-
     const totalActiveReadyStock = await stockRepository.aggregate(
       {
-        itemId: stockRequest.itemId,
+        itemId: stockRequest?.itemId,
       },
       { quantity: true },
       prisma,
     );
 
-    // Guard clause: Ensure stock record exists
-    if (
-      totalActiveReadyStock.quantity === null ||
-      totalActiveReadyStock.quantity === undefined
-    ) {
-      throw notFound("Stock record not found.");
-    }
-
-    if (
-      !totalActiveReadyStock ||
-      totalActiveReadyStock.quantity < data.approvedQuantity
-    ) {
-      throw badRequest(
-        "Approved quantity cannot exceed the total ready stock quantity.",
-      );
-    }
+    assertCanReviewStockRequest(
+      data,
+      stockRequest,
+      totalActiveReadyStock.quantity,
+    );
 
     const transaction = await prisma.$transaction(async (tx) => {
       const reviewedStockRequest = await stockRequestRepository.review(
@@ -217,7 +203,7 @@ const stockRequestService = {
 
       let stockMovementType: MovementType;
 
-      switch (stockRequest.type) {
+      switch (stockRequest?.type) {
         case "ISSUE":
           stockMovementType = "CONSUME";
           break;
@@ -261,7 +247,7 @@ const stockRequestService = {
         {
           itemId: stockRequest.itemId,
           quantity: data.approvedQuantity,
-          reason: stockRequest.reason,
+          reason: data.stockMovementReason,
           stockMovementType,
           destinationLocationId: stockRequest.destinationLocationId,
           stockId: stock?.id,
@@ -400,15 +386,37 @@ const stockRequestService = {
 
     assertCanDeleteStockRequest(session, stockRequest);
 
-    const deletedStockRequest = await stockRequestRepository.delete(
-      stockRequestId,
-      prisma,
-    );
+    const transaction = await prisma.$transaction(async (tx) => {
+      const deletedStockRequest = await stockRequestRepository.delete(
+        stockRequestId,
+        prisma,
+      );
+
+      await auditLogsRepository.create(
+        {
+          entity: "STOCK_REQUEST",
+          action: "DELETE",
+          entityId: deletedStockRequest.id,
+          metadata: {
+            itemId: deletedStockRequest.itemId,
+            quantity: deletedStockRequest.requestedQuantity,
+            sourceLocationId: deletedStockRequest.sourceLocationId,
+            destinationLocationId: deletedStockRequest.destinationLocationId,
+            requestType: deletedStockRequest.type,
+            reason: deletedStockRequest.reason,
+          },
+          userId: session.id,
+        },
+        tx,
+      );
+
+      return { deletedStockRequest };
+    });
 
     return {
       message: "Stock request deleted successfully.",
       data: {
-        id: deletedStockRequest.id,
+        id: transaction.deletedStockRequest.id,
       },
     };
   },

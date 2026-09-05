@@ -28,6 +28,7 @@ export const stockRequestReviewSchema = z
     writeOffTypeDecision: writeOffTypeDecisionEnum,
     approvedQuantity: z.number().min(0),
     decisitonNotes: z.string().max(100).optional(),
+    stockMovementReason: z.string().trim().min(10),
   })
   .superRefine((val, ctx) => {
     if (val.stockRequestStatus === "PENDING") {
@@ -54,7 +55,7 @@ export const stockRequestUpdateSchema = z
   .object({
     type: stockRequestTypeEnum,
     requestedQuantity: z.number().min(1),
-    sourceLocationId: z.string().trim().min(1).optional(),
+    stockId: z.string().trim().min(1).optional(),
     destinationLocationId: z.string().trim().min(1),
   })
   .superRefine((val, ctx) => {
@@ -65,12 +66,10 @@ export const stockRequestUpdateSchema = z
       "SALE",
       "TRANSFER",
       "WRITE_OFF",
+      "REPORT_LOST",
     ] as StockRequestType[];
 
-    if (
-      requiredSourceLocationTypes.includes(val.type) &&
-      !val.sourceLocationId
-    ) {
+    if (requiredSourceLocationTypes.includes(val.type) && !val.stockId) {
       ctx.addIssue({
         code: "custom",
         message: "Source location is required for this type of stock request",

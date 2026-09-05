@@ -1,5 +1,11 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 
+export const pushSubscriptionWhereInput = <
+  T extends Prisma.PushSubscriptionWhereInput,
+>(
+  where: T,
+): T => where;
+
 const pushSubscriptionRepository = {
   getMany: async (
     whereClause: Prisma.PushSubscriptionWhereInput,

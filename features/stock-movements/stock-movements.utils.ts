@@ -9,11 +9,7 @@ import { badRequest } from "@/shared/lib/error-handlers";
 import { stockRepository } from "../stocks/stock.repository";
 import stockMovementsRepository from "./stock-movements.repository";
 
-export const automaticTotalCostCalculationType: MovementType[] = [
-  "DISCARD",
-  "SALE",
-  "CONSUME",
-];
+export const automaticTotalCostCalculationType: MovementType[] = ["DISCARD"];
 
 export const AUTO_CALCULATED_MOVEMENTS: MovementType[] = [
   "CONSUME",

@@ -468,6 +468,43 @@ const stockMovementsService = {
         );
       }
 
+      if (
+        currentStock &&
+        (payload.stockMovementType === "CONSUME" ||
+          payload.stockMovementType === "SALE")
+      ) {
+        if (currentStock.quantity < payload.quantity) {
+          throw badRequest("Insufficient stock quantity.");
+        }
+
+        const unitCost =
+          currentStock.quantity > 0
+            ? (currentStock.totalCost ?? 0) / currentStock.quantity
+            : 0;
+        const deductionCost = payload.quantity * unitCost;
+
+        // 1. Record stock movement entry
+        movement = await stockMovementsRepository.create(
+          {
+            ...createdStockMovement,
+            sourceLocationId: currentStock.locationId,
+            destinationLocationId: null,
+            totalCost: deductionCost,
+          },
+          tx,
+        );
+
+        // 2. Decrement physical inventory from source stock record
+        await stockRepository.update(
+          currentStock.id,
+          {
+            quantity: { decrement: payload.quantity },
+            totalCost: { decrement: deductionCost },
+          },
+          tx,
+        );
+      }
+
       if (movement) {
         await auditLogsRepository.create(
           {

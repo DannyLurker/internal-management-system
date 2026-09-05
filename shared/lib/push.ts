@@ -1,6 +1,6 @@
 import webpush from "web-push";
 import prisma from "../db/prisma";
-import { Role } from "@prisma/client";
+import { Prisma, Role } from "@prisma/client";
 import pushSubscriptionRepository from "@/features/push-subscriptions/push-subscription.repository";
 
 webpush.setVapidDetails(
@@ -14,23 +14,28 @@ export async function sendPushToUser(
   roles: Role[] | null,
   payload: { title: string; body: string; url?: string },
 ) {
+  const subscriptionsOrConditions: Prisma.PushSubscriptionWhereInput = {};
+
+  if (userId) {
+    subscriptionsOrConditions.userId = userId;
+  }
+
+  if (roles && roles.length > 0) {
+    subscriptionsOrConditions.user = {
+      role: {
+        in: roles,
+      },
+    };
+  }
+
   const subscriptions = await pushSubscriptionRepository.getMany(
     {
-      OR: [
-        {
-          userId: userId ? userId : undefined,
-        },
-        {
-          user: {
-            role: {
-              in: roles ? roles : undefined,
-            },
-          },
-        },
-      ],
+      ...subscriptionsOrConditions,
     },
     prisma,
   );
+
+  console.log("subs: ", subscriptions);
 
   await Promise.all(
     subscriptions.map(async (sub) => {
