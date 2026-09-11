@@ -44,13 +44,14 @@ export const stockRepository = {
 
   findMany: async <T extends Prisma.StockSelect>(
     where: Prisma.StockWhereInput,
-    select: Prisma.Subset<T, Prisma.StockSelect>,
+    // null = default
+    select: Prisma.Subset<T, Prisma.StockSelect> | null,
     options: Prisma.StockFindManyArgs,
     tx: PrismaClient | Prisma.TransactionClient,
   ): Promise<Prisma.StockGetPayload<{ select: T }>[]> => {
     return (await tx.stock.findMany({
       where,
-      select,
+      select: select ? select : undefined,
       ...options,
     })) as Prisma.StockGetPayload<{ select: T }>[];
   },

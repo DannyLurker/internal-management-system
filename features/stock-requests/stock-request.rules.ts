@@ -6,12 +6,15 @@ import {
 import { Session } from "next-auth";
 import { ItemRepositoryFindById } from "../items/item.types";
 import { StockRepositoryFindById } from "../stocks/stock.types";
-import { LocationRepositoryFindById } from "../locations/location.types";
 import {
   StockRequestReviewSchema,
   StockRequestUpdateSchema,
 } from "@/shared/lib/zods/stock-request.zod";
 import { StockRequestRepositoryFindById } from "./stock-request.types";
+import {
+  LocationFindManyForStockRequests,
+  LocationRepositoryFindById,
+} from "../locations/location.types";
 
 export function assertCanReviewStockRequest(
   data: StockRequestReviewSchema,
@@ -42,21 +45,40 @@ export function assertCanReviewStockRequest(
 
 export function assertCanCreateStockRequest(
   item: ItemRepositoryFindById | undefined | null,
-  stock: StockRepositoryFindById,
-  destinationLocation: LocationRepositoryFindById,
+  stock: StockRepositoryFindById | undefined | null,
+  destinationLocation: LocationFindManyForStockRequests | undefined | null,
   totalReadyStock: number | undefined | null,
   requestedQuantity: number,
+  index: number,
 ) {
-  if (!item) throw badRequest("Item not found");
-  if (!stock) throw badRequest("Stock not found");
-  if (!destinationLocation) throw badRequest("Destination location not found");
+  if (!item) {
+    throw badRequest(
+      `[Row ${index + 1}] Selected item does not exist or has been deactivated.`,
+    );
+  }
+
+  if (!stock) {
+    throw badRequest(
+      `[Row ${index + 1}] Selected source stock record was not found.`,
+    );
+  }
+
+  if (!destinationLocation) {
+    throw badRequest(
+      `[Row ${index + 1}] Selected destination location is invalid or inactive.`,
+    );
+  }
 
   if (totalReadyStock === undefined || totalReadyStock === null) {
-    throw badRequest("Unable to determine the total ready stock.");
+    throw badRequest(
+      `[Row ${index + 1}] Unable to calculate ready stock levels for ${item.name ?? "the selected item"}.`,
+    );
   }
 
   if (totalReadyStock < requestedQuantity) {
-    throw badRequest("Requested quantity exceeds the available stock.");
+    throw badRequest(
+      `[Row ${index + 1}] Insufficient stock. Requested: ${requestedQuantity}, Available: ${totalReadyStock}.`,
+    );
   }
 }
 

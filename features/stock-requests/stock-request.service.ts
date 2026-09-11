@@ -6,12 +6,14 @@ import {
 } from "@/shared/lib/zods/stock-request.zod";
 import { MovementType, Prisma, PrismaClient } from "@prisma/client";
 import { Session } from "next-auth";
-import itemRepository from "../items/item.repository";
-import { locationRepository } from "../locations/location.repository";
+import itemRepository, { createSelectItemData } from "../items/item.repository";
+import {
+  locationRepository,
+  locationSelectData,
+} from "../locations/location.repository";
 import { badRequest, notFound } from "@/shared/lib/error-handlers";
-
 import { sendPushToUser } from "@/shared/lib/push";
-import { stockRepository } from "../stocks/stock.repository";
+import { stockRepository, stockSelectData } from "../stocks/stock.repository";
 import {
   createStockRequestOrderByQuery,
   createStockRequestSelect,
@@ -33,74 +35,139 @@ const stockRequestService = {
     data: StockRequestCreateSchema,
     prisma: PrismaClient | Prisma.TransactionClient,
   ) => {
-    const [item, stock, destinationLocation, totalReadyStocks] =
-      await Promise.all([
-        itemRepository.findById(data.itemId, prisma),
-        stockRepository.findById(data.stockId, prisma),
-        locationRepository.findById(data.destinationLocationId, prisma),
-        stockRepository.aggregate(
-          { itemId: data.itemId, type: "READY" },
-          { quantity: true },
-          prisma,
-        ),
-      ]);
-
-    assertCanCreateStockRequest(
-      item,
-      stock,
-      destinationLocation,
-      totalReadyStocks?.quantity,
-      data.quantity,
-    );
-
-    const createdStockRequest = await prisma.$transaction(async (tx) => {
-      const stockRequest = await stockRequestRepository.create(
-        {
-          item: { connect: { id: data.itemId } },
-          requestedQuantity: data.quantity,
-          sourceLocation: { connect: { id: stock!.locationId } },
-          destinationLocation: {
-            connect: { id: data.destinationLocationId },
-          },
-          type: data.requestType,
-          reason: data.reason,
-          requestedBy: { connect: { id: session.id } },
+    const itemSelect = createSelectItemData({
+      id: true,
+      name: true,
+      isActive: true,
+      category: {
+        select: {
+          id: true,
+          name: true,
         },
-        tx,
-      );
-
-      await auditLogsRepository.create(
-        {
-          entity: "STOCK_REQUEST",
-          action: "CREATE",
-          entityId: stockRequest.id,
-          metadata: {
-            itemId: stockRequest.itemId,
-            quantity: stockRequest.requestedQuantity,
-            sourceLocationId: stockRequest.sourceLocationId,
-            destinationLocationId: stockRequest.destinationLocationId,
-            requestType: stockRequest.type,
-            reason: stockRequest.reason,
-          },
-          userId: session.id,
-        },
-        tx,
-      );
-
-      return stockRequest;
+      },
     });
 
+    const stockSelect = stockSelectData({
+      id: true,
+      location: {
+        select: {
+          id: true,
+          type: true,
+          name: true,
+        },
+      },
+      itemId: true,
+      type: true,
+      quantity: true,
+      createdAt: true,
+      updatedAt: true,
+      createdBy: true,
+      updatedBy: true,
+      totalCost: true,
+      expiredAt: true,
+      locationId: true,
+    });
+
+    const destinationLocationSelect = locationSelectData({
+      id: true,
+    });
+
+    const requestsList = Array.isArray(data.requests)
+      ? data.requests
+      : [data.requests];
+
+    const createdStockRequests = await prisma.$transaction(async (tx) => {
+      const [items, stocks, destinationLocations] = await Promise.all([
+        itemRepository.findMany({ isActive: true }, itemSelect, {}, tx),
+        stockRepository.findMany({}, stockSelect, {}, tx),
+        locationRepository.findMany({}, destinationLocationSelect, {}, tx),
+      ]);
+
+      const itemMap = new Map(items.map((item) => [item.id, item]));
+      const stockMap = new Map(
+        stocks.map((stock) => [
+          stock.id,
+          { ...stock, quantity: stock.quantity ?? 0 },
+        ]),
+      );
+      const destinationLocationMap = new Map(
+        destinationLocations.map((location) => [location.id, location]),
+      );
+
+      const stockRequestPayloads: Prisma.StockRequestCreateManyInput[] = [];
+
+      for (const [index, request] of requestsList.entries()) {
+        const item = itemMap.get(request.itemId);
+        const stock = stockMap.get(request.stockId);
+        const destinationLocation = destinationLocationMap.get(
+          request.destinationLocationId,
+        );
+
+        // Handling database aggregation using transaction context
+        const totalReadyStocks = await stockRepository.aggregate(
+          { itemId: request.itemId, type: "READY" },
+          { quantity: true },
+          tx,
+        );
+
+        assertCanCreateStockRequest(
+          item,
+          stock,
+          destinationLocation,
+          totalReadyStocks?.quantity ?? 0,
+          request.quantity,
+          index,
+        );
+
+        stockRequestPayloads.push({
+          itemId: item!.id,
+          requestedQuantity: request.quantity,
+          sourceLocationId: stock!.locationId,
+          destinationLocationId: destinationLocation!.id,
+          type: request.requestType,
+          reason: request.reason,
+          requestedById: session.id,
+        });
+      }
+
+      // Handling batch database insertion
+      const createdRequests = await stockRequestRepository.createMany(
+        stockRequestPayloads,
+        tx,
+      );
+
+      // Handling structured audit logging for multi-request batches
+      await auditLogsRepository.createMany(
+        stockRequestPayloads.map((payload, index) => ({
+          entityId: createdRequests[index].id,
+          entity: "STOCK_REQUEST",
+          action: "CREATE",
+          metadata: {
+            itemId: payload.itemId,
+            quantity: payload.requestedQuantity,
+            sourceLocationId: payload.sourceLocationId,
+            destinationLocationId: payload.destinationLocationId,
+            requestType: payload.type,
+            reason: payload.reason,
+          },
+          userId: session.id,
+        })),
+        tx,
+      );
+
+      return createdRequests;
+    });
+
+    // Handling push notification dispatch after transaction commit
     sendPushToUser(null, ["HOTEL_MANAGER", "SUPERVISOR"], {
-      title: "New Stock Request",
-      body: `${session.name} has submitted a new stock request.`,
+      title: "New Stock Request Submitted",
+      body: `${session.name} has submitted ${requestsList.length} stock request(s).`,
       url: `${process.env.NEXT_PUBLIC_BASE_URL}/stock-requests`,
     });
 
     return {
-      message: "Stock request created successfully",
-      data: {
-        id: createdStockRequest.id,
-      },
+      message: "Stock request(s) created successfully.",
+      data: createdStockRequests,
     };
   },
 
