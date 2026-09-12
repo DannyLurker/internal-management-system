@@ -37,7 +37,13 @@ const DashboardClient = () => {
     case "HOTEL_MANAGER":
       return <DashboardManager />;
     default:
-      return <div>Unauthorized role</div>;
+      return (
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="bold font-bold color-[--primary] text-4xl">
+            Under Development
+          </div>
+        </div>
+      );
   }
 };
 

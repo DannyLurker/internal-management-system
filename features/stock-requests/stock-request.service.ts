@@ -167,7 +167,10 @@ const stockRequestService = {
 
     return {
       message: "Stock request(s) created successfully.",
-      data: createdStockRequests,
+      data: createdStockRequests.map((request, index) => ({
+        executedOrder: index + 1,
+        id: request.id,
+      })),
     };
   },
 

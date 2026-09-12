@@ -1,6 +1,6 @@
 import stockRequestService from "@/features/stock-requests/stock-request.service";
 import {
-  StockRequestCUDApiResponse,
+  StockRequestCreateApiResponse,
   StockRequestGetManyApiResponse,
 } from "@/features/stock-requests/stock-request.types";
 import prisma from "@/shared/db/prisma";
@@ -31,9 +31,9 @@ export async function POST(req: Request) {
 
     const result = await stockRequestService.create(session, data, prisma);
 
-    const response: StockRequestCUDApiResponse = {
+    const response: StockRequestCreateApiResponse = {
       data: {
-        id: result.data.id,
+        createdStockRequests: result.data,
       },
       message: result.message,
       status: 201,

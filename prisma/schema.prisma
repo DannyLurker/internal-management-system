@@ -19,6 +19,7 @@ enum Role {
   ACCOUNTANT
   HOUSEKEEPING
   FRONT_DESK
+  GUEST
 }
 
 enum LocationType {
