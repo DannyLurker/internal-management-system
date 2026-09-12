@@ -39,7 +39,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           role: true,
         });
 
-        const userDb = await userRepository.findUserByEmail(email, selectData);
+        const userDb = await userRepository.findUserByEmail(
+          email,
+          selectData,
+          prisma,
+        );
 
         if (!userDb) {
           return null;

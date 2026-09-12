@@ -4,6 +4,7 @@ import {
 } from "@/features/users/user.repository";
 import { auth } from "../auth";
 import { notFound, unauthorized } from "../error-handlers";
+import prisma from "@/shared/db/prisma";
 
 const sessionValidation = async () => {
   const currentSession = await auth();
@@ -21,6 +22,7 @@ const sessionValidation = async () => {
   const user = await userRepository.findUserById(
     currentSession?.user.id!,
     selectData,
+    prisma,
   );
 
   if (!user) throw notFound("User with this session not found");
