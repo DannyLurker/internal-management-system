@@ -1,5 +1,6 @@
 import {
   Body,
+  Button,
   Container,
   Head,
   Heading,
@@ -18,6 +19,7 @@ interface EmailOtpTemplateProps {
   expirationMinutes: number;
   hotelName: string;
   supportEmail: string;
+  verificationUrl: string;
   //   logoUrl?: string;
 }
 
@@ -27,6 +29,7 @@ export const EmailOtpTemplate = ({
   expirationMinutes = 15,
   hotelName = "BIZ HOTEL",
   supportEmail = "www.bizhotel.com",
+  verificationUrl,
   //   logoUrl = "/biz-hotel.jpg",
 }: EmailOtpTemplateProps) => {
   // Handling split code display for improved legibility (3 digits - 3 digits)
@@ -80,6 +83,13 @@ export const EmailOtpTemplate = ({
               If you did not request this verification code, please ignore this
               email or contact our concierge team immediately.
             </Text>
+
+            {/* Handling Primary Call-to-Action Button */}
+            <Section style={styles.buttonContainer}>
+              <Button style={styles.button} href={verificationUrl}>
+                Verify Account
+              </Button>
+            </Section>
 
             <Hr style={styles.divider} />
 
@@ -214,5 +224,23 @@ const styles = {
     fontSize: "12px",
     color: "#857467",
     margin: "0",
+  },
+  buttonContainer: {
+    textAlign: "center" as const,
+    marginTop: "28px",
+    marginBottom: "28px",
+  },
+  button: {
+    backgroundColor: "#894d0d", // Primary Ochre
+    borderRadius: "4px",
+    color: "#ffffff",
+    fontFamily: "'Hanken Grotesk', sans-serif",
+    fontSize: "15px",
+    fontWeight: "600",
+    textDecoration: "none",
+    textAlign: "center" as const,
+    display: "inline-block",
+    padding: "12px 32px",
+    lineHeight: "20px",
   },
 };

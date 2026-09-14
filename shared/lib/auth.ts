@@ -9,6 +9,7 @@ import { signInSchema } from "./zods/auth.zod";
 import bcrypt from "bcryptjs";
 import prisma from "../db/prisma";
 import { Role } from "@prisma/client";
+import { EmailNotVerifiedError } from "./auth-errors";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -37,6 +38,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           password: true,
           image: true,
           role: true,
+          emailVerified: true,
         });
 
         const userDb = await userRepository.findUserByEmail(
@@ -47,6 +49,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (!userDb) {
           return null;
+        }
+
+        if (!userDb.emailVerified) {
+          throw new EmailNotVerifiedError();
         }
 
         const isPwValid = await bcrypt.compare(password, userDb.password);

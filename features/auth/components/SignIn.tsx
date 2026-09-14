@@ -6,39 +6,54 @@ import { toast } from "sonner";
 export default function SignIn() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    const loginPromise = new Promise(async (resolve, reject) => {
-      try {
-        const result = await signIn("credentials", {
-          email,
-          password,
-          redirect: false,
-        });
+    // Handling login execution wrapped in a throwing Promise
+    const loginPromise = (async () => {
+      const res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
 
-        if (result?.error) {
-          reject(new Error("Invalid credentials"));
-        } else {
-          resolve(result);
-        }
-      } catch (err) {
-        reject(err);
+      // Handling NextAuth response error inspection
+      if (res?.error) {
+        // NextAuth v5 passes custom codes in res.code or via URL search params
+        const urlParams = res.url ? new URL(res.url).searchParams : null;
+        const errorCode = res.code || urlParams?.get("code") || res.error;
+
+        // Explicitly throwing an error so toast.promise catches it
+        throw new Error(errorCode);
       }
-    });
 
+      return res;
+    })();
+
+    // Handling toast notifications bound to the custom promise
     toast.promise(loginPromise, {
       loading: "Signing you in...",
-      success: "Welcome back! Redirecting...",
-      error: (err) => err.message || "Failed to sign in",
-    });
+      success: () => {
+        // Handling post-login redirection on success
+        window.location.href = "/dashboard";
+        return "Welcome back! Redirecting...";
+      },
+      error: (err: unknown) => {
+        console.error("Caught login error:", err);
 
-    try {
-      await loginPromise;
-      window.location.href = "/";
-    } catch (err) {}
+        const errorMsg = err instanceof Error ? err.message : String(err);
+
+        if (
+          errorMsg.includes("email_not_verified") ||
+          errorMsg.includes("EmailNotVerified")
+        ) {
+          return "Your email address has not been verified yet. Please check your inbox / click the verify link.";
+        }
+
+        return "Invalid email or password.";
+      },
+    });
   };
 
   return (
@@ -86,19 +101,24 @@ export default function SignIn() {
               className="w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-[14px] text-slate-900 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-amber-700 focus:ring-2 focus:ring-amber-100"
             />
           </div>
-          <div className="flex items-center justify-between pt-1">
-            <label className="flex items-center gap-2 text-sm text-slate-600">
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded border-slate-300 text-amber-700 focus:ring-amber-200"
-              />
-              <span className="text-[13px]">Remember me</span>
-            </label>
+          <div className="flex items-center border-b-2 pt-1">
             <Link
               href="#"
-              className="text-[13px] font-medium text-slate-600 hover:text-slate-900"
+              className="text-[13px] font-medium text-slate-900 hover:black mb-2"
             >
               Forgot password?
+            </Link>
+          </div>
+          <div className="flex items-center justify-center pt-1">
+            <p className="text-[13px] font-medium text-slate-600">
+              Haven't gotten an account yet?&nbsp;
+            </p>
+            <Link
+              href="#"
+              className="text-[13px] font-medium text-slate-900 hover:black"
+            >
+              {" "}
+              Sign Up
             </Link>
           </div>
           <button

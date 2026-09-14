@@ -1,6 +1,7 @@
 import { Role } from "@prisma/client";
 
 const PERMISSIONS = {
+  CREATE_STAFF_ACCOUNT: ["HOTEL_MANAGER"],
   CAN_VIEW_LOCATION: [
     "HOTEL_MANAGER",
     "SUPERVISOR",
@@ -121,4 +122,8 @@ export const canDeleteAllStockRequest = (role: Role) => {
 
 export const canDeleteOwnStockRequest = (role: Role) => {
   return PERMISSIONS.DELETE_OWN_STOCK_REQUESTS.includes(role);
+};
+
+export const canCreateStaffAccount = (role: Role) => {
+  return PERMISSIONS.CREATE_STAFF_ACCOUNT.includes(role);
 };
