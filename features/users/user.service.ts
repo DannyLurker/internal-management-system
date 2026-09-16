@@ -12,7 +12,6 @@ import { Resend } from "resend";
 import EmailOtpTemplate from "@/shared/emails/EmailOtp";
 import { Session } from "next-auth";
 import { canCreateStaffAccount } from "@/shared/lib/validations/user-access-validation";
-import { success } from "zod";
 
 export const userService = {
   create: async (
@@ -74,11 +73,6 @@ export const userService = {
         tx,
       );
 
-      const hashedCreatedEmailVerificationId = await bcrypt.hash(
-        createdEmailVerification.id,
-        10,
-      );
-
       const resend = new Resend(process.env.RESEND_API_KEY);
 
       if (
@@ -99,7 +93,7 @@ export const userService = {
             verificationUrl:
               process.env.NEXT_PUBLIC_BASE_URL +
               "/users/verify/" +
-              hashedCreatedEmailVerificationId,
+              createdEmailVerification.id,
           }),
         });
       }
@@ -135,16 +129,23 @@ export const userService = {
       prisma,
     );
 
+    const emailOtpVerification = await emailVerificationRepository.findById(
+      verificationId,
+      {
+        code: true,
+        id: true,
+      },
+      prisma,
+    );
+
     if (!user) throw notFound("user not found");
 
     if (!user?.emailVerified) throw badRequest("Email has already verified");
 
     if (!user.EmailOtpVerification?.id) throw badRequest("OTP Code not found");
 
-    const isVerificationIdExact = await bcrypt.compare(
-      user.EmailOtpVerification.id,
-      verificationId,
-    );
+    const isVerificationIdExact =
+      user.EmailOtpVerification.id === emailOtpVerification?.id;
 
     if (!isVerificationIdExact)
       throw badRequest(
