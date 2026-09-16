@@ -203,7 +203,6 @@ export default function LaundryTable({
         dataPerPage={dataPerPage}
         onPageChange={onPageChange}
         onDataPerPageChange={onDataPerPageChange}
-        pageSizeOptions={[5, 10, 25, 50]}
         entityLabel="laundry records"
       />
     </div>

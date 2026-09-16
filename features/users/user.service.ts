@@ -1,4 +1,8 @@
-import { UserCreateSchema, UserVerifySchema } from "@/shared/lib/zods/user.zod";
+import {
+  UserCreateSchema,
+  UserRequestOtpSchema,
+  UserVerifySchema,
+} from "@/shared/lib/zods/user.zod";
 import { Prisma, PrismaClient, Role } from "@prisma/client";
 import { createUserSelect, userRepository } from "./user.repository";
 import {
@@ -11,8 +15,6 @@ import { emailVerificationRepository } from "../email-verification/email-verific
 import { Resend } from "resend";
 import EmailOtpTemplate from "@/shared/emails/EmailOtp";
 import { Session } from "next-auth";
-import { canCreateStaffAccount } from "@/shared/lib/validations/user-access-validation";
-import { success } from "zod";
 
 export const userService = {
   create: async (
@@ -81,28 +83,22 @@ export const userService = {
 
       const resend = new Resend(process.env.RESEND_API_KEY);
 
-      if (
-        data.creationType === "STAFF" &&
-        session &&
-        canCreateStaffAccount(session.role)
-      ) {
-        await resend.emails.send({
-          from: "onboarding@resend.dev",
-          to: data.email,
-          subject: `Verify your BIZ Hotel account (Expires in 15 mins)`,
-          react: EmailOtpTemplate({
-            expirationMinutes: 15,
-            hotelName: "BIZ Hotel",
-            otpCode: otpCode,
-            userName: data.name,
-            supportEmail: "www.bizhotelbatam.com",
-            verificationUrl:
-              process.env.NEXT_PUBLIC_BASE_URL +
-              "/users/verify/" +
-              hashedCreatedEmailVerificationId,
-          }),
-        });
-      }
+      await resend.emails.send({
+        from: "onboarding@resend.dev",
+        to: data.email,
+        subject: `Verify your BIZ Hotel account (Expires in 15 mins)`,
+        react: EmailOtpTemplate({
+          expirationMinutes: 15,
+          hotelName: "BIZ Hotel",
+          otpCode: otpCode,
+          userName: data.name,
+          supportEmail: "www.bizhotelbatam.com",
+          verificationUrl:
+            process.env.NEXT_PUBLIC_BASE_URL +
+            "/users/verify/" +
+            hashedCreatedEmailVerificationId,
+        }),
+      });
 
       return {
         userId: createdUser.id,
@@ -115,6 +111,140 @@ export const userService = {
         "Account created successfully. Next step is to verify your account. Check your email, please!",
       userId: transaction.userId,
       emailVerificationId: transaction.emailVerificationId,
+    };
+  },
+
+  requestOtp: async (
+    data: UserRequestOtpSchema,
+    prisma: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    const user = await userRepository.findUserByEmail(
+      data.email,
+      {
+        id: true,
+        name: true,
+        EmailOtpVerification: true,
+        emailVerified: true,
+      },
+      prisma,
+    );
+
+    if (!user) {
+      return {
+        message:
+          "An email OTP verification sended successfully. Check your email.",
+      };
+    }
+
+    if (user?.emailVerified)
+      throw badRequest("This email has already verified.");
+
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const hashedOtpCode = await bcrypt.hash(otpCode, 10);
+
+    const otpcodeExpiresAt = new Date();
+    otpcodeExpiresAt.setMinutes(otpcodeExpiresAt.getMinutes() + 15);
+
+    const resend = new Resend();
+
+    if (!user.EmailOtpVerification) {
+      const emailVerificationOtp = await emailVerificationRepository.create(
+        {
+          code: hashedOtpCode,
+          expiresAt: otpcodeExpiresAt,
+          user: {
+            connect: {
+              id: user.id,
+            },
+          },
+          inputOtpCounter: 0,
+          requestNewOtpCounter: 1,
+        },
+        prisma,
+      );
+
+      const hashedEmailVerificationOtp = await bcrypt.hash(
+        emailVerificationOtp.id,
+        10,
+      );
+
+      await resend.emails.send({
+        from: "onboarding@resend.dev",
+        to: data.email,
+        subject: `Verify your BIZ Hotel account (Expires in 15 mins)`,
+        react: EmailOtpTemplate({
+          expirationMinutes: 15,
+          hotelName: "BIZ Hotel",
+          otpCode: otpCode,
+          userName: user.name,
+          supportEmail: "www.bizhotelbatam.com",
+          verificationUrl:
+            process.env.NEXT_PUBLIC_BASE_URL +
+            "/users/verify/" +
+            hashedEmailVerificationOtp,
+        }),
+      });
+
+      return {
+        message:
+          "An email OTP verification sended successfully. Check your email.",
+      };
+    }
+
+    const emailOtpLastRequest = user.EmailOtpVerification?.updatedAt;
+    emailOtpLastRequest?.setDate(emailOtpLastRequest.getDate() + 1);
+
+    if (
+      emailOtpLastRequest < new Date() &&
+      user.EmailOtpVerification.requestNewOtpCounter >= 3
+    ) {
+      throw badRequest("You've already reached the limit of the requests");
+    }
+
+    if (user.EmailOtpVerification && user.EmailOtpVerification.id) {
+      await emailVerificationRepository.updateById(
+        {
+          where: {
+            id: user.EmailOtpVerification.id,
+          },
+          data: {
+            code: hashedOtpCode,
+            requestNewOtpCounter: {
+              increment: 1,
+            },
+            expiresAt: otpcodeExpiresAt,
+          },
+        },
+        prisma,
+      );
+    }
+
+    const hashedEmailVerificationOtp = await bcrypt.hash(
+      user.EmailOtpVerification.id,
+      10,
+    );
+
+    await resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: data.email,
+      subject: `Verify your BIZ Hotel account (Expires in 15 mins)`,
+      react: EmailOtpTemplate({
+        expirationMinutes: 15,
+        hotelName: "BIZ Hotel",
+        otpCode: otpCode,
+        userName: user.name,
+        supportEmail: "www.bizhotelbatam.com",
+        verificationUrl:
+          process.env.NEXT_PUBLIC_BASE_URL +
+          "/users/verify/" +
+          hashedEmailVerificationOtp,
+      }),
+    });
+
+    return {
+      message:
+        "An email OTP verification sended successfully. Check your email.",
     };
   },
 
@@ -167,6 +297,11 @@ export const userService = {
         {
           emailVerified: new Date(),
         },
+        prisma,
+      );
+
+      await emailVerificationRepository.deleteById(
+        user.EmailOtpVerification.id,
         prisma,
       );
 

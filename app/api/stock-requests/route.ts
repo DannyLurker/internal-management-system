@@ -27,6 +27,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
+    console.log(body);
     const data = stockRequestCreateSchema.parse(body);
 
     const result = await stockRequestService.create(session, data, prisma);
