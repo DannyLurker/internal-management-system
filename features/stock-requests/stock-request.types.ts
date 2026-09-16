@@ -3,14 +3,14 @@ import { Role } from "@prisma/client";
 import stockRequestService from "./stock-request.service";
 import { stockRequestRepository } from "./stock-request.repository";
 
-// Update delete
+// Update-Delete
 export type StockRequestUDApiResponse = ApiResponse<{
   id: string;
 }>;
 
 export type StockRequestCreateApiResponse = ApiResponse<{
-  ids: {
-    executionOrder: number;
+  createdStockRequests: {
+    executedOrder: number;
     id: string;
   }[];
 }>;

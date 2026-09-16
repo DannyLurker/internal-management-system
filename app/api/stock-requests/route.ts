@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
     const response: StockRequestCreateApiResponse = {
       data: {
-        ids: result.data.ids,
+        createdStockRequests: result.data,
       },
       message: result.message,
       status: 201,

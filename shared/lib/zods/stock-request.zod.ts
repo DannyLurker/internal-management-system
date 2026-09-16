@@ -10,20 +10,17 @@ import {
 } from "./general.zod";
 import { StockRequestType } from "@prisma/client";
 
+const stockRequestCreateObject = z.object({
+  itemId: z.string().trim().min(1),
+  quantity: z.number().min(1),
+  reason: z.string().min(10),
+  stockId: z.string().trim().min(1),
+  destinationLocationId: z.string().trim().min(1),
+  requestType: stockRequestTypeEnum,
+});
+
 export const stockRequestCreateSchema = z.object({
-  requests: z
-    .array(
-      z.object({
-        itemId: z.string().trim().min(1),
-        quantity: z.number().min(1),
-        reason: z.string().min(10),
-        stockId: z.string().trim().min(1),
-        destinationLocationId: z.string().trim().min(1),
-        requestType: stockRequestTypeEnum,
-      }),
-    )
-    .min(1)
-    .max(5),
+  requests: z.array(stockRequestCreateObject).min(1).max(5),
 });
 
 export type StockRequestCreateSchema = z.infer<typeof stockRequestCreateSchema>;

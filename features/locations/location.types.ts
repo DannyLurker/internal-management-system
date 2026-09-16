@@ -46,6 +46,10 @@ export const locationTypeLabels: Record<LocationType, string> = {
 };
 
 // repository types
+export type LocationFindManyForStockRequests = {
+  id: string;
+};
+
 export type LocationRepositoryFindById = Awaited<
   ReturnType<typeof locationRepository.findById>
 >;

@@ -19,6 +19,7 @@ enum Role {
   ACCOUNTANT
   HOUSEKEEPING
   FRONT_DESK
+  GUEST
 }
 
 enum LocationType {
@@ -116,6 +117,7 @@ model User {
   id            String          @id @default(cuid())
   name          String
   email         String          @unique
+  phoneNumber   String?
   password      String
   emailVerified DateTime?
   image         String?
@@ -136,12 +138,27 @@ model User {
   requestedStockRequests StockRequest[]  @relation("StockRequestsRequested")
   approvedStockRequests  StockRequest[]  @relation("StockRequestsApproved")
   orders                 Order[]
-  logs                   AuditLog[]
   stockMovements         StockMovement[]
+  logs                   AuditLog[]
+
+  EmailOtpVerification EmailOtpVerification?
 
   createdAt         DateTime           @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime           @updatedAt @db.Timestamptz(3)
   pushSubscriptions PushSubscription[]
+}
+
+model EmailOtpVerification {
+  id                   String   @id @default(uuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code                 String
+  requestNewOtpCounter Int      @default(1)
+  inputOtpCounter      Int      @default(0)
+  expiresAt            DateTime
+  createdAt            DateTime @default(now())
+
+  @@index([userId, code])
 }
 
 model Account {

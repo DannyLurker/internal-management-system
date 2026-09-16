@@ -1,5 +1,4 @@
-import prisma from "@/shared/db/prisma";
-import { Prisma } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 
 export const createUserWhere = <T extends Prisma.UserWhereInput>(where: T): T =>
   where;
@@ -15,8 +14,9 @@ export const userRepository = {
   findUserByEmail: <T extends Prisma.UserSelect>(
     email: string,
     select: Prisma.Subset<T, Prisma.UserSelect>,
+    tx: Prisma.TransactionClient | PrismaClient,
   ) => {
-    return prisma.user.findUnique({
+    return tx.user.findUnique({
       where: {
         email,
       },
@@ -26,12 +26,33 @@ export const userRepository = {
   findUserById: <T extends Prisma.UserSelect>(
     id: string,
     select: Prisma.Subset<T, Prisma.UserSelect>,
+    tx: Prisma.TransactionClient | PrismaClient,
   ) => {
-    return prisma.user.findUnique({
+    return tx.user.findUnique({
       where: {
         id: id,
       },
       select: select,
+    });
+  },
+  create: async (
+    data: Prisma.UserCreateInput,
+    tx: Prisma.TransactionClient | PrismaClient,
+  ) => {
+    return tx.user.create({
+      data,
+    });
+  },
+  update: async (
+    id: string,
+    data: Prisma.UserUpdateInput,
+    tx: Prisma.TransactionClient | PrismaClient,
+  ) => {
+    return tx.user.update({
+      where: {
+        id,
+      },
+      data,
     });
   },
 };

@@ -87,6 +87,15 @@ export const stockRequestRepository = {
     });
   },
 
+  createMany: async (
+    data: Prisma.StockRequestCreateManyInput[],
+    tx: Prisma.TransactionClient | PrismaClient,
+  ) => {
+    return await tx.stockRequest.createManyAndReturn({
+      data,
+    });
+  },
+
   update: async (
     stockRequestId: string,
     data: Prisma.StockRequestUncheckedUpdateInput,

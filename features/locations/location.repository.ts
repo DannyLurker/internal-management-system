@@ -39,6 +39,19 @@ export const locationRepository = {
     return whereQuery;
   },
 
+  findMany: async <T extends Prisma.LocationSelect>(
+    where: Prisma.LocationWhereInput,
+    select: Prisma.Subset<T, Prisma.LocationSelect>,
+    options: Prisma.LocationFindManyArgs,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ): Promise<Prisma.LocationGetPayload<{ select: T }>[]> => {
+    return (await tx.location.findMany({
+      where,
+      select,
+      ...options,
+    })) as Prisma.LocationGetPayload<{ select: T }>[];
+  },
+
   create: async (
     data: Prisma.LocationCreateInput,
     tx: PrismaClient | Prisma.TransactionClient,

@@ -3,11 +3,14 @@ import {
   Entity,
   LocationType,
   MovementType,
+  Role,
   StockRequestStatus,
   StockRequestType,
   StockType,
 } from "@prisma/client";
 import z from "zod";
+
+export const userRoleEnum = z.enum(Object.values(Role));
 
 export const searchQuery = z.string().trim().min(3).optional();
 export const page = z.coerce.number().min(1).default(1);

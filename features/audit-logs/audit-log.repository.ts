@@ -16,6 +16,15 @@ const auditLogsRepository = {
       },
     });
   },
+
+  createMany: async (
+    data: Prisma.AuditLogCreateManyInput[],
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    return await tx.auditLog.createMany({
+      data,
+    });
+  },
 };
 
 export default auditLogsRepository;

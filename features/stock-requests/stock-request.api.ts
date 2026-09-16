@@ -1,8 +1,9 @@
 import { api } from "@/shared/lib/api-client";
 import {
-  StockRequestCUDApiResponse,
+  StockRequestCreateApiResponse,
   StockRequestGetByIdResponse,
   StockRequestGetManyApiResponse,
+  StockRequestUDApiResponse,
 } from "./stock-request.types";
 import {
   StockRequestCreateSchema,
@@ -30,7 +31,7 @@ const stockRequestApi = {
   },
 
   create: async (data: StockRequestCreateSchema) => {
-    const result = await api.post<StockRequestCUDApiResponse>(
+    const result = await api.post<StockRequestCreateApiResponse>(
       "/stock-requests",
       data,
     );
@@ -38,7 +39,7 @@ const stockRequestApi = {
   },
 
   update: async (id: string, data: StockRequestUpdateSchema) => {
-    const result = await api.patch<StockRequestCUDApiResponse>(
+    const result = await api.patch<StockRequestUDApiResponse>(
       `/stock-requests/${id}`,
       data,
     );
@@ -46,7 +47,7 @@ const stockRequestApi = {
   },
 
   review: async (id: string, data: StockRequestReviewSchema) => {
-    const result = await api.patch<StockRequestCUDApiResponse>(
+    const result = await api.patch<StockRequestUDApiResponse>(
       `/stock-requests/${id}`,
       data,
     );
@@ -54,7 +55,7 @@ const stockRequestApi = {
   },
 
   delete: async (id: string) => {
-    const result = await api.delete<StockRequestCUDApiResponse>(
+    const result = await api.delete<StockRequestUDApiResponse>(
       `/stock-requests/${id}`,
     );
     return result.data;
