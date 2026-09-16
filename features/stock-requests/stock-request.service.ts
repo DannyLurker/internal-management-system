@@ -211,6 +211,7 @@ const stockRequestService = {
           type: data.type,
           requestedQuantity: data.requestedQuantity,
         },
+
         tx,
       );
 
@@ -233,13 +234,13 @@ const stockRequestService = {
       );
 
       return {
-        updatedStockRequest,
+        updatedStockRequestId: updatedStockRequest.id,
       };
     });
 
     return {
       message: `Stock request updated successfully`,
-      stockRequestId: transaction.updatedStockRequest.id,
+      stockRequestId: transaction.updatedStockRequestId,
     };
   },
 

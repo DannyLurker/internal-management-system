@@ -127,7 +127,6 @@ export default function CategoryTable({
         dataPerPage={dataPerPage}
         onPageChange={onPageChange}
         onDataPerPageChange={onDataPerPageChange}
-        pageSizeOptions={[10, 20, 50, 100]}
         entityLabel="categories"
       />
     </div>

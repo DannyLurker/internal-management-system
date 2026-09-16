@@ -262,7 +262,6 @@ export default function StockMovementTable({
         dataPerPage={dataPerPage}
         onPageChange={onPageChange}
         onDataPerPageChange={onDataPerPageChange}
-        pageSizeOptions={[10, 20, 50, 100]}
         entityLabel="stock movements"
       />
     </div>

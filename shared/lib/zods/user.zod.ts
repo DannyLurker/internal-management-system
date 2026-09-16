@@ -45,3 +45,9 @@ export const userVerifySchema = z.object({
 });
 
 export type UserVerifySchema = z.infer<typeof userVerifySchema>;
+
+export const userRequestOtpSchema = z.object({
+  email: z.email(),
+});
+
+export type UserRequestOtpSchema = z.infer<typeof userRequestOtpSchema>;
