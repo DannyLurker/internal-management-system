@@ -33,73 +33,99 @@ const stockRequestService = {
     data: StockRequestCreateSchema,
     prisma: PrismaClient | Prisma.TransactionClient,
   ) => {
-    const [item, stock, destinationLocation, totalReadyStocks] =
-      await Promise.all([
-        itemRepository.findById(data.itemId, prisma),
-        stockRepository.findById(data.stockId, prisma),
-        locationRepository.findById(data.destinationLocationId, prisma),
-        stockRepository.aggregate(
-          { itemId: data.itemId, type: "READY" },
-          { quantity: true },
-          prisma,
-        ),
-      ]);
+    const stockRequestedIds: {
+      executionOrder: number;
+      id: string;
+    }[] = [];
 
-    assertCanCreateStockRequest(
-      item,
-      stock,
-      destinationLocation,
-      totalReadyStocks?.quantity,
-      data.quantity,
-    );
+    await prisma.$transaction(async (tx) => {
+      for (const request of data.requests) {
+        const [item, stock, destinationLocation, totalReadyStocks] =
+          await Promise.all([
+            itemRepository.findById(request.itemId, tx),
+            stockRepository.findById(request.stockId, tx),
+            locationRepository.findById(request.destinationLocationId, tx),
+            stockRepository.aggregate(
+              { itemId: request.itemId, type: "READY" },
+              { quantity: true },
+              tx,
+            ),
+          ]);
 
-    const createdStockRequest = await prisma.$transaction(async (tx) => {
-      const stockRequest = await stockRequestRepository.create(
-        {
-          item: { connect: { id: data.itemId } },
-          requestedQuantity: data.quantity,
-          sourceLocation: { connect: { id: stock!.locationId } },
-          destinationLocation: {
-            connect: { id: data.destinationLocationId },
+        assertCanCreateStockRequest(
+          item,
+          stock,
+          destinationLocation,
+          totalReadyStocks?.quantity,
+          request.quantity,
+        );
+
+        const stockRequest = await stockRequestRepository.create(
+          {
+            item: {
+              connect: {
+                id: request.itemId,
+              },
+            },
+            requestedQuantity: request.quantity,
+            sourceLocation: {
+              connect: {
+                id: stock!.locationId,
+              },
+            },
+            destinationLocation: {
+              connect: {
+                id: request.destinationLocationId,
+              },
+            },
+            type: request.requestType,
+            reason: request.reason,
+            requestedBy: {
+              connect: {
+                id: session.id,
+              },
+            },
           },
-          type: data.requestType,
-          reason: data.reason,
-          requestedBy: { connect: { id: session.id } },
-        },
-        tx,
-      );
+          tx,
+        );
 
-      await auditLogsRepository.create(
-        {
-          entity: "STOCK_REQUEST",
-          action: "CREATE",
-          entityId: stockRequest.id,
-          metadata: {
-            itemId: stockRequest.itemId,
-            quantity: stockRequest.requestedQuantity,
-            sourceLocationId: stockRequest.sourceLocationId,
-            destinationLocationId: stockRequest.destinationLocationId,
-            requestType: stockRequest.type,
-            reason: stockRequest.reason,
+        await auditLogsRepository.create(
+          {
+            entity: "STOCK_REQUEST",
+            action: "CREATE",
+            entityId: stockRequest.id,
+            metadata: {
+              itemId: stockRequest.itemId,
+              quantity: stockRequest.requestedQuantity,
+              sourceLocationId: stockRequest.sourceLocationId,
+              destinationLocationId: stockRequest.destinationLocationId,
+              requestType: stockRequest.type,
+              reason: stockRequest.reason,
+            },
+            userId: session.id,
           },
-          userId: session.id,
-        },
-        tx,
-      );
+          tx,
+        );
 
-      return stockRequest;
+        const executionOrder = stockRequestedIds.length + 1;
+
+        stockRequestedIds.push({
+          executionOrder,
+          id: stockRequest.id,
+        });
+      }
     });
 
     sendPushToUser(null, ["HOTEL_MANAGER", "SUPERVISOR"], {
       title: "New Stock Request",
-      body: `${session.name} has submitted a new stock request.`,
+      body: `${session.name} has submitted ${stockRequestedIds.length > 0 ? `${stockRequestedIds.length} new stocks.` : "a new stock request."} `,
       url: `${process.env.NEXT_PUBLIC_BASE_URL}/stock-requests`,
     });
 
     return {
       message: "Stock request created successfully",
       data: {
-        id: createdStockRequest.id,
+        ids: stockRequestedIds,
       },
     };
   },
@@ -141,6 +167,7 @@ const stockRequestService = {
           type: data.type,
           requestedQuantity: data.requestedQuantity,
         },
+
         tx,
       );
 
@@ -163,13 +190,13 @@ const stockRequestService = {
       );
 
       return {
-        updatedStockRequest,
+        updatedStockRequestId: updatedStockRequest.id,
       };
     });
 
     return {
       message: `Stock request updated successfully`,
-      stockRequestId: transaction.updatedStockRequest.id,
+      stockRequestId: transaction.updatedStockRequestId,
     };
   },
 

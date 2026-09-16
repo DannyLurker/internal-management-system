@@ -11,12 +11,19 @@ import {
 import { StockRequestType } from "@prisma/client";
 
 export const stockRequestCreateSchema = z.object({
-  itemId: z.string().trim().min(1),
-  quantity: z.number().min(1),
-  reason: z.string().min(10),
-  stockId: z.string().trim().min(1),
-  destinationLocationId: z.string().trim().min(1),
-  requestType: stockRequestTypeEnum,
+  requests: z
+    .array(
+      z.object({
+        itemId: z.string().trim().min(1),
+        quantity: z.number().min(1),
+        reason: z.string().min(10),
+        stockId: z.string().trim().min(1),
+        destinationLocationId: z.string().trim().min(1),
+        requestType: stockRequestTypeEnum,
+      }),
+    )
+    .min(1)
+    .max(5),
 });
 
 export type StockRequestCreateSchema = z.infer<typeof stockRequestCreateSchema>;
