@@ -8,3 +8,9 @@ export type UserGuestCreateApiResponse = ApiResponse<{
 export type UserStaffCreateApiResponse = ApiResponse<{
   userId: string;
 }>;
+
+export type UserVerifyApiResponse = ApiResponse<{
+  success: boolean;
+}>;
+
+export type UserRequestOtpApiResponse = ApiResponse<null>;

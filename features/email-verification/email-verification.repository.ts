@@ -21,6 +21,15 @@ export const emailVerificationRepository = {
       select,
     });
   },
+  updateById: async (
+    options: Prisma.EmailOtpVerificationUpdateArgs,
+    tx: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    return tx.emailOtpVerification.update({
+      where: options.where,
+      data: options.data,
+    });
+  },
   deleteById: async (
     id: string,
     tx: PrismaClient | Prisma.TransactionClient,
