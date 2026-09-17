@@ -1,12 +1,12 @@
 import { userService } from "@/features/users/user.service";
-import { UserVerifyApiResponse } from "@/features/users/user.types";
+import { UserVerifyEmailApiResponse } from "@/features/users/user.types";
 import prisma from "@/shared/db/prisma";
 import { badRequest } from "@/shared/lib/error-handlers";
 import {
   handleError,
   printConsoleError,
 } from "@/shared/lib/error-handlers/handleError";
-import { userVerifySchema } from "@/shared/lib/zods/user.zod";
+import { userVerifyEmailSchema } from "@/shared/lib/zods/user.zod";
 
 export async function PATCH(
   req: Request,
@@ -18,11 +18,11 @@ export async function PATCH(
     if (!id) throw badRequest("Id is missing");
 
     const body = await req.json();
-    const data = userVerifySchema.parse(body);
+    const data = userVerifyEmailSchema.parse(body);
 
-    const result = await userService.verify(id, data, prisma);
+    const result = await userService.verifyEmail(id, data, prisma);
 
-    const response: UserVerifyApiResponse = {
+    const response: UserVerifyEmailApiResponse = {
       data: {
         success: result.success,
       },

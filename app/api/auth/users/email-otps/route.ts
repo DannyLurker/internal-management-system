@@ -1,21 +1,21 @@
 import { userService } from "@/features/users/user.service";
-import { UserRequestOtpApiResponse } from "@/features/users/user.types";
+import { UserRequestEmailOtpApiResponse } from "@/features/users/user.types";
 import prisma from "@/shared/db/prisma";
 import {
   handleError,
   printConsoleError,
 } from "@/shared/lib/error-handlers/handleError";
-import { userRequestOtpSchema } from "@/shared/lib/zods/user.zod";
+import { userRequestEmailOtpSchema } from "@/shared/lib/zods/user.zod";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const data = userRequestOtpSchema.parse(body);
+    const data = userRequestEmailOtpSchema.parse(body);
 
-    const result = await userService.requestOtp(data, prisma);
+    const result = await userService.requestEmailOtp(data, prisma);
 
-    const response: UserRequestOtpApiResponse = {
+    const response: UserRequestEmailOtpApiResponse = {
       data: null,
       message: result.message,
       status: 201,

@@ -141,7 +141,8 @@ model User {
   stockMovements         StockMovement[]
   logs                   AuditLog[]
 
-  EmailOtpVerification EmailOtpVerification?
+  EmailOtpVerification         EmailOtpVerification?
+  resetPasswordOtpVerification ResetPasswordOtpVerification?
 
   createdAt         DateTime           @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime           @updatedAt @db.Timestamptz(3)
@@ -149,7 +150,7 @@ model User {
 }
 
 model EmailOtpVerification {
-  id                   String   @id @default(uuid())
+  id                   String   @id @default(cuid())
   userId               String   @unique
   user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   code                 String
@@ -160,6 +161,18 @@ model EmailOtpVerification {
   updatedAt            DateTime @updatedAt
 
   @@index([userId, code])
+}
+
+model ResetPasswordOtpVerification {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code                 String
+  requestNewOtpCounter Int      @default(1)
+  inputOtpCounter      Int      @default(0)
+  expiresAt            DateTime
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 }
 
 model Account {

@@ -1,7 +1,8 @@
 import {
   UserCreateSchema,
-  UserRequestOtpSchema,
-  UserVerifySchema,
+  UserRequestEmailOtpSchema,
+  UserRequestResetPasswordSchema,
+  UserVerifyEmailSchema,
 } from "@/shared/lib/zods/user.zod";
 import { Prisma, PrismaClient, Role } from "@prisma/client";
 import { createUserSelect, userRepository } from "./user.repository";
@@ -15,6 +16,7 @@ import { emailVerificationRepository } from "../email-verification/email-verific
 import { Resend } from "resend";
 import EmailOtpTemplate from "@/shared/emails/EmailOtp";
 import { Session } from "next-auth";
+import { resetPasswordVerificationRepository } from "../reset-password-verification/reset-password-verification.reopsitory";
 
 export const userService = {
   create: async (
@@ -109,8 +111,8 @@ export const userService = {
     };
   },
 
-  requestOtp: async (
-    data: UserRequestOtpSchema,
+  requestEmailOtp: async (
+    data: UserRequestEmailOtpSchema,
     prisma: PrismaClient | Prisma.TransactionClient,
   ) => {
     const user = await userRepository.findUserByEmail(
@@ -191,13 +193,39 @@ export const userService = {
     emailOtpLastRequest?.setDate(emailOtpLastRequest.getDate() + 1);
 
     if (
-      emailOtpLastRequest < new Date() &&
+      emailOtpLastRequest > new Date() &&
       user.EmailOtpVerification.requestNewOtpCounter >= 3
     ) {
       throw badRequest("You've already reached the limit of the requests");
     }
 
-    if (user.EmailOtpVerification && user.EmailOtpVerification.id) {
+    // if requestOtpCounter === 3 then current requestNewOtp Counter will be 0
+    if (
+      user.EmailOtpVerification &&
+      user.EmailOtpVerification.id &&
+      user.EmailOtpVerification.requestNewOtpCounter === 3
+    ) {
+      await emailVerificationRepository.updateById(
+        {
+          where: {
+            id: user.EmailOtpVerification.id,
+          },
+          data: {
+            code: hashedOtpCode,
+            requestNewOtpCounter: 0,
+            expiresAt: otpcodeExpiresAt,
+          },
+        },
+        prisma,
+      );
+    }
+
+    // if requestOtpCounter < 3 then increment the current requestNewOtp Counter
+    if (
+      user.EmailOtpVerification &&
+      user.EmailOtpVerification.id &&
+      user.EmailOtpVerification.requestNewOtpCounter < 3
+    ) {
       await emailVerificationRepository.updateById(
         {
           where: {
@@ -215,11 +243,6 @@ export const userService = {
       );
     }
 
-    const hashedEmailVerificationOtp = await bcrypt.hash(
-      user.EmailOtpVerification.id,
-      10,
-    );
-
     await resend.emails.send({
       from: "onboarding@resend.dev",
       to: data.email,
@@ -233,7 +256,7 @@ export const userService = {
         verificationUrl:
           process.env.NEXT_PUBLIC_BASE_URL +
           "/users/verify/" +
-          hashedEmailVerificationOtp,
+          user.EmailOtpVerification.id,
       }),
     });
 
@@ -243,9 +266,9 @@ export const userService = {
     };
   },
 
-  verify: async (
+  verifyEmail: async (
     verificationId: string,
-    data: UserVerifySchema,
+    data: UserVerifyEmailSchema,
     prisma: Prisma.TransactionClient | PrismaClient,
   ) => {
     const userSelect = createUserSelect({
@@ -271,7 +294,7 @@ export const userService = {
 
     if (!user) throw notFound("user not found");
 
-    if (!user?.emailVerified) throw badRequest("Email has already verified");
+    if (user?.emailVerified) throw badRequest("Email has already verified");
 
     if (!user.EmailOtpVerification?.id) throw badRequest("OTP Code not found");
 
@@ -331,5 +354,71 @@ export const userService = {
         success: false,
       };
     }
+  },
+
+  requestResetPasswordOtp: async (
+    data: UserRequestResetPasswordSchema,
+    prisma: PrismaClient | Prisma.TransactionClient,
+  ) => {
+    const user = await userRepository.findUserByEmail(
+      data.email,
+      {
+        id: true,
+        name: true,
+        resetPasswordOtpVerification: true,
+        emailVerified: true,
+      },
+      prisma,
+    );
+
+    if (!user) {
+      return {
+        message:
+          "If this email is existed we will send the OTP. Check you email, please.",
+      };
+    }
+
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const hashedOtpCode = await bcrypt.hash(otpCode, 10);
+
+    const otpcodeExpiresAt = new Date();
+    otpcodeExpiresAt.setMinutes(otpcodeExpiresAt.getMinutes() + 15);
+
+    const resend = new Resend();
+
+    // TODO: Work on request OTP counter, when to increment and reset
+    const transaction = await prisma.$transaction(async (tx) => {
+      let resetPasswordOtpVerification;
+
+      if (!user.resetPasswordOtpVerification?.id) {
+        resetPasswordOtpVerification =
+          await resetPasswordVerificationRepository.create(
+            {
+              code: hashedOtpCode,
+              expiresAt: otpcodeExpiresAt,
+              user: {
+                connect: {
+                  id: user.id,
+                },
+              },
+            },
+            tx,
+          );
+      }
+
+      resetPasswordOtpVerification =
+        await resetPasswordVerificationRepository.update(
+          user.resetPasswordOtpVerification!.id,
+          {
+            code: hashedOtpCode,
+            expiresAt: otpcodeExpiresAt,
+            requestNewOtpCounter: {
+              increment: 1,
+            },
+          },
+          tx,
+        );
+    });
   },
 };

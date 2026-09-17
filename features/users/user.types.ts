@@ -9,8 +9,8 @@ export type UserStaffCreateApiResponse = ApiResponse<{
   userId: string;
 }>;
 
-export type UserVerifyApiResponse = ApiResponse<{
+export type UserVerifyEmailApiResponse = ApiResponse<{
   success: boolean;
 }>;
 
-export type UserRequestOtpApiResponse = ApiResponse<null>;
+export type UserRequestEmailOtpApiResponse = ApiResponse<null>;
