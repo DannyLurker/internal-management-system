@@ -25,6 +25,7 @@ export async function PATCH(
     const response: UserVerifyEmailApiResponse = {
       data: {
         success: result.success,
+        userId: result.userId,
       },
       message: result.message,
       status: 201,

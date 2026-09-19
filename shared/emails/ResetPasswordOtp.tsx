@@ -13,7 +13,7 @@ import {
   Text,
 } from "react-email";
 
-interface EmailOtpTemplateProps {
+interface ResetPasswordOtpProps {
   userName: string;
   otpCode: string;
   expirationMinutes: number;
@@ -23,7 +23,7 @@ interface EmailOtpTemplateProps {
   //   logoUrl?: string;
 }
 
-export const EmailOtpTemplate = ({
+export const ResetPasswordOtpTemplate = ({
   userName = "Valued Guest",
   otpCode = "849201",
   expirationMinutes = 15,
@@ -31,7 +31,7 @@ export const EmailOtpTemplate = ({
   supportEmail = "www.bizhotel.com",
   verificationUrl,
   //   logoUrl = "/biz-hotel.jpg",
-}: EmailOtpTemplateProps) => {
+}: ResetPasswordOtpProps) => {
   // Handling split code display for improved legibility (3 digits - 3 digits)
   const formattedCode =
     otpCode.length === 6
@@ -63,7 +63,9 @@ export const EmailOtpTemplate = ({
 
           {/* Handling Main Verification Card */}
           <Section style={styles.card}>
-            <Heading style={styles.heading}>Verify Your Account</Heading>
+            <Heading style={styles.heading}>
+              Change Your Account Password
+            </Heading>
 
             <Text style={styles.paragraph}>Hello {userName},</Text>
 
@@ -87,7 +89,7 @@ export const EmailOtpTemplate = ({
             {/* Handling Primary Call-to-Action Button */}
             <Section style={styles.buttonContainer}>
               <Button style={styles.button} href={verificationUrl}>
-                Verify Account
+                Change Password
               </Button>
             </Section>
 
@@ -114,7 +116,7 @@ export const EmailOtpTemplate = ({
   );
 };
 
-export default EmailOtpTemplate;
+export default ResetPasswordOtpTemplate;
 
 // Handling inline style definitions based on Ochre Harbor design system
 const styles = {

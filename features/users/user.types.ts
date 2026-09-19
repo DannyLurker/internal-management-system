@@ -10,7 +10,19 @@ export type UserStaffCreateApiResponse = ApiResponse<{
 }>;
 
 export type UserVerifyEmailApiResponse = ApiResponse<{
+  userId: string;
   success: boolean;
 }>;
 
-export type UserRequestEmailOtpApiResponse = ApiResponse<null>;
+export type UserRequestEmailOtpApiResponse = ApiResponse<{
+  emailOtpVerificationId: string | null;
+}>;
+
+export type UserRequestPasswordOtpApiResponse = ApiResponse<{
+  resetPasswordOtpVerificationId: string | null;
+}>;
+
+export type UserVerifPasswordApiResponse = ApiResponse<{
+  userId: string;
+  success: boolean;
+}>;

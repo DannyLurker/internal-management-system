@@ -143,6 +143,7 @@ model User {
 
   EmailOtpVerification         EmailOtpVerification?
   resetPasswordOtpVerification ResetPasswordOtpVerification?
+  lastPasswordChangedAt        DateTime?                     @db.Timestamptz(3)
 
   createdAt         DateTime           @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime           @updatedAt @db.Timestamptz(3)

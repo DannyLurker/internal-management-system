@@ -78,3 +78,7 @@ export const userVerifyResetPasswordSchema = z
       });
     }
   });
+
+export type UserVerifyResetPasswordSchema = z.infer<
+  typeof userVerifyResetPasswordSchema
+>;
