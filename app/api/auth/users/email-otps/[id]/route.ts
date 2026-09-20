@@ -6,6 +6,7 @@ import {
   handleError,
   printConsoleError,
 } from "@/shared/lib/error-handlers/handleError";
+import { executeRatelimit } from "@/shared/lib/rate-limiter";
 import { userVerifyEmailSchema } from "@/shared/lib/zods/user.zod";
 
 export async function PATCH(
@@ -13,6 +14,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await executeRatelimit(req);
+
     const { id } = await params;
 
     if (!id) throw badRequest("Id is missing");

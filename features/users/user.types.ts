@@ -1,4 +1,7 @@
 import { ApiResponse } from "@/shared/lib/api-client";
+import { userRepository } from "./user.repository";
+
+export type User = Awaited<ReturnType<typeof userRepository.findUserByEmail>>;
 
 export type UserGuestCreateApiResponse = ApiResponse<{
   userId: string;
@@ -22,7 +25,7 @@ export type UserRequestPasswordOtpApiResponse = ApiResponse<{
   resetPasswordOtpVerificationId: string | null;
 }>;
 
-export type UserVerifPasswordApiResponse = ApiResponse<{
+export type UserVerifyPasswordApiResponse = ApiResponse<{
   userId: string;
   success: boolean;
 }>;

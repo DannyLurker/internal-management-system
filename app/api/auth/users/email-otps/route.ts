@@ -5,10 +5,13 @@ import {
   handleError,
   printConsoleError,
 } from "@/shared/lib/error-handlers/handleError";
+import { executeRatelimit } from "@/shared/lib/rate-limiter";
 import { userRequestEmailOtpSchema } from "@/shared/lib/zods/user.zod";
 
 export async function POST(req: Request) {
   try {
+    await executeRatelimit(req);
+
     const body = await req.json();
 
     const data = userRequestEmailOtpSchema.parse(body);
@@ -16,7 +19,9 @@ export async function POST(req: Request) {
     const result = await userService.requestEmailOtp(data, prisma);
 
     const response: UserRequestEmailOtpApiResponse = {
-      data: null,
+      data: {
+        emailOtpVerificationId: result.emailOtpVerificationId ?? null,
+      },
       message: result.message,
       status: 201,
     };

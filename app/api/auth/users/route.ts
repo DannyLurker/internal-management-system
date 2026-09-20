@@ -9,12 +9,15 @@ import {
   handleError,
   printConsoleError,
 } from "@/shared/lib/error-handlers/handleError";
+import { executeRatelimit } from "@/shared/lib/rate-limiter";
 import { canCreateStaffAccount } from "@/shared/lib/validations/user-access-validation";
 import sessionValidation from "@/shared/lib/validations/user-session-validation";
 import { userCreateSchema } from "@/shared/lib/zods/user.zod";
 
 export async function POST(req: Request) {
   try {
+    await executeRatelimit(req);
+
     let user = null;
 
     try {

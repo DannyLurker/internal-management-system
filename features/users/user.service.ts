@@ -9,7 +9,6 @@ import { Prisma, PrismaClient, Role } from "@prisma/client";
 import { createUserSelect, userRepository } from "./user.repository";
 import {
   badRequest,
-  internalServerError,
   notFound,
   tooManyRequest,
 } from "@/shared/lib/error-handlers";
@@ -20,6 +19,11 @@ import EmailOtpTemplate from "@/shared/emails/EmailOtp";
 import { Session } from "next-auth";
 import { resetPasswordVerificationRepository } from "../reset-password-verification/reset-password-verification.reopsitory";
 import { ResetPasswordOtpTemplate } from "@/shared/emails/ResetPasswordOtp";
+import {
+  assertCanCreateUser,
+  assertCanRequestEmailOtp,
+  assertCanVerifyEmail,
+} from "./user.rule";
 
 export const userService = {
   create: async (
@@ -38,11 +42,7 @@ export const userService = {
       prisma,
     );
 
-    if (findUser && findUser.emailVerified)
-      throw badRequest("This email has already registered");
-
-    if (findUser && !findUser.emailVerified)
-      throw badRequest("This email has already used, yet haven't verified yet");
+    assertCanCreateUser(findUser);
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
@@ -136,8 +136,7 @@ export const userService = {
       };
     }
 
-    if (user?.emailVerified)
-      throw badRequest("This email has already verified.");
+    assertCanRequestEmailOtp(user);
 
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -148,8 +147,10 @@ export const userService = {
 
     const resend = new Resend();
 
+    let emailVerificationOtp;
+
     if (!user.EmailOtpVerification) {
-      const emailVerificationOtp = await emailVerificationRepository.create(
+      emailVerificationOtp = await emailVerificationRepository.create(
         {
           code: hashedOtpCode,
           expiresAt: otpcodeExpiresAt,
@@ -189,6 +190,7 @@ export const userService = {
       return {
         message:
           "An email OTP verification sended successfully. Check your email.",
+        emailOtpVerificationId: emailVerificationOtp.id,
       };
     }
 
@@ -208,7 +210,7 @@ export const userService = {
       user.EmailOtpVerification.id &&
       user.EmailOtpVerification.requestNewOtpCounter === 3
     ) {
-      await emailVerificationRepository.updateById(
+      emailVerificationOtp = await emailVerificationRepository.updateById(
         {
           where: {
             id: user.EmailOtpVerification.id,
@@ -229,7 +231,7 @@ export const userService = {
       user.EmailOtpVerification.id &&
       user.EmailOtpVerification.requestNewOtpCounter < 3
     ) {
-      await emailVerificationRepository.updateById(
+      emailVerificationOtp = await emailVerificationRepository.updateById(
         {
           where: {
             id: user.EmailOtpVerification.id,
@@ -258,7 +260,7 @@ export const userService = {
         supportEmail: "www.bizhotelbatam.com",
         verificationUrl:
           process.env.NEXT_PUBLIC_BASE_URL +
-          "/users/verify/" +
+          "/users/email-otps/" +
           user.EmailOtpVerification.id,
       }),
     });
@@ -266,6 +268,7 @@ export const userService = {
     return {
       message:
         "An email OTP verification sended successfully. Check your email.",
+      emailOtpVerificationId: emailVerificationOtp!.id,
     };
   },
 
@@ -295,30 +298,9 @@ export const userService = {
       prisma,
     );
 
-    if (!user) throw notFound("user not found");
-
-    if (user?.emailVerified) throw badRequest("Email has already verified");
-
-    if (!user.EmailOtpVerification?.id) throw badRequest("OTP Code not found");
-
-    const isVerificationIdExact =
-      user.EmailOtpVerification.id === emailOtpVerification?.id;
-
-    if (!isVerificationIdExact)
-      throw badRequest(
-        "The verification id is incorrect. Try to request a new OTP code again.",
-      );
-
-    if (user.EmailOtpVerification.inputOtpCounter >= 3)
-      throw tooManyRequest(
-        "You have already reached your maximum limit of inputting OTP",
-      );
-
     const now = new Date();
 
-    if (emailOtpVerification.expiresAt < now) {
-      throw badRequest("OTP code has already epxired. Request a new one.");
-    }
+    assertCanVerifyEmail(user, emailOtpVerification, now);
 
     const resetPeriodic = new Date(emailOtpVerification.updatedAt);
     resetPeriodic.setDate(resetPeriodic.getDate() + 1);
@@ -425,13 +407,7 @@ export const userService = {
       );
     }
 
-    console.log(allowedPeriodForPasswordChanged);
-
     const now = new Date();
-
-    console.log(
-      allowedPeriodForPasswordChanged && allowedPeriodForPasswordChanged > now,
-    );
 
     if (
       allowedPeriodForPasswordChanged &&
@@ -452,7 +428,6 @@ export const userService = {
 
     const resend = new Resend(process.env.RESEND_API_KEY);
 
-    // TODO: Work on request OTP counter, when to increment and reset
     const transaction = await prisma.$transaction(async (tx) => {
       let resetPasswordOtpVerification;
 
@@ -467,25 +442,6 @@ export const userService = {
                 connect: {
                   id: user.id,
                 },
-              },
-            },
-            tx,
-          );
-      }
-
-      // if request otp counter < 3, then increment its value by 1
-      if (
-        user.resetPasswordOtpVerification?.requestNewOtpCounter &&
-        user.resetPasswordOtpVerification.requestNewOtpCounter < 3
-      ) {
-        resetPasswordOtpVerification =
-          await resetPasswordVerificationRepository.update(
-            user.resetPasswordOtpVerification!.id,
-            {
-              code: hashedOtpCode,
-              expiresAt: otpcodeExpiresAt,
-              requestNewOtpCounter: {
-                increment: 1,
               },
             },
             tx,
@@ -509,8 +465,19 @@ export const userService = {
           );
       }
 
-      if (!resetPasswordOtpVerification)
-        throw internalServerError("Something went incorrect");
+      // request otp counter < 3, then increment its value by 1
+      resetPasswordOtpVerification =
+        await resetPasswordVerificationRepository.update(
+          user.resetPasswordOtpVerification!.id,
+          {
+            code: hashedOtpCode,
+            expiresAt: otpcodeExpiresAt,
+            requestNewOtpCounter: {
+              increment: 1,
+            },
+          },
+          tx,
+        );
 
       return {
         resetPasswordOtpVerification,
@@ -530,7 +497,7 @@ export const userService = {
         verificationUrl:
           process.env.NEXT_PUBLIC_BASE_URL +
           "/users/password-otps/" +
-          transaction.resetPasswordOtpVerification.id,
+          transaction.resetPasswordOtpVerification!.id,
       }),
     });
 
@@ -538,7 +505,7 @@ export const userService = {
       message:
         "If this email is existed we will send the OTP. Check you email, please.",
       resetPasswordOtpVerificationId:
-        transaction.resetPasswordOtpVerification.id,
+        transaction.resetPasswordOtpVerification!.id,
     };
   },
 

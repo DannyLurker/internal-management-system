@@ -5,10 +5,13 @@ import {
   handleError,
   printConsoleError,
 } from "@/shared/lib/error-handlers/handleError";
+import { executeRatelimit } from "@/shared/lib/rate-limiter";
 import { userRequestResetPasswordSchema } from "@/shared/lib/zods/user.zod";
 
 export async function POST(req: Request) {
   try {
+    await executeRatelimit(req);
+
     const body = await req.json();
     const data = userRequestResetPasswordSchema.parse(body);
 

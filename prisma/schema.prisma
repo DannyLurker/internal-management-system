@@ -454,6 +454,15 @@ model OrderItem {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
 }
 
+// rate limiter
+model RateLimit {
+  key       String   @id
+  count     Int      @default(1)
+  expiresAt DateTime
+
+  @@index([expiresAt])
+}
+
 // Log Audit
 model AuditLog {
   id       String     @id @default(cuid())
