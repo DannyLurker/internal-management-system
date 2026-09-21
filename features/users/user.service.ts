@@ -7,11 +7,7 @@ import {
 } from "@/shared/lib/zods/user.zod";
 import { Prisma, PrismaClient, Role } from "@prisma/client";
 import { createUserSelect, userRepository } from "./user.repository";
-import {
-  badRequest,
-  notFound,
-  tooManyRequest,
-} from "@/shared/lib/error-handlers";
+import { badRequest, tooManyRequest } from "@/shared/lib/error-handlers";
 import bcrypt from "bcryptjs";
 import { emailVerificationRepository } from "../email-verification/email-verification.repository";
 import { Resend } from "resend";
@@ -292,8 +288,12 @@ export const userService = {
     const emailOtpVerification = await emailVerificationRepository.findById(
       verificationId,
       {
-        code: true,
         id: true,
+        code: true,
+        expiresAt: true,
+        updatedAt: true,
+        inputOtpCounter: true,
+        userId: true,
       },
       prisma,
     );
@@ -302,17 +302,17 @@ export const userService = {
 
     assertCanVerifyEmail(user, emailOtpVerification, now);
 
-    const resetPeriodic = new Date(emailOtpVerification.updatedAt);
+    const resetPeriodic = new Date(emailOtpVerification!.updatedAt);
     resetPeriodic.setDate(resetPeriodic.getDate() + 1);
 
     const isOtpExact = await bcrypt.compare(
       data.otpCode,
-      user.EmailOtpVerification.code,
+      user!.EmailOtpVerification!.code,
     );
 
     if (isOtpExact) {
       await userRepository.update(
-        user.id,
+        user!.id,
         {
           emailVerified: new Date(),
         },
@@ -320,21 +320,21 @@ export const userService = {
       );
 
       await emailVerificationRepository.deleteById(
-        user.EmailOtpVerification.id,
+        user!.EmailOtpVerification!.id,
         prisma,
       );
 
       return {
         message: "Email verified successfully",
         success: true,
-        userId: emailOtpVerification.userId,
+        userId: emailOtpVerification!.userId,
       };
     } else if (
       now > resetPeriodic &&
-      emailOtpVerification.inputOtpCounter === 3
+      emailOtpVerification!.inputOtpCounter === 3
     ) {
       await userRepository.update(
-        user.id,
+        user!.id,
         {
           EmailOtpVerification: {
             update: {
@@ -348,11 +348,11 @@ export const userService = {
       return {
         message: "The OTP code is incorrect",
         success: false,
-        userId: emailOtpVerification.userId,
+        userId: emailOtpVerification!.userId,
       };
     } else {
       await userRepository.update(
-        user.id,
+        user!.id,
         {
           EmailOtpVerification: {
             update: {
@@ -368,7 +368,7 @@ export const userService = {
       return {
         message: "The OTP code is incorrect",
         success: false,
-        userId: emailOtpVerification.userId,
+        userId: emailOtpVerification!.userId,
       };
     }
   },

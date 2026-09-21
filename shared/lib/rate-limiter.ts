@@ -48,12 +48,10 @@ export async function executeRatelimit(req: Request) {
   const ip = forwarded ? forwarded.split(",")[0].trim() : "127.0.0.1";
   const rateLimitKey = `register:${ip}`;
 
-  const { remaining, resetAt, success } = await checkRateLimit(rateLimitKey, {
+  const { resetAt, success } = await checkRateLimit(rateLimitKey, {
     limit: 10,
     windowSeconds: 15 * 60,
   });
-
-  console.log(success);
 
   if (!success) {
     const retryAfterMinutes = Math.ceil(

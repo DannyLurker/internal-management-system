@@ -25,30 +25,34 @@ export const assertCanRequestEmailOtp = (user: Partial<User>) => {
 
 export const assertCanVerifyEmail = (
   user: Partial<User>,
-  emailOtpVerification: Partial<EmailOtpVerification>,
+  emailOtpVerification: Partial<EmailOtpVerification> | null,
   now: Date,
 ) => {
-  if (!user) throw notFound("user not found");
+  if (!user) throw notFound("User not found");
 
-  if (user?.emailVerified) throw badRequest("Email has already verified");
+  if (user.emailVerified) throw badRequest("Email has already been verified");
 
-  if (!emailOtpVerification || !user.EmailOtpVerification?.id)
+  if (!emailOtpVerification || !user.EmailOtpVerification) {
     throw notFound("Email OTP not found");
+  }
 
-  const isVerificationIdExact =
-    user.EmailOtpVerification.id === emailOtpVerification.id;
-
-  if (!isVerificationIdExact)
+  if (user.EmailOtpVerification.id !== emailOtpVerification.id) {
     throw badRequest(
-      "The verification id is incorrect. Try to request a new OTP code again.",
+      "The verification ID is incorrect. Try requesting a new OTP code.",
     );
+  }
 
-  if (user.EmailOtpVerification.inputOtpCounter >= 3)
+  if (emailOtpVerification.expiresAt && emailOtpVerification.expiresAt < now) {
+    throw badRequest("OTP code has expired. Request a new one.");
+  }
+
+  const resetPeriodic = new Date(emailOtpVerification.updatedAt as Date);
+  resetPeriodic.setDate(resetPeriodic.getDate() + 1);
+
+  const isCooldownActive = now <= resetPeriodic;
+  if (user.EmailOtpVerification.inputOtpCounter >= 3 && isCooldownActive) {
     throw tooManyRequest(
-      "You have already reached your maximum limit of inputting OTP",
+      "You have reached the maximum limit of OTP attempts. Please wait 24 hours.",
     );
-
-  if ((emailOtpVerification.expiresAt as Date) < now) {
-    throw badRequest("OTP code has already epxired. Request a new one.");
   }
 };
