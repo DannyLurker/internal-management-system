@@ -21,9 +21,7 @@ export type UserRequestEmailOtpApiResponse = ApiResponse<{
   emailOtpVerificationId: string | null;
 }>;
 
-export type UserRequestPasswordOtpApiResponse = ApiResponse<{
-  resetPasswordOtpVerificationId: string | null;
-}>;
+export type UserRequestPasswordOtpApiResponse = ApiResponse<null>;
 
 export type UserVerifyPasswordApiResponse = ApiResponse<{
   userId: string;

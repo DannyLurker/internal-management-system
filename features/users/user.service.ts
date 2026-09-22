@@ -23,7 +23,6 @@ import {
   assertCanVerifyEmail,
 } from "./user.rule";
 import crypto from "crypto";
-import { microtask } from "framer-motion";
 
 export const userService = {
   create: async (
@@ -405,6 +404,13 @@ export const userService = {
       prisma,
     );
 
+    if (!user) {
+      return {
+        message:
+          "If this email exists, we will send the OTP. Please check your email.",
+      };
+    }
+
     assertCanRequestResetPasswordOtp(user);
 
     const otpCode = crypto.randomInt(100000, 999999).toString();
@@ -420,7 +426,7 @@ export const userService = {
       let resetPasswordOtpVerification;
 
       // if reset password otp === null (No record), then create a new otp
-      if (!user!.resetPasswordOtpVerification?.id) {
+      if (!user.resetPasswordOtpVerification?.id) {
         resetPasswordOtpVerification =
           await resetPasswordVerificationRepository.create(
             {
@@ -438,8 +444,8 @@ export const userService = {
 
       // if request otp counter === 3, then requestOtpCounter will be reset to 1
       if (
-        user!.resetPasswordOtpVerification?.requestNewOtpCounter &&
-        user!.resetPasswordOtpVerification.requestNewOtpCounter === 3
+        user.resetPasswordOtpVerification?.requestNewOtpCounter &&
+        user.resetPasswordOtpVerification.requestNewOtpCounter === 3
       ) {
         resetPasswordOtpVerification =
           await resetPasswordVerificationRepository.update(
@@ -492,8 +498,6 @@ export const userService = {
     return {
       message:
         "If this email is existed we will send the OTP. Check you email, please.",
-      resetPasswordOtpVerificationId:
-        transaction.resetPasswordOtpVerification!.id,
     };
   },
 

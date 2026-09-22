@@ -18,10 +18,7 @@ export async function POST(req: Request) {
     const result = await userService.requestResetPasswordOtp(data, prisma);
 
     const response: UserRequestPasswordOtpApiResponse = {
-      data: {
-        resetPasswordOtpVerificationId:
-          result.resetPasswordOtpVerificationId ?? null,
-      },
+      data: null,
       message: result.message,
       status: 201,
     };

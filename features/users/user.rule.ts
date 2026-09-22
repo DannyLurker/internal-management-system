@@ -6,13 +6,9 @@ import {
 } from "@/shared/lib/error-handlers";
 import { User } from "./user.types";
 import { EmailOtpVerification } from "../email-verification/email-verification.type";
-import { ResetPasswordOtpVerification } from "@prisma/client";
 import { ResetPasswordVerificationFindById } from "../reset-password-verification/reset-password-verification.type";
 import { UserVerifyResetPasswordSchema } from "@/shared/lib/zods/user.zod";
 
-// ---------------------------------------------------------------------
-// USER CREATION
-// ---------------------------------------------------------------------
 export const assertCanCreateUser = (
   user: { id: string; emailVerified: Date | null } | null,
 ) => {
@@ -24,9 +20,6 @@ export const assertCanCreateUser = (
   }
 };
 
-// ---------------------------------------------------------------------
-// REQUEST EMAIL OTP
-// ---------------------------------------------------------------------
 export const assertCanRequestEmailOtp = (
   user: Partial<User>,
   lastRequestNewOtp: Date | null,
@@ -48,9 +41,6 @@ export const assertCanRequestEmailOtp = (
   }
 };
 
-// ---------------------------------------------------------------------
-// VERIFY EMAIL OTP
-// ---------------------------------------------------------------------
 export const assertCanVerifyEmail = (
   user: Partial<User>,
   emailOtpVerification: Partial<EmailOtpVerification> | null,
@@ -87,20 +77,13 @@ export const assertCanVerifyEmail = (
   }
 };
 
-// ---------------------------------------------------------------------
-// REQUEST RESET PASSWORD OTP
-// ---------------------------------------------------------------------
-export const assertCanRequestResetPasswordOtp = (
+export function assertCanRequestResetPasswordOtp(
   user: {
     id: string;
-    name: string;
-    resetPasswordOtpVerification: ResetPasswordOtpVerification | null;
-    emailVerified: Date | null;
     lastPasswordChangedAt: Date | null;
   } | null,
-) => {
-  // If the user does not exist we silently return – route will send generic message.
-  if (!user) return;
+): asserts user is NonNullable<typeof user> {
+  if (!user?.id) throw badRequest("User not found");
 
   const allowedPeriod = user.lastPasswordChangedAt
     ? new Date(user.lastPasswordChangedAt)
@@ -114,11 +97,8 @@ export const assertCanRequestResetPasswordOtp = (
       );
     }
   }
-};
+}
 
-// ---------------------------------------------------------------------
-// RESET PASSWORD VALIDATION
-// ---------------------------------------------------------------------
 export function assertCanResetPassword(
   resetPasswordOtpVerification: ResetPasswordVerificationFindById,
   data: UserVerifyResetPasswordSchema,
