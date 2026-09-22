@@ -7,7 +7,7 @@ import {
 } from "@/shared/lib/zods/user.zod";
 import { Prisma, PrismaClient, Role } from "@prisma/client";
 import { createUserSelect, userRepository } from "./user.repository";
-import { badRequest, tooManyRequest } from "@/shared/lib/error-handlers";
+import { badRequest } from "@/shared/lib/error-handlers";
 import bcrypt from "bcryptjs";
 import { emailVerificationRepository } from "../email-verification/email-verification.repository";
 import { Resend } from "resend";
@@ -18,8 +18,12 @@ import { ResetPasswordOtpTemplate } from "@/shared/emails/ResetPasswordOtp";
 import {
   assertCanCreateUser,
   assertCanRequestEmailOtp,
+  assertCanRequestResetPasswordOtp,
+  assertCanResetPassword,
   assertCanVerifyEmail,
 } from "./user.rule";
+import crypto from "crypto";
+import { microtask } from "framer-motion";
 
 export const userService = {
   create: async (
@@ -42,6 +46,10 @@ export const userService = {
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
+    const otpCode = crypto.randomInt(100000, 999999).toString();
+
+    const hashedOtpCode = await bcrypt.hash(otpCode, 10);
+
     const transaction = await prisma.$transaction(async (tx) => {
       const createdUser = await userRepository.create(
         {
@@ -59,10 +67,6 @@ export const userService = {
         emailVerificationExpiersDate.getMinutes() + 15,
       );
 
-      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-      const hashedOtpCode = await bcrypt.hash(otpCode, 10);
-
       const createdEmailVerification = await emailVerificationRepository.create(
         {
           code: hashedOtpCode,
@@ -73,12 +77,20 @@ export const userService = {
             },
           },
           requestNewOtpCounter: 1,
+          lastRequestNewOtp: new Date(),
         },
         tx,
       );
 
-      const resend = new Resend(process.env.RESEND_API_KEY);
+      return {
+        user: createdUser,
+        emailVerificationId: createdEmailVerification.id,
+      };
+    });
 
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
+    if (data.creationType === "GUEST") {
       await resend.emails.send({
         from: "onboarding@resend.dev",
         to: data.email,
@@ -92,20 +104,15 @@ export const userService = {
           verificationUrl:
             process.env.NEXT_PUBLIC_BASE_URL +
             "/users/verify/" +
-            createdEmailVerification.id,
+            transaction.emailVerificationId,
         }),
       });
-
-      return {
-        userId: createdUser.id,
-        emailVerificationId: createdEmailVerification.id,
-      };
-    });
+    }
 
     return {
       message:
         "Account created successfully. Next step is to verify your account. Check your email, please!",
-      userId: transaction.userId,
+      userId: transaction.user.id,
       emailVerificationId: transaction.emailVerificationId,
     };
   },
@@ -132,9 +139,24 @@ export const userService = {
       };
     }
 
-    assertCanRequestEmailOtp(user);
+    const emailOtpLastRequest = user.EmailOtpVerification
+      ? user.EmailOtpVerification?.lastRequestNewOtp
+        ? new Date(user.EmailOtpVerification.lastRequestNewOtp)
+        : null
+      : null;
 
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    emailOtpLastRequest?.setHours(emailOtpLastRequest.getHours() + 12);
+
+    const now = new Date();
+
+    assertCanRequestEmailOtp(
+      user,
+      emailOtpLastRequest,
+      now,
+      user.EmailOtpVerification?.requestNewOtpCounter,
+    );
+
+    const otpCode = crypto.randomInt(100000, 999999).toString();
 
     const hashedOtpCode = await bcrypt.hash(otpCode, 10);
 
@@ -161,11 +183,6 @@ export const userService = {
         prisma,
       );
 
-      const hashedEmailVerificationOtp = await bcrypt.hash(
-        emailVerificationOtp.id,
-        10,
-      );
-
       await resend.emails.send({
         from: "onboarding@resend.dev",
         to: data.email,
@@ -179,25 +196,14 @@ export const userService = {
           verificationUrl:
             process.env.NEXT_PUBLIC_BASE_URL +
             "/users/verify/" +
-            hashedEmailVerificationOtp,
+            emailVerificationOtp.id,
         }),
       });
 
       return {
         message:
           "An email OTP verification sended successfully. Check your email.",
-        emailOtpVerificationId: emailVerificationOtp.id,
       };
-    }
-
-    const emailOtpLastRequest = user.EmailOtpVerification?.updatedAt;
-    emailOtpLastRequest?.setDate(emailOtpLastRequest.getDate() + 1);
-
-    if (
-      emailOtpLastRequest > new Date() &&
-      user.EmailOtpVerification.requestNewOtpCounter >= 3
-    ) {
-      throw tooManyRequest("You've already reached the limit of the requests");
     }
 
     // if requestOtpCounter === 3 then current requestNewOtp Counter will be 0
@@ -215,12 +221,15 @@ export const userService = {
             code: hashedOtpCode,
             requestNewOtpCounter: 0,
             expiresAt: otpcodeExpiresAt,
+            inputOtpCounter: 0,
+            lastRequestNewOtp: new Date(),
           },
         },
         prisma,
       );
     }
 
+    //emailOtpLastRequest < now
     // if requestOtpCounter < 3 then increment the current requestNewOtp Counter
     if (
       user.EmailOtpVerification &&
@@ -234,10 +243,15 @@ export const userService = {
           },
           data: {
             code: hashedOtpCode,
-            requestNewOtpCounter: {
-              increment: 1,
-            },
+            ...(emailOtpLastRequest && emailOtpLastRequest > now
+              ? {
+                  requestNewOtpCounter: { increment: 1 },
+                }
+              : {
+                  requestNewOtpCounter: 1,
+                }),
             expiresAt: otpcodeExpiresAt,
+            lastRequestNewOtp: new Date(),
           },
         },
         prisma,
@@ -264,7 +278,6 @@ export const userService = {
     return {
       message:
         "An email OTP verification sended successfully. Check your email.",
-      emailOtpVerificationId: emailVerificationOtp!.id,
     };
   },
 
@@ -291,7 +304,7 @@ export const userService = {
         id: true,
         code: true,
         expiresAt: true,
-        updatedAt: true,
+        lastInputOtp: true,
         inputOtpCounter: true,
         userId: true,
       },
@@ -302,8 +315,13 @@ export const userService = {
 
     assertCanVerifyEmail(user, emailOtpVerification, now);
 
-    const resetPeriodic = new Date(emailOtpVerification!.updatedAt);
-    resetPeriodic.setDate(resetPeriodic.getDate() + 1);
+    const resetPeriodic = emailOtpVerification?.lastInputOtp
+      ? new Date(emailOtpVerification.lastInputOtp as Date)
+      : null;
+
+    emailOtpVerification?.lastInputOtp
+      ? resetPeriodic!.setMinutes(resetPeriodic!.getMinutes() + 10)
+      : null;
 
     const isOtpExact = await bcrypt.compare(
       data.otpCode,
@@ -311,18 +329,20 @@ export const userService = {
     );
 
     if (isOtpExact) {
-      await userRepository.update(
-        user!.id,
-        {
-          emailVerified: new Date(),
-        },
-        prisma,
-      );
+      await prisma.$transaction(async (tx) => {
+        await userRepository.update(
+          user!.id,
+          {
+            emailVerified: new Date(),
+          },
+          tx,
+        );
 
-      await emailVerificationRepository.deleteById(
-        user!.EmailOtpVerification!.id,
-        prisma,
-      );
+        await emailVerificationRepository.deleteById(
+          user!.EmailOtpVerification!.id,
+          tx,
+        );
+      });
 
       return {
         message: "Email verified successfully",
@@ -330,46 +350,42 @@ export const userService = {
         userId: emailOtpVerification!.userId,
       };
     } else if (
-      now > resetPeriodic &&
+      ((resetPeriodic && now > resetPeriodic) || !resetPeriodic) &&
       emailOtpVerification!.inputOtpCounter === 3
     ) {
-      await userRepository.update(
-        user!.id,
-        {
-          EmailOtpVerification: {
-            update: {
+      const updatedEmailVerification =
+        await emailVerificationRepository.updateById(
+          {
+            where: {
+              id: emailOtpVerification?.id,
+            },
+            data: {
               inputOtpCounter: 1,
             },
           },
-        },
-        prisma,
-      );
+          prisma,
+        );
 
-      return {
-        message: "The OTP code is incorrect",
-        success: false,
-        userId: emailOtpVerification!.userId,
-      };
+      throw badRequest(
+        `The OTP code is correct. Remaining attempts: ${3 - updatedEmailVerification.inputOtpCounter}`,
+      );
     } else {
-      await userRepository.update(
-        user!.id,
-        {
-          EmailOtpVerification: {
-            update: {
-              inputOtpCounter: {
-                increment: 1,
-              },
+      const updatedEmailVerification =
+        await emailVerificationRepository.updateById(
+          {
+            where: {
+              id: emailOtpVerification?.id,
+            },
+            data: {
+              inputOtpCounter: 1,
             },
           },
-        },
-        prisma,
-      );
+          prisma,
+        );
 
-      return {
-        message: "The OTP code is incorrect",
-        success: false,
-        userId: emailOtpVerification!.userId,
-      };
+      throw badRequest(
+        `The OTP code is correct. Remaining attempts: ${3 - updatedEmailVerification.inputOtpCounter}`,
+      );
     }
   },
 
@@ -389,37 +405,9 @@ export const userService = {
       prisma,
     );
 
-    if (!user) {
-      return {
-        message:
-          "If this email is existed we will send the OTP. Check you email, please.",
-      };
-    }
+    assertCanRequestResetPasswordOtp(user);
 
-    const allowedPeriodForPasswordChanged = user.lastPasswordChangedAt
-      ? new Date(user.lastPasswordChangedAt)
-      : null;
-
-    // if there is a record when the user changed password, add twelve hours as a restriction so they can't spam requests
-    if (allowedPeriodForPasswordChanged) {
-      allowedPeriodForPasswordChanged?.setHours(
-        allowedPeriodForPasswordChanged.getHours() + 12,
-      );
-    }
-
-    const now = new Date();
-
-    if (
-      allowedPeriodForPasswordChanged &&
-      allowedPeriodForPasswordChanged > now
-    ) {
-      throw tooManyRequest(
-        "you've reached your limit of changing password. Next available changed at " +
-          allowedPeriodForPasswordChanged,
-      );
-    }
-
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpCode = crypto.randomInt(100000, 999999).toString();
 
     const hashedOtpCode = await bcrypt.hash(otpCode, 10);
 
@@ -432,7 +420,7 @@ export const userService = {
       let resetPasswordOtpVerification;
 
       // if reset password otp === null (No record), then create a new otp
-      if (!user.resetPasswordOtpVerification?.id) {
+      if (!user!.resetPasswordOtpVerification?.id) {
         resetPasswordOtpVerification =
           await resetPasswordVerificationRepository.create(
             {
@@ -440,7 +428,7 @@ export const userService = {
               expiresAt: otpcodeExpiresAt,
               user: {
                 connect: {
-                  id: user.id,
+                  id: user!.id,
                 },
               },
             },
@@ -450,12 +438,12 @@ export const userService = {
 
       // if request otp counter === 3, then requestOtpCounter will be reset to 1
       if (
-        user.resetPasswordOtpVerification?.requestNewOtpCounter &&
-        user.resetPasswordOtpVerification.requestNewOtpCounter === 3
+        user!.resetPasswordOtpVerification?.requestNewOtpCounter &&
+        user!.resetPasswordOtpVerification.requestNewOtpCounter === 3
       ) {
         resetPasswordOtpVerification =
           await resetPasswordVerificationRepository.update(
-            user.resetPasswordOtpVerification!.id,
+            user!.resetPasswordOtpVerification!.id,
             {
               code: hashedOtpCode,
               expiresAt: otpcodeExpiresAt,
@@ -468,7 +456,7 @@ export const userService = {
       // request otp counter < 3, then increment its value by 1
       resetPasswordOtpVerification =
         await resetPasswordVerificationRepository.update(
-          user.resetPasswordOtpVerification!.id,
+          user!.resetPasswordOtpVerification!.id,
           {
             code: hashedOtpCode,
             expiresAt: otpcodeExpiresAt,
@@ -492,7 +480,7 @@ export const userService = {
         expirationMinutes: 15,
         hotelName: "BIZ Hotel",
         otpCode: otpCode,
-        userName: user.name,
+        userName: user!.name,
         supportEmail: "www.bizhotelbatam.com",
         verificationUrl:
           process.env.NEXT_PUBLIC_BASE_URL +
@@ -521,33 +509,23 @@ export const userService = {
         prisma,
       );
 
-    if (!resetPasswordOtpVerification)
-      throw badRequest("Reset password OTP not found");
-
-    if (resetPasswordOtpVerification.user.email !== data.email)
-      throw badRequest("The reset password OTP id is incorrect.");
-
-    const resetPasswordPeriodic = new Date(
-      resetPasswordOtpVerification.updatedAt,
-    );
-    resetPasswordPeriodic.setDate(resetPasswordPeriodic.getDate() + 1);
+    const resetPasswordPeriodic = resetPasswordOtpVerification!.lastInputOtp
+      ? new Date(resetPasswordOtpVerification!.lastInputOtp)
+      : null;
+    resetPasswordOtpVerification!.lastInputOtp
+      ? resetPasswordPeriodic?.setMinutes(
+          resetPasswordPeriodic.getMinutes() + 10,
+        )
+      : null;
 
     const now = new Date();
 
-    if (!resetPasswordOtpVerification.user) throw badRequest("user is missing");
-
-    if (resetPasswordOtpVerification.user.email !== data.email)
-      throw badRequest("The email is different");
-
-    if (
-      resetPasswordOtpVerification.inputOtpCounter === 3 &&
-      now < resetPasswordPeriodic
-    ) {
-      throw tooManyRequest("You've reached the input limit");
-    }
-
-    if (resetPasswordOtpVerification.expiresAt < now)
-      throw badRequest("OTP has already expired");
+    assertCanResetPassword(
+      resetPasswordOtpVerification,
+      data,
+      resetPasswordPeriodic,
+      now,
+    );
 
     const isOtpExact = await bcrypt.compare(
       data.otpCode,
@@ -575,35 +553,33 @@ export const userService = {
         };
       } else if (
         resetPasswordOtpVerification.inputOtpCounter === 3 &&
-        now > resetPasswordPeriodic
+        (!resetPasswordPeriodic || now > resetPasswordPeriodic)
       ) {
-        await resetPasswordVerificationRepository.update(
-          id,
-          {
-            inputOtpCounter: 1,
-          },
-          tx,
-        );
+        const resePasswordVerification =
+          await resetPasswordVerificationRepository.update(
+            id,
+            {
+              inputOtpCounter: 1,
+            },
+            tx,
+          );
 
-        return {
-          message: "The OTP code is incorrect. Try again.",
-          userId: resetPasswordOtpVerification.userId,
-          success: false,
-        };
+        throw badRequest(
+          `The OTP code is incorrect. Reamaining attempts: ${3 - resePasswordVerification.inputOtpCounter}`,
+        );
       } else {
-        await resetPasswordVerificationRepository.update(
-          id,
-          {
-            inputOtpCounter: { increment: 1 },
-          },
-          tx,
-        );
+        const resePasswordVerification =
+          await resetPasswordVerificationRepository.update(
+            id,
+            {
+              inputOtpCounter: { increment: 1 },
+            },
+            tx,
+          );
 
-        return {
-          message: "The OTP code is incorrect. Try again.",
-          userId: resetPasswordOtpVerification.userId,
-          success: false,
-        };
+        throw badRequest(
+          `The OTP code is incorrect. Reamaining attempts: ${3 - resePasswordVerification.inputOtpCounter}`,
+        );
       }
     });
 

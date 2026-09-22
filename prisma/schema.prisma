@@ -151,29 +151,31 @@ model User {
 }
 
 model EmailOtpVerification {
-  id                   String   @id @default(cuid())
-  userId               String   @unique
-  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   code                 String
-  requestNewOtpCounter Int      @default(1)
-  inputOtpCounter      Int      @default(0)
+  requestNewOtpCounter Int       @default(1)
+  lastRequestNewOtp    DateTime?
+  inputOtpCounter      Int       @default(0)
+  lastInputOtp         DateTime?
   expiresAt            DateTime
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  createdAt            DateTime  @default(now())
 
   @@index([userId, code])
 }
 
 model ResetPasswordOtpVerification {
-  id                   String   @id @default(cuid())
-  userId               String   @unique
-  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   code                 String
-  requestNewOtpCounter Int      @default(1)
-  inputOtpCounter      Int      @default(0)
+  requestNewOtpCounter Int       @default(1)
+  lastRequestNewOtp    DateTime?
+  inputOtpCounter      Int       @default(0)
+  lastInputOtp         DateTime?
   expiresAt            DateTime
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  createdAt            DateTime  @default(now())
 }
 
 model Account {

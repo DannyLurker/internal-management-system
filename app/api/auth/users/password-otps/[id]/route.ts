@@ -36,7 +36,7 @@ export async function POST(
 
     return Response.json(response, { status: 200 });
   } catch (error) {
-    printConsoleError(error, "PATCH", req.url);
+    printConsoleError(error, "POST", req.url);
     return handleError(error);
   }
 }
