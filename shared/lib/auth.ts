@@ -13,6 +13,10 @@ import { EmailNotVerifiedError } from "./auth-errors";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
+  trustHost: true,
+  pages: {
+    signIn: "/sign-in",
+  },
   session: {
     strategy: "jwt",
     maxAge: 7 * 24 * 60 * 60,
@@ -59,11 +63,52 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (!isPwValid) return null;
 
-        return userDb;
+        // Never leak the password hash into the JWT / session.
+        const { password: _passwordHash, ...safeUser } = userDb;
+        void _passwordHash;
+        return safeUser;
       },
     }),
   ],
   callbacks: {
+    authorized: async ({ auth, request }) => {
+      const pathname = request.nextUrl.pathname;
+
+      // NextAuth's own routes must stay reachable.
+      if (pathname.startsWith("/api/auth")) return true;
+
+      const isAuthPage =
+        pathname === "/sign-in" ||
+        pathname.startsWith("/users/email-otps") ||
+        pathname.startsWith("/users/password-otps");
+
+      const isProtectedRoute =
+        pathname === "/dashboard" ||
+        pathname.startsWith("/dashboard/") ||
+        pathname.startsWith("/inventory");
+
+      if (isAuthPage) {
+        // Authenticated users don't need the sign-in form.
+        if (auth?.user && pathname === "/sign-in") {
+          return Response.redirect(new URL("/dashboard", request.nextUrl));
+        }
+        return true;
+      }
+
+      if (isProtectedRoute) {
+        if (!auth?.user) {
+          const signInUrl = new URL("/sign-in", request.nextUrl);
+          signInUrl.searchParams.set(
+            "callbackUrl",
+            request.nextUrl.pathname + request.nextUrl.search,
+          );
+          return Response.redirect(signInUrl);
+        }
+        return true;
+      }
+
+      return true;
+    },
     jwt: async ({ user, token, account }) => {
       if (user && account) {
         token.id = user.id;
@@ -76,11 +121,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token;
     },
     session: async ({ token, session }) => {
-      session.user.id = token.id as string;
-      session.user.name = token.name as string;
-      session.user.email = token.email as string;
-      session.user.image = token.image as string;
-      session.user.role = token.role as Role;
+      if (token.id) session.user.id = token.id as string;
+      if (typeof token.name === "string") session.user.name = token.name;
+      if (typeof token.email === "string") session.user.email = token.email;
+      session.user.image =
+        typeof token.image === "string" ? token.image : null;
+      if (token.role) session.user.role = token.role as Role;
 
       return session;
     },

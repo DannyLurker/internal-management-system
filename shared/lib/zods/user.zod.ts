@@ -6,13 +6,13 @@ export const userCreateSchema = z
     name: z.string().trim().min(3),
     email: z.email(),
     password: z.string().trim().min(8),
-    confirmPassowrd: z.string().trim().min(8),
+    confirmPassword: z.string().trim().min(8),
     role: userRoleEnum.optional(),
     phoneNumber: z.string(),
     creationType: z.enum(["GUEST", "STAFF"]),
   })
   .superRefine((val, ctx) => {
-    if (val.password !== val.confirmPassowrd) {
+    if (val.password !== val.confirmPassword) {
       ctx.addIssue({
         code: "invalid_value" as any,
         path: ["confirmPassword"],

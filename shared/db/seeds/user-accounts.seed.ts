@@ -3,69 +3,77 @@ import { hash } from "bcryptjs";
 import prisma from "../prisma";
 
 export async function createUserAccountsSeed() {
+  const verifiedAt = new Date();
+
   const adminUser = await prisma.user.upsert({
     where: { email: "admin@hotel.com" },
-    update: {},
+    update: { emailVerified: verifiedAt },
     create: {
       name: "System Admin",
       email: "admin@hotel.com",
       password: await hash("admin123", 10),
       role: Role.ADMIN,
+      emailVerified: verifiedAt,
     },
   });
 
   const hotelManagerUser = await prisma.user.upsert({
     where: { email: "manager@hotel.com" },
-    update: {},
+    update: { emailVerified: verifiedAt },
     create: {
       name: "Hotel Manager",
       email: "manager@hotel.com",
       password: await hash("manager123", 10),
       role: Role.HOTEL_MANAGER,
+      emailVerified: verifiedAt,
     },
   });
 
   const supervisorUser = await prisma.user.upsert({
     where: { email: "supervisor@hotel.com" },
-    update: {},
+    update: { emailVerified: verifiedAt },
     create: {
       name: "Shift Supervisor",
       email: "supervisor@hotel.com",
       password: await hash("supervisor123", 10),
       role: Role.SUPERVISOR,
+      emailVerified: verifiedAt,
     },
   });
 
   const accountantUser = await prisma.user.upsert({
     where: { email: "accountant@hotel.com" },
-    update: {},
+    update: { emailVerified: verifiedAt },
     create: {
       name: "Hotel Accountant",
       email: "accountant@hotel.com",
       password: await hash("accountant123", 10),
       role: Role.ACCOUNTANT,
+      emailVerified: verifiedAt,
     },
   });
 
   const housekeepingUser = await prisma.user.upsert({
     where: { email: "housekeeping@hotel.com" },
-    update: {},
+    update: { emailVerified: verifiedAt },
     create: {
       name: "Housekeeping Staff",
       email: "housekeeping@hotel.com",
       password: await hash("housekeeping123", 10),
       role: Role.HOUSEKEEPING,
+      emailVerified: verifiedAt,
     },
   });
 
   const frontDeskUser = await prisma.user.upsert({
     where: { email: "frontdesk@hotel.com" },
-    update: {},
+    update: { emailVerified: verifiedAt },
     create: {
       name: "Front Desk Staff",
       email: "frontdesk@hotel.com",
       password: await hash("frontdesk123", 10),
       role: Role.FRONT_DESK,
+      emailVerified: verifiedAt,
     },
   });
 

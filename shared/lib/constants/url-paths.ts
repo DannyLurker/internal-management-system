@@ -1,5 +1,6 @@
 export const paths = {
   dashboard: "/dashboard",
+  staffCreate: "/staff/create",
   items: "/inventory/items",
   categories: "/inventory/categories",
   locations: "/inventory/locations",

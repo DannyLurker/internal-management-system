@@ -1,9 +1,13 @@
+"use client";
+
+import { useSession } from "next-auth/react";
 import { cn } from "@/shared/lib/utils";
 import SectionLabel from "./SecitionLabel";
 import SidebarDashboardLink from "./SidebarDashboardLink";
-import { LayoutGrid } from "lucide-react";
+import { LayoutGrid, UserPlus } from "lucide-react";
 import SidebarInventory from "./SidebarInventory";
 import { paths } from "@/shared/lib/constants/url-paths";
+import { canCreateStaffAccount } from "@/shared/lib/validations/user-access-validation";
 
 export default function SidebarNavContent({
   isExpanded,
@@ -26,6 +30,12 @@ export default function SidebarNavContent({
   onInventoryKeyDown: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
   inventoryFlyoutId: string;
 }) {
+  const { data: session, status } = useSession();
+  const canCreateStaff =
+    status === "authenticated" &&
+    session?.user?.role !== undefined &&
+    canCreateStaffAccount(session.user.role);
+
   return (
     <nav className="flex min-h-0 flex-1 flex-col overflow-visible px-2 pb-4 pt-2">
       <div
@@ -43,6 +53,16 @@ export default function SidebarNavContent({
           isActive={pathname === paths.dashboard}
           isExpanded={isExpanded}
         />
+
+        {canCreateStaff && (
+          <SidebarDashboardLink
+            href={paths.staffCreate}
+            label="Create Staff"
+            icon={UserPlus}
+            isActive={pathname === paths.staffCreate}
+            isExpanded={isExpanded}
+          />
+        )}
 
         {isExpanded && (
           <SidebarInventory

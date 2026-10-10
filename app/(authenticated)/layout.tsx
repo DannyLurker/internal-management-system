@@ -20,13 +20,17 @@ export default function AuthenticatedLayout({
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/sign-in");
+      router.replace("/sign-in");
     }
   }, [status, router]);
 
   useEffect(() => {
     setIsLoading(status === "loading");
   }, [status, setIsLoading]);
+
+  if (status === "loading" || status === "unauthenticated") {
+    return null;
+  }
 
   return (
     <div className="flex min-h-screen min-w-0">
